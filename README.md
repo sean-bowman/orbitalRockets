@@ -132,4 +132,12 @@ orbitalRockets/
 
 ---
 
+## License
+
+[MIT](LICENSE). Copyright (c) 2026 Sean Bowman.
+
+This is reference and analysis material. The MIT warranty disclaimer applies in full: nothing here substitutes for qualified engineering judgment, an independent check, or the governing standard for a given application.
+
+---
+
 Sean Bowman
