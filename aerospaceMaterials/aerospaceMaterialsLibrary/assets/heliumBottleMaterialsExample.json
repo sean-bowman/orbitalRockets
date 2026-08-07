@@ -1,0 +1,71 @@
+{
+  "caseName": "GHe pressurant bottle, 100 N hydrazine monopropellant system",
+  "linkedCase": "hydrazineMonoprop100N",
+  "linkedCaseNote": "The three inherited values below are produced by fluidSystems/codeInterface.py. They are stated here rather than recomputed so the coupling between the two directories is visible in the configuration rather than buried in code.",
+
+  "inherited": {
+    "bottlePressure": 30.0e6,
+    "bottleVolume": 0.00323,
+    "pressurantMass": 0.1394,
+    "tankPressure": 2.2360e6,
+    "surgePeakPressure": 2.4249e6,
+    "thrusterValveBore": 0.00476,
+    "feedLineRoughnessSurface": "drawn tube"
+  },
+
+  "vessel": {
+    "geometry": "sphere",
+    "serviceTemperature": 293.15,
+    "minimumTemperature": 253.15,
+    "maximumTemperature": 333.15,
+    "proofFactor": 1.5,
+    "burstFactorOnUltimate": 1.5,
+    "yieldFactorAtMeop": 1.25,
+    "designCycles": 500,
+    "serviceLifeYears": 10.0,
+    "loadPath": "single",
+    "environment": "launch site marine",
+    "fluids": ["GHE"],
+    "girthWeldProcess": "weld, electron beam"
+  },
+
+  "candidates": [
+    ["Ti-6Al-4V", "annealed"],
+    ["Ti-6Al-4V", "sta"],
+    ["316L", "annealed"],
+    ["6061", "t6"],
+    ["Inconel 718", "sta"],
+    ["2219", "t87"]
+  ],
+
+  "allowablesSample": {
+    "note": "A synthetic 30 specimen Ti-6Al-4V ultimate strength sample with a 3.2 percent coefficient of variation, drawn from a fixed seed so the worked example is reproducible. Real programme data would replace this.",
+    "seed": 20260807,
+    "specimens": 30,
+    "meanStrength": 950.0e6,
+    "standardDeviation": 30.0e6
+  },
+
+  "bracket": {
+    "note": "The 6061-T6 mounting bracket the bottle boss lands on, which is the galvanic couple that matters.",
+    "material": "6061",
+    "condition": "t6",
+    "bossArea": 0.0012,
+    "bracketArea": 0.0080,
+    "corrosionAllowance": 0.0002
+  },
+
+  "manifold": {
+    "note": "The secondary leg: an LPBF Inconel 718 thruster valve manifold, which closes the loop back into the fluid system pressure drop.",
+    "material": "Inconel 718",
+    "condition": "lpbf hip + sta",
+    "channelDiameter": 0.00476,
+    "channelLength": 0.180,
+    "asBuiltSurface": "lpbf as-built",
+    "finishedSurface": "lpbf abrasive flow",
+    "massFlow": 0.045,
+    "fluid": "N2H4",
+    "inletPressure": 2.30e6,
+    "inletTemperature": 293.15
+  }
+}

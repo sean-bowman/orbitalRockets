@@ -1,0 +1,23 @@
+# fluidSystems -- Aerospace Fluid System Design and Analysis Library
+#
+# Install with:  pip install -r dependencies.txt
+# Target runtime: Python 3.10 (win-amd64)
+
+# -- Core numerics -- #
+numpy>=2.2
+scipy>=1.15
+
+# -- Fluid properties -- #
+# fluidProps() in utils.py dispatches REFPROP first, then falls back to
+# CoolProp. CoolProp alone is sufficient to run every tool in this library,
+# with the exception of hydrazine, which has no CoolProp equation of state
+# and is served by the built-in correlation table in utils.py instead.
+CoolProp>=8.0
+ctREFPROP>=0.10.5
+
+# -- Plotting -- #
+matplotlib>=3.10
+plotly>=6.2
+
+# -- Testing -- #
+pytest>=8.0

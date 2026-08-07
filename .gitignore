@@ -1,0 +1,30 @@
+# Hidden folders and files
+.claude/
+.scratch/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.vs/
+.vscode/
+*.user
+
+# Temp files
+*.tmp
+*.tmp.*
+tmpclaude-*
+
+# Internal notes (not for publication)
+objectives.md
+
+# Temporary / generated job data
+temp/
+
+# Generated run outputs. Curated figures live in docs/images/ instead.
+*Outputs/
+*.pkl
+.pytest_cache/

@@ -1,0 +1,145 @@
+{
+  "_comment": "Worked example: GHe-pressurized hydrazine monopropellant feed system, 100 N class. A null value means 'not specified'; a literal 0.0 means 'specified as zero'. All units are mass-base SI: m, kg, s, Pa absolute, K.",
+
+  "caseName": "hydrazineMonoprop100N",
+
+  "mission": {
+    "propellantVolume": 0.030,
+    "requiredThrust": 100.0,
+    "missionDuration": 315576000.0,
+    "enclosureVolume": 30.0,
+    "hazardConcentrationLimit": 1.0e-8
+  },
+
+  "thruster": {
+    "propellant": "n2h4",
+    "thrust": 100.0,
+    "massFlow": null,
+    "chamberPressure": 1.5e6,
+    "expansionRatio": 50.0,
+    "ambientPressure": 0.0,
+    "nozzleHalfAngle": 15.0,
+    "injectorPressureDrop": 0.25
+  },
+
+  "catalystBed": {
+    "catalyst": "shell 405",
+    "meshSize": "14-18",
+    "bedLoading": 20.0,
+    "lengthToDiameterRatio": 1.2,
+    "ammoniaDissociation": 0.40,
+    "bedTemperature": 373.15,
+    "inletTemperature": 293.15
+  },
+
+  "injector": {
+    "orificeType": "square",
+    "numberOfOrifices": 8,
+    "lengthToDiameter": 3.0
+  },
+
+  "thrusterValve": {
+    "valveType": "poppet",
+    "nominalSize": 0.00476,
+    "seatMaterial": "ptfe",
+    "allowablePressureDrop": 3.0e4,
+    "closureTime": 0.020
+  },
+
+  "trimOrifice": {
+    "orificeType": "square",
+    "allowablePressureDrop": 5.0e4
+  },
+
+  "feedLine": {
+    "length": 2.5,
+    "service": "hydrazine",
+    "surface": "drawn tube",
+    "material": "316L",
+    "allowablePressureDrop": 5.0e4,
+    "elevationChange": 0.0,
+    "fittings": {"bend 90 r/d=3": 4, "tee run": 1},
+    "lossCoefficients": {"an flare union": 2}
+  },
+
+  "filter": {
+    "filterType": "pleated mesh",
+    "betaRatio": 1000,
+    "allowableCleanPressureDrop": 2.0e4,
+    "contaminationLoading": 1.0e-3,
+    "requiredLife": 36000.0
+  },
+
+  "checkValve": {
+    "valveType": "dual poppet redundant",
+    "nominalSize": 0.004,
+    "minimumMassFlow": 0.0001
+  },
+
+  "pressurization": {
+    "architecture": "regulated",
+    "pressurant": "helium",
+    "bottlePressure": 30.0e6,
+    "bottleTemperature": 293.15,
+    "tankTemperature": 293.15,
+    "collapseFactorKey": "storable, spacecraft duty",
+    "bottleProcess": "isothermal",
+    "blowdownRatio": 4.0,
+    "polytropicExponent": 1.0
+  },
+
+  "regulator": {
+    "regulatorType": "two stage spring",
+    "reliefType": "spring relief",
+    "burstDiscRating": 5.0e6,
+    "burstDiscMaterial": "inconel",
+    "burstDiscTolerance": 0.05,
+    "burstDiscTemperature": 295.0,
+    "proofFactor": 1.5,
+    "reliefFlow": 0.01
+  },
+
+  "seal": {
+    "sealType": "static face",
+    "material": "epdm",
+    "crossSectionDiameter": 0.001778,
+    "innerDiameter": 0.012,
+    "grooveInnerDiameter": 0.01224,
+    "durometer": 70,
+    "diametralClearance": 0.00015,
+    "minimumTemperature": 280.0
+  },
+
+  "weld": {
+    "jointType": "tube to fitting",
+    "material": "316L",
+    "fluidHazard": "toxic",
+    "pressureCycles": 500,
+    "chromium": 18.5,
+    "nickel": 12.0,
+    "molybdenum": 2.5,
+    "carbon": 0.02,
+    "niobium": 0.0,
+    "nitrogen": 0.05,
+    "copper": 0.2
+  },
+
+  "insulation": {
+    "material": "aerogel blanket",
+    "length": 2.5,
+    "ambientTemperature": 250.0,
+    "relativeHumidity": 0.0,
+    "windSpeed": 0.0,
+    "targetSurfaceTemperature": null,
+    "targetHeatLeak": 5.0
+  },
+
+  "leakCheck": {
+    "species": "He",
+    "pathLength": 0.001,
+    "testVolume": 0.010,
+    "transducerResolution": 100.0,
+    "testDuration": 3600.0,
+    "temperatureStability": 0.1
+  }
+}
