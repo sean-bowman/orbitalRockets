@@ -155,6 +155,7 @@ The numbers are not the interesting part. These are:
 | `Regulator` | [Regulator.py](fluidSystemsLibrary/Regulator.py) | Regulator band, relief sizing, burst disc, pressure set point ladder |
 | `CheckValve` | [CheckValve.py](fluidSystemsLibrary/CheckValve.py) | Cracking pressure, chatter margin, reverse leakage |
 | `Filter` | [Filter.py](fluidSystemsLibrary/Filter.py) | Rating selection, element sizing on life, clean dP |
+| `FluidView` | [FluidView.py](fluidSystemsLibrary/FluidView.py) | Property viewer: single points, range sweeps, carpet plots, phase diagrams |
 
 Shared infrastructure is in [utils.py](fluidSystemsLibrary/utils.py): the `fluidProps` property stack, `frictionFactor`, `leakRateConvert`, `materialProperties`, `roughnessTable`, `b31_3WallThickness`, `chokedMassFlux`, `secantSolve`, `formatReportTable`, and the `FluidSystemError` exception hierarchy.
 
@@ -168,6 +169,7 @@ Start at [FluidSystemsOverview.md](fluidSystemsLibrary/docs/FluidSystemsOverview
 
 | Document | Covers |
 |---|---|
+| [Fluid Properties](fluidSystemsLibrary/docs/FluidProperties.md) | Backend dispatch, input and output type codes, the error sentinel, phase coding |
 | [Orifices](fluidSystemsLibrary/docs/Orifices.md) | Discharge coefficients, choked and cavitating flow, ISO 5167, drill selection |
 | [Pipe Routing and Sizing](fluidSystemsLibrary/docs/PipeRoutingAndSizing.md) | Darcy-Weisbach, minor losses, velocity limits, B31.3, routing, supports |
 | [Valves](fluidSystemsLibrary/docs/Valves.md) | Cv sizing, choking, cavitation, characteristics, actuation, leakage classes |
@@ -233,7 +235,7 @@ fluidSystems/
     ├── utils.py                   property stack, conversions, correlations, errors
     ├── *.py                       one class per component, sixteen of them
     ├── assets/                    JSON configuration for the worked example
-    └── docs/                      twenty-three reference documents
+    └── docs/                      twenty-four reference documents
 ```
 
 ---
