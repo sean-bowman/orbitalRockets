@@ -30,6 +30,8 @@ Two things that are meant to be used together, in every domain.
 
 ## Domains
 
+Six of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist: what is built, what is not, the build order, and the depth each remaining domain is planned to.
+
 | Domain | Status | Covers |
 |---|---|---|
 | [fluidSystems](fluidSystems/) | **Complete** | Valves, lines, orifices, fittings, seals, leaks, welds, insulation, water hammer, hydrazine, catalyst beds, monopropellant thrusters, pressurization |
