@@ -1,0 +1,94 @@
+{
+  "caseName": "Hydrazine propellant tank as primary structure, and the dry skirt beside it",
+  "linkedCase": "hydrazineMonoprop100N",
+  "linkedCaseNote": "The inherited values below are produced by fluidSystems/codeInterface.py and reused by aerospaceMaterials/codeInterface.py. They are stated here rather than recomputed so the coupling between the three directories is visible in the configuration rather than buried in code.",
+  "inherited": {
+    "propellantVolume": 0.03,
+    "tankPressure": 2236000.0,
+    "surgePeakPressure": 2424900.0,
+    "serviceTemperature": 293.15
+  },
+  "smallTank": {
+    "_comment": "The actual monopropellant tank from the fluidSystems case. Pressure sizes the wall and the resulting R/t is 79.7, the same as at stage scale.",
+    "radius": 0.18,
+    "domeType": "sqrt2 ellipsoidal",
+    "material": "2219-T87",
+    "condition": "t87",
+    "basis": "A",
+    "jointEfficiency": 0.7,
+    "jointEfficiencyNote": "Fusion welded 2219 girth and longitudinal seams, per fluidSystems Weld"
+  },
+  "stageTank": {
+    "_comment": "The same propellant and the same operating pressure at launch vehicle scale. R/t comes out identical to the small tank, because a pressure-sized wall scales linearly with radius.",
+    "radius": 1.8,
+    "cylindricalLength": 6.0,
+    "domeType": "sqrt2 ellipsoidal",
+    "material": "2219-T87",
+    "condition": "t87",
+    "basis": "A",
+    "jointEfficiency": 0.7,
+    "dryMassAbove": 4200.0,
+    "dryMassAboveNote": "Upper stage and payload carried through this barrel section"
+  },
+  "loadCases": {
+    "_comment": "Limit loads. Representative of a small launch vehicle, and the point of the example is which one governs rather than their absolute accuracy.",
+    "groundHandling": {
+      "axialG": 1.0,
+      "lateralG": 0.5,
+      "internalPressure": 0.0
+    },
+    "liftoff": {
+      "axialG": 3.0,
+      "lateralG": 1.0,
+      "internalPressure": 2236000.0
+    },
+    "maxQ": {
+      "axialG": 2.5,
+      "lateralG": 2.2,
+      "internalPressure": 2236000.0,
+      "dynamicPressure": 35000.0
+    },
+    "maxAcceleration": {
+      "axialG": 6.0,
+      "lateralG": 0.3,
+      "internalPressure": 1800000.0
+    },
+    "staging": {
+      "axialG": 0.5,
+      "lateralG": 0.6,
+      "internalPressure": 1500000.0
+    }
+  },
+  "stiffenedAlternative": {
+    "_comment": "An orthogrid barrel of the same radius, as the alternative to a thicker monocoque wall.",
+    "skinThickness": 0.003,
+    "stiffenerSpacing": 0.12,
+    "stiffenerHeight": 0.028,
+    "stiffenerThickness": 0.0035,
+    "stiffenerType": "blade"
+  },
+  "mounting": {
+    "_comment": "The bolted flange joining the barrel to the thrust structure.",
+    "boltDiameter": 0.0127,
+    "boltCount": 48,
+    "gripLength": 0.024,
+    "memberThickness": 0.012,
+    "edgeDistance": 0.0254,
+    "pitch": 0.0635,
+    "preloadMethod": "torque"
+  },
+  "dynamics": {
+    "_comment": "A representative small launcher stiffness requirement.",
+    "requiredLateral": 10.0,
+    "requiredAxial": 25.0
+  },
+  "drySkirt": {
+    "_comment": "An aft skirt of the same radius carrying the same compression, with no internal pressure to size its wall. R/t is a free choice here and it is chosen thin, which is what makes it a stability problem.",
+    "radius": 1.8,
+    "length": 2.0,
+    "thickness": 0.003,
+    "material": "2219-T87",
+    "condition": "t87",
+    "basis": "A"
+  }
+}
