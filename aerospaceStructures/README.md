@@ -2,7 +2,7 @@
 
 **Launch Vehicle Structural Design and Analysis**
 
-> **Status: library complete, documentation planned.** All eight classes are built and tested (105 tests). The fifteen documents in the topic list are not yet written. See [../fluidSystems/](../fluidSystems/) for a completed domain.
+> **Status: complete.** Eight classes, fifteen documents and 105 tests, with a worked example that inherits its pressure from [fluidSystems](../fluidSystems/) and its allowables from [aerospaceMaterials](../aerospaceMaterials/).
 
 ---
 
@@ -28,21 +28,21 @@ Reference documentation, a component class library and a tiered test suite, matc
 
 | Document | Covers | Status |
 |---|---|---|
-| `docs/StructuresOverview.md` | Hub: load paths, the analysis sequence, conventions, document index | planned |
-| `docs/LoadsAndLoadCases.md` | Load sources, combination, factors of safety, limit and ultimate, load case matrices | planned |
-| `docs/ShellBuckling.md` | Cylindrical and conical shells, knockdown factors, NASA SP-8007, stiffened shells | planned |
-| `docs/PressureVesselsAndTanks.md` | Membrane theory, domes, Y-rings, common bulkheads, autofrettage, COPVs | planned |
-| `docs/SandwichPanels.md` | Honeycomb and foam cores, facesheet wrinkling, core shear, intracell buckling | planned |
-| `docs/StiffenedStructures.md` | Isogrid, orthogrid, skin-stringer, ring frames, crippling | planned |
-| `docs/BoltedJoints.md` | Preload, separation, joint diagrams, bearing and shear-out, NASA-STD-5020 | planned |
-| `docs/BondedAndCompositeJoints.md` | Adhesive joints, composite laminates, failure criteria, damage tolerance | planned |
-| `docs/WeldedStructures.md` | Weld joint efficiency, HAZ derating, friction stir, weld land design | planned |
-| `docs/ThrustStructures.md` | Thrust takeout, gimbal loads, engine mounts, interstage and skirt design | planned |
-| `docs/DynamicsAndModes.md` | Modal analysis, frequency requirements, POGO, slosh, coupled loads analysis | planned |
-| `docs/FatigueAndFracture.md` | S-N and crack growth, fracture control, NASA-STD-5019, damage tolerance | planned |
-| `docs/StabilityAndCollapse.md` | External pressure, vacuum jacket collapse, general instability | planned |
-| `docs/MassPropertiesAndOptimization.md` | Mass estimating relationships, sizing loops, structural efficiency | planned |
-| `docs/StandardsIndex.md` | Annotated index of the governing structural standards | planned |
+| [StructuresOverview.md](docs/StructuresOverview.md) | Hub: load paths, the analysis sequence, conventions, document index | **written** |
+| [LoadsAndLoadCases.md](docs/LoadsAndLoadCases.md) | Load sources, combination, factors of safety, limit and ultimate, load case matrices | **written** |
+| [ShellBuckling.md](docs/ShellBuckling.md) | Cylindrical and conical shells, knockdown factors, NASA SP-8007, stiffened shells | **written** |
+| [PressureVesselsAndTanks.md](docs/PressureVesselsAndTanks.md) | Membrane theory, domes, Y-rings, common bulkheads, autofrettage, COPVs | **written** |
+| [SandwichPanels.md](docs/SandwichPanels.md) | Honeycomb and foam cores, facesheet wrinkling, core shear, intracell buckling | **written** |
+| [StiffenedStructures.md](docs/StiffenedStructures.md) | Isogrid, orthogrid, skin-stringer, ring frames, crippling | **written** |
+| [BoltedJoints.md](docs/BoltedJoints.md) | Preload, separation, joint diagrams, bearing and shear-out, NASA-STD-5020 | **written** |
+| [BondedAndCompositeJoints.md](docs/BondedAndCompositeJoints.md) | Adhesive joints, composite laminates, failure criteria, damage tolerance | **written** |
+| [WeldedStructures.md](docs/WeldedStructures.md) | Weld joint efficiency, HAZ derating, friction stir, weld land design | **written** |
+| [ThrustStructures.md](docs/ThrustStructures.md) | Thrust takeout, gimbal loads, engine mounts, interstage and skirt design | **written** |
+| [DynamicsAndModes.md](docs/DynamicsAndModes.md) | Modal analysis, frequency requirements, POGO, slosh, coupled loads analysis | **written** |
+| [FatigueAndFracture.md](docs/FatigueAndFracture.md) | S-N and crack growth, fracture control, NASA-STD-5019, damage tolerance | **written** |
+| [StabilityAndCollapse.md](docs/StabilityAndCollapse.md) | External pressure, vacuum jacket collapse, general instability | **written** |
+| [MassPropertiesAndOptimization.md](docs/MassPropertiesAndOptimization.md) | Mass estimating relationships, sizing loops, structural efficiency | **written** |
+| [StandardsIndex.md](docs/StandardsIndex.md) | Annotated index of the governing structural standards | **written** |
 
 ## Planned library
 

@@ -34,7 +34,7 @@ Two things that are meant to be used together, in every domain.
 |---|---|---|
 | [fluidSystems](fluidSystems/) | **Complete** | Valves, lines, orifices, fittings, seals, leaks, welds, insulation, water hammer, hydrazine, catalyst beds, monopropellant thrusters, pressurization |
 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | **Complete** | Test campaigns from concept through development, qualification and flight acceptance |
-| [aerospaceStructures](aerospaceStructures/) | Scaffolded | Shell buckling, sandwich panels, bolted and bonded joints, modal analysis, load paths, tanks |
+| [aerospaceStructures](aerospaceStructures/) | **Complete** | Shell buckling, sandwich panels, bolted and bonded joints, modal analysis, load paths, tanks |
 | [aerospaceMaterials](aerospaceMaterials/) | **Complete** | Alloy selection, allowables, fracture, corrosion, plus ten process sub-domains covering additive, casting, wrought, forming, machining, joining and post-processing |
 | [thermalManagement](thermalManagement/) | Scaffolded | Thermal protection systems, thermal control, radiators, heat pipes, aeroheating |
 | [environmentsAndLoads](environmentsAndLoads/) | Scaffolded | Random vibration, acoustics, shock, aerodynamic loads, load cases, coupled loads analysis |
