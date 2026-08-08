@@ -2,7 +2,7 @@
 
 **Launch Vehicle Structural Design and Analysis**
 
-> **Status: scaffolded.** The topic coverage below is defined and the documents are planned. Nothing in this domain is written yet. See [../fluidSystems/](../fluidSystems/) for a completed domain.
+> **Status: in progress.** Two of eight classes are built and tested (34 tests). The remaining six classes and all fifteen documents are planned. See [../fluidSystems/](../fluidSystems/) for a completed domain.
 
 ---
 
@@ -48,8 +48,8 @@ Reference documentation, a component class library and a tiered test suite, matc
 
 | Class | Computes | Status |
 |---|---|---|
-| `CylindricalShell` | Buckling under axial, bending, external pressure and combined load, with knockdown factors | planned |
-| `PressureVessel` | Membrane stresses, dome geometry, wall thickness, proof and burst, mass | planned |
+| `CylindricalShell` | Buckling under axial, bending, external pressure, torsion and combined load, with SP-8007 knockdowns and pressure stabilization | **built** |
+| `PressureVessel` | Membrane stresses, dome geometry, wall thickness, proof and burst, mass | **built** |
 | `SandwichPanel` | Facesheet wrinkling, core shear, dimpling, panel bending and buckling | planned |
 | `StiffenedPanel` | Isogrid and skin-stringer smeared properties, crippling, panel and general instability | planned |
 | `BoltedJoint` | Preload, joint stiffness diagram, separation margin, bearing and shear-out | planned |
@@ -57,7 +57,9 @@ Reference documentation, a component class library and a tiered test suite, matc
 | `ModalEstimate` | First bending and axial modes for shells, beams and panels | planned |
 | `LoadCase` | Load combination, limit and ultimate factors, governing case identification | planned |
 
-All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../common/](../common/) through this domain's `utils.py`.
+All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../common/](../common/) through this domain's `utils.py`, and the structure-specific helpers live in `structuresUtils.py`.
+
+Allowables come from the [aerospaceMaterials](../aerospaceMaterials/) database through `structuralAllowables()`, which carries the full alloy roster and the A and B basis values. It falls back to the nine-alloy seed table in `common` when that domain is absent, and always reports which source answered.
 
 ---
 
