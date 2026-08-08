@@ -2,7 +2,7 @@
 
 **Launch Vehicle Structural Design and Analysis**
 
-> **Status: in progress.** Two of eight classes are built and tested (34 tests). The remaining six classes and all fifteen documents are planned. See [../fluidSystems/](../fluidSystems/) for a completed domain.
+> **Status: library complete, documentation planned.** All eight classes are built and tested (105 tests). The fifteen documents in the topic list are not yet written. See [../fluidSystems/](../fluidSystems/) for a completed domain.
 
 ---
 
@@ -50,12 +50,12 @@ Reference documentation, a component class library and a tiered test suite, matc
 |---|---|---|
 | `CylindricalShell` | Buckling under axial, bending, external pressure, torsion and combined load, with SP-8007 knockdowns and pressure stabilization | **built** |
 | `PressureVessel` | Membrane stresses, dome geometry, wall thickness, proof and burst, mass | **built** |
-| `SandwichPanel` | Facesheet wrinkling, core shear, dimpling, panel bending and buckling | planned |
-| `StiffenedPanel` | Isogrid and skin-stringer smeared properties, crippling, panel and general instability | planned |
-| `BoltedJoint` | Preload, joint stiffness diagram, separation margin, bearing and shear-out | planned |
-| `BeamColumn` | Euler and Johnson columns, combined axial and bending, effective length | planned |
-| `ModalEstimate` | First bending and axial modes for shells, beams and panels | planned |
-| `LoadCase` | Load combination, limit and ultimate factors, governing case identification | planned |
+| `SandwichPanel` | Facesheet wrinkling, core shear, dimpling, panel bending and buckling | **built** |
+| `StiffenedPanel` | Isogrid and skin-stringer smeared properties, crippling, panel and general instability | **built** |
+| `BoltedJoint` | Preload, joint stiffness diagram, separation margin, bearing and shear-out | **built** |
+| `BeamColumn` | Euler and Johnson columns, combined axial and bending, effective length | **built** |
+| `ModalEstimate` | First bending and axial modes for shells, beams and panels | **built** |
+| `LoadCase` | Load combination, limit and ultimate factors, governing case identification | **built** |
 
 All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../common/](../common/) through this domain's `utils.py`, and the structure-specific helpers live in `structuresUtils.py`.
 
