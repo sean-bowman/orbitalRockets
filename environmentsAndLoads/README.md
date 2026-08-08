@@ -2,7 +2,7 @@
 
 **Launch and Flight Environments, Loads Definition**
 
-> **Status: scaffolded.** The topic coverage below is defined and the documents are planned. Nothing in this domain is written yet. See [../fluidSystems/](../fluidSystems/) for a completed domain.
+> **Status: complete.** Five classes, thirteen documents and 60 tests, with a worked example that derives a component environment from flight data and compares it against the generic specification the same hardware is currently qualified to.
 
 ---
 
@@ -28,29 +28,29 @@ Reference documentation, a component class library and a tiered test suite, matc
 
 | Document | Covers | Status |
 |---|---|---|
-| `docs/EnvironmentsOverview.md` | Hub: the environment sources, the derivation chain, document index | planned |
-| `docs/RandomVibration.md` | PSD, Grms, sources, transmissibility, derivation of test levels, Miner scaling | planned |
-| `docs/AcousticEnvironment.md` | Liftoff and aerodynamic acoustics, SPL, vibroacoustic response, reverberant test | planned |
-| `docs/ShockEnvironment.md` | Pyroshock, separation, SRS, attenuation with distance, test methods | planned |
-| `docs/SineAndTransientVibration.md` | Low frequency transients, sine equivalent, coupled loads analysis | planned |
-| `docs/AerodynamicLoads.md` | Max-Q, angle of attack, buffet, aeroelasticity, gust and wind shear | planned |
-| `docs/ThermalEnvironments.md` | Aeroheating, solar and albedo, thermal cycling, on-orbit extremes | planned |
-| `docs/StaticAndQuasiStaticLoads.md` | Liftoff, max acceleration, staging, landing, ground handling | planned |
-| `docs/PressureEnvironments.md` | Ambient profile, venting, compartment pressure, differential during ascent | planned |
-| `docs/NaturalEnvironments.md` | Wind, humidity, salt fog, sand and dust, lightning, radiation | planned |
-| `docs/LoadCyclesAndCLA.md` | The loads cycle process, coupled loads analysis, model validation | planned |
-| `docs/EnvironmentDerivation.md` | Flight data to specification: statistics, enveloping, margin policy | planned |
-| `docs/StandardsIndex.md` | Annotated index of the governing environments standards | planned |
+| [EnvironmentsOverview.md](docs/EnvironmentsOverview.md) | Hub: the environment sources, the derivation chain, document index | **written** |
+| [RandomVibration.md](docs/RandomVibration.md) | PSD, Grms, sources, transmissibility, derivation of test levels, Miner scaling | **written** |
+| [AcousticEnvironment.md](docs/AcousticEnvironment.md) | Liftoff and aerodynamic acoustics, SPL, vibroacoustic response, reverberant test | **written** |
+| [ShockEnvironment.md](docs/ShockEnvironment.md) | Pyroshock, separation, SRS, attenuation with distance, test methods | **written** |
+| [SineAndTransientVibration.md](docs/SineAndTransientVibration.md) | Low frequency transients, sine equivalent, coupled loads analysis | **written** |
+| [AerodynamicLoads.md](docs/AerodynamicLoads.md) | Max-Q, angle of attack, buffet, aeroelasticity, gust and wind shear | **written** |
+| [ThermalEnvironments.md](docs/ThermalEnvironments.md) | Aeroheating, solar and albedo, thermal cycling, on-orbit extremes | **written** |
+| [StaticAndQuasiStaticLoads.md](docs/StaticAndQuasiStaticLoads.md) | Liftoff, max acceleration, staging, landing, ground handling | **written** |
+| [PressureEnvironments.md](docs/PressureEnvironments.md) | Ambient profile, venting, compartment pressure, differential during ascent | **written** |
+| [NaturalEnvironments.md](docs/NaturalEnvironments.md) | Wind, humidity, salt fog, sand and dust, lightning, radiation | **written** |
+| [LoadCyclesAndCLA.md](docs/LoadCyclesAndCLA.md) | The loads cycle process, coupled loads analysis, model validation | **written** |
+| [EnvironmentDerivation.md](docs/EnvironmentDerivation.md) | Flight data to specification: statistics, enveloping, margin policy | **written** |
+| [StandardsIndex.md](docs/StandardsIndex.md) | Annotated index of the governing environments standards | **written** |
 
 ## Planned library
 
 | Class | Computes | Status |
 |---|---|---|
-| `RandomVibrationSpec` | PSD breakpoint tables, Grms, level derivation, qual and acceptance, Miner duration scaling | planned |
-| `ShockSpectrum` | SRS construction, pyroshock attenuation with distance and joints, test level derivation | planned |
-| `AcousticSpec` | Octave band SPL, overall SPL, vibroacoustic response estimate | planned |
-| `ThermalEnvironment` | Aeroheating estimate, on-orbit hot and cold cases, cycle definition | planned |
-| `LoadFactorSet` | Quasi-static load factors by flight event, combination, limit and ultimate | planned |
+| `RandomVibrationSpec` | PSD breakpoint tables, Grms, level derivation, qual and acceptance, Miner duration scaling | **built** |
+| `ShockSpectrum` | SRS construction, pyroshock attenuation with distance and joints, test level derivation | **built** |
+| `AcousticSpec` | Octave band SPL, overall SPL, vibroacoustic response estimate | **built** |
+| `ThermalEnvironment` | Aeroheating estimate, on-orbit hot and cold cases, cycle definition | **built** |
+| `LoadFactorSet` | Quasi-static load factors by flight event, combination, limit and ultimate | **built** |
 
 All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../common/](../common/) through this domain's `utils.py`.
 
