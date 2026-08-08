@@ -13,5 +13,6 @@ Date:   08/06/2026
 '''
 
 from utils import *
+from thermalUtils import *
 
 # Add component modules here as they are created
