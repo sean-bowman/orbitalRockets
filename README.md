@@ -34,6 +34,7 @@ Two things that are meant to be used together, in every domain.
 |---|---|---|
 | [fluidSystems](fluidSystems/) | **Complete** | Valves, lines, orifices, fittings, seals, leaks, welds, insulation, water hammer, hydrazine, catalyst beds, monopropellant thrusters, pressurization |
 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | **Complete** | Test campaigns from concept through development, qualification and flight acceptance |
+| [propulsion](propulsion/) | Scaffolded | Liquid bipropellant engines: combustion devices, turbomachinery, engine cycles, nozzle performance, ignition and transients, hot fire test |
 | [aerospaceStructures](aerospaceStructures/) | **Complete** | Shell buckling, sandwich panels, bolted and bonded joints, modal analysis, load paths, tanks |
 | [aerospaceMaterials](aerospaceMaterials/) | **Complete** | Alloy selection, allowables, fracture, corrosion, plus ten process sub-domains covering additive, casting, wrought, forming, machining, joining and post-processing |
 | [thermalManagement](thermalManagement/) | Scaffolded | Thermal protection systems, thermal control, radiators, heat pipes, aeroheating |
@@ -48,7 +49,7 @@ Two things that are meant to be used together, in every domain.
 | [manufacturingAndAssembly](manufacturingAndAssembly/) | Scaffolded | Welding, composites, machining, tooling, inspection and NDE, supply chain |
 | [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Scaffolded | Flight termination, trajectory limits, autonomous FTS, debris analysis |
 
-Propulsion itself is deliberately absent: it is covered by the separate NOVA nozzle design suite and propulsionDesign repositories.
+Propulsion is covered here, as a hub with six sub-domains, and it is deliberately liquid bipropellant. Nozzle contour generation remains in the separate NOVA suite: this repository covers nozzle performance and area ratio selection, which are the decisions, and points at NOVA for the geometry. Reimplementing a method-of-characteristics generator here would create a second implementation with nothing enforcing agreement between them.
 
 ---
 
