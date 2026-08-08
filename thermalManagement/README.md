@@ -2,7 +2,7 @@
 
 **Thermal Protection, Thermal Control and Heat Transfer**
 
-> **Status: scaffolded.** The topic coverage below is defined and the documents are planned. Nothing in this domain is written yet. See [../fluidSystems/](../fluidSystems/) for a completed domain.
+> **Status: complete.** Five classes, twelve documents and 54 tests, with a worked example that follows an ascent heat pulse from the aeroheating environment through TPS sizing into the soakback that reaches the avionics 950 seconds after the heating stopped.
 
 ---
 
@@ -24,34 +24,54 @@ Reference documentation, a component class library and a tiered test suite, matc
 
 ---
 
-## Planned documentation
+## Documentation
 
 | Document | Covers | Status |
 |---|---|---|
-| `docs/ThermalOverview.md` | Hub: the thermal design process, regimes, document index | planned |
-| `docs/ConductionAndResistance.md` | Resistance networks, contact conductance, transient conduction, Biot number | planned |
-| `docs/ConvectionAndBoiling.md` | Free and forced convection, boiling regimes, film coefficients | planned |
-| `docs/RadiationHeatTransfer.md` | View factors, emissivity, enclosure analysis, radiators | planned |
-| `docs/AeroheatingAndTPS.md` | Ascent and entry heating, ablatives, reusable TPS, hot structures | planned |
-| `docs/CryogenicInsulation.md` | MLI, foam, vacuum jackets, boil-off, penetrations (extends the fluid systems work) | planned |
-| `docs/ThermalControlSystems.md` | Heaters, thermostats, coatings, louvres, active loops | planned |
-| `docs/HeatPipesAndTwoPhase.md` | Heat pipes, loop heat pipes, capillary limits, working fluids | planned |
-| `docs/RadiatorsAndRejection.md` | Radiator sizing, sink temperatures, deployable radiators | planned |
-| `docs/ThermalModelling.md` | Nodal models, correlation to test, model uncertainty, margins | planned |
-| `docs/ThermalTesting.md` | Thermal vacuum, thermal cycling, balance tests, instrumentation | planned |
-| `docs/StandardsIndex.md` | Annotated index of the governing thermal standards | planned |
+| [ThermalOverview.md](docs/ThermalOverview.md) | Hub: the four thermal problems, the transport mechanisms, document index | **written** |
+| [ConductionAndResistance.md](docs/ConductionAndResistance.md) | Resistance networks, contact conductance, transient conduction, Biot and Fourier | **written** |
+| [ConvectionAndBoiling.md](docs/ConvectionAndBoiling.md) | Correlations and their validity limits, the boiling curve, chilldown | **written** |
+| [RadiationHeatTransfer.md](docs/RadiationHeatTransfer.md) | The fourth power, absorptivity against emissivity, degradation, view factors | **written** |
+| [AeroheatingAndTPS.md](docs/AeroheatingAndTPS.md) | Sutton-Graves, the ablation energy balance, recession against insulation limits | **written** |
+| [CryogenicInsulation.md](docs/CryogenicInsulation.md) | MLI as a radiation problem, penetrations, the ground to flight transition | **written** |
+| [ThermalControlSystems.md](docs/ThermalControlSystems.md) | Heaters, thermostats, the hot and cold case as one problem | **written** |
+| [HeatPipesAndTwoPhase.md](docs/HeatPipesAndTwoPhase.md) | The four limits, wick selection, ground testability and dead angles | **written** |
+| [RadiatorsAndRejection.md](docs/RadiatorsAndRejection.md) | Sizing, sinks, fin efficiency, the fourth power penalty | **written** |
+| [ThermalModelling.md](docs/ThermalModelling.md) | Nodal networks, implicit marching, radiative nonlinearity, run length, soakback | **written** |
+| [ThermalTesting.md](docs/ThermalTesting.md) | Thermal balance, vacuum and cycling, instrumentation, ground test artefacts | **written** |
+| [StandardsIndex.md](docs/StandardsIndex.md) | Annotated index of the governing thermal standards | **written** |
 
-## Planned library
+## Library
 
 | Class | Computes | Status |
 |---|---|---|
-| `ThermalNetwork` | Multi-node resistance network solve, steady state and transient | planned |
-| `AblativeTPS` | Recession rate, char depth, backface temperature, sizing for a heat pulse | planned |
-| `Radiator` | Area sizing against a sink temperature, fin efficiency, view factor | planned |
-| `HeatPipe` | Capillary, sonic, entrainment and boiling limits, transport capability | planned |
-| `ThermalControl` | Heater power sizing, setpoint band, duty cycle, worst hot and cold cases | planned |
+| `ThermalNetwork` | Multi-node resistance network, steady state and transient, soakback and sensitivity | **written** |
+| `AblativeTPS` | The surface energy balance, recession, insulation depth, material comparison | **written** |
+| `Radiator` | Area against a sink temperature, fin efficiency, sink comparison | **written** |
+| `HeatPipe` | Capillary, sonic, entrainment and boiling limits, transport, ground testability | **written** |
+| `ThermalControl` | Heater power, setpoint band, duty cycle, thermostat life, hot case check | **written** |
 
 All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../common/](../common/) through this domain's `utils.py`.
+
+---
+
+## Worked example
+
+`codeInterface.py` follows one heat pulse across three domains, because no single domain owns the failure it produces.
+
+| Link | Owner | Value |
+|---|---|---|
+| Aeroheating flux | environmentsAndLoads | 0.163 MW/m^2 over 140 s |
+| Protection thickness | thermalManagement | 11.48 mm of cork, insulation limited |
+| Avionics peak, run stopped when the heating stops | thermalManagement | 307.4 K |
+| Avionics peak, run until every node turns over | thermalManagement | 374.8 K at 950 s |
+| Avionics limit | fluidSystems | 323.15 K |
+
+The short run passes and the long run fails, on the same model and the same hardware. The only difference is when the analyst stopped integrating.
+
+```bash
+python thermalManagement/codeInterface.py
+```
 
 ---
 

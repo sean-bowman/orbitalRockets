@@ -82,6 +82,16 @@ MASSLESS_NODE_CAPACITANCE = 0.0    # [J/K]
 # meaningfully and effort is better spent elsewhere.
 SENSITIVITY_REPORTING_THRESHOLD = 0.05    # [-]
 
+# A radiative link is linearised about the temperatures at its two ends, so a steady state solve has
+# to iterate: solve, re-linearise about the answer, solve again, until the temperatures stop moving.
+# A tenth of a millikelvin is far below anything that matters physically and is reached in a handful
+# of iterations for any network that converges at all.
+RADIATION_CONVERGENCE_TOLERANCE = 1.0e-4    # [K]
+
+# If Picard iteration has not settled by here the network is oscillating rather than converging,
+# which happens when a radiative link swings a node further each pass than the last.
+RADIATION_MAXIMUM_ITERATIONS = 200    # [-]
+
 # ------------------------------------------------------------------------------------------------ #
 # -- ThermalNetwork -- #
 # ------------------------------------------------------------------------------------------------ #
@@ -239,10 +249,16 @@ class ThermalNetwork:
 
         '''
 
-        Connect two nodes by radiation, linearised about their current temperatures.
+        Connect two nodes by radiation.
 
-        The linearisation is only valid near the temperatures it was taken at, so a
-        radiation-dominated network needs the resistance re-evaluated as the solution moves.
+        The link is stored with its emissivity and area rather than as a fixed resistance, because
+        the linearised conductance depends on the temperatures at both ends and those move. Both
+        solvers re-form it: the steady state solve iterates until the linearisation is consistent
+        with the answer it produced, and the transient re-forms it at every step.
+
+        Freezing it at the temperatures that happened to be set when the link was added makes the
+        answer depend on the initial guess, which is not a property a steady state solution is
+        allowed to have.
 
         '''
 
@@ -252,6 +268,38 @@ class ThermalNetwork:
 
         self.addResistance(nodeA, nodeB, resistance,
                            note = f'radiation, eps {emissivity:.2f}, linearised')
+
+        self.resistances[tuple(sorted((nodeA, nodeB)))]['radiation'] = {
+            'emissivity': float(emissivity), 'area': float(area)}
+
+    # -------------------------------------------------------------------------------------------- #
+
+    def _relinearise(self, temperatures: dict = None) -> None:
+
+        '''
+
+        Re-form every radiative link about the supplied temperatures.
+
+        `temperatures` maps node name to temperature; nodes absent from it keep their stored value,
+        which is how boundary nodes are handled without special casing them.
+
+        '''
+
+        if not any('radiation' in entry for entry in self.resistances.values()):
+            return
+
+        lookup = dict(temperatures) if temperatures else {}
+
+        for (nodeA, nodeB), entry in self.resistances.items():
+
+            if 'radiation' not in entry:
+                continue
+
+            hot  = lookup.get(nodeA, self.nodes[nodeA]['temperature'])
+            cold = lookup.get(nodeB, self.nodes[nodeB]['temperature'])
+
+            entry['resistance'] = radiationResistance(entry['radiation']['emissivity'],
+                                                      entry['radiation']['area'], hot, cold)
 
     # -------------------------------------------------------------------------------------------- #
 
@@ -307,6 +355,11 @@ class ThermalNetwork:
         This answers where the network ends up given infinite time, which on a launch vehicle is
         frequently not the question. Nothing reaches steady state during an ascent.
 
+        Radiative links are nonlinear, so the solve is a Picard iteration: linearise about the
+        current temperatures, solve, re-linearise about the answer, repeat. Without it the result
+        depends on whatever temperatures the nodes happened to be initialised with, which for a
+        radiation dominated network is an error of tens of kelvin and no warning.
+
         '''
 
         free, index, conductance, loads = self._assemble()
@@ -316,19 +369,57 @@ class ThermalNetwork:
                 'Every node is a boundary node, so there is nothing to solve for.',
                 context = createErrorContext(component = 'ThermalNetwork'))
 
-        try:
-            temperatures = np.linalg.solve(conductance, loads)
-        except np.linalg.LinAlgError as error:
-            raise ThermalNetworkError(
-                f'The conductance matrix is singular: {error}. A node is probably disconnected '
-                f'from every boundary, so its temperature is undetermined.',
-                context = createErrorContext(component = 'ThermalNetwork')) from error
+        radiative = any('radiation' in entry for entry in self.resistances.values())
 
-        result = dict(self.nodes)
+        temperatures = None
+        iterations   = 0
+        residual     = 0.0
+
+        for iterations in range(1, RADIATION_MAXIMUM_ITERATIONS + 1):
+
+            try:
+                updated = np.linalg.solve(conductance, loads)
+            except np.linalg.LinAlgError as error:
+                raise ThermalNetworkError(
+                    f'The conductance matrix is singular: {error}. A node is probably disconnected '
+                    f'from every boundary, so its temperature is undetermined.',
+                    context = createErrorContext(component = 'ThermalNetwork')) from error
+
+            if np.any(updated <= 0.0):
+                raise ThermalNetworkError(
+                    'The steady state solution contains a temperature at or below absolute zero, '
+                    'which means the network has a heat load or a boundary that is not physical.',
+                    context = createErrorContext(component = 'ThermalNetwork'))
+
+            residual     = 0.0 if temperatures is None else float(np.max(np.abs(updated
+                                                                                - temperatures)))
+            temperatures = updated
+
+            if not radiative:
+                break
+
+            self._relinearise({name: float(temperatures[index[name]]) for name in free})
+            free, index, conductance, loads = self._assemble()
+
+            if iterations > 1 and residual < RADIATION_CONVERGENCE_TOLERANCE:
+                break
+
+        else:
+            raise ThermalNetworkError(
+                f'The radiative linearisation did not converge in {RADIATION_MAXIMUM_ITERATIONS} '
+                f'iterations, with {residual:.3f} K still moving between passes. The network is '
+                f'oscillating rather than settling.',
+                context = createErrorContext(component = 'ThermalNetwork'))
+
         for name in free:
             self.nodes[name]['temperature'] = float(temperatures[index[name]])
 
         self.findings = []
+
+        if radiative:
+            self.findings.append(
+                f'The radiative links were re-linearised to convergence in {iterations} '
+                f'iterations, settling to within {residual:.2e} K.')
 
         hottest = max(self.nodes, key = lambda name: self.nodes[name]['temperature'])
         coldest = min(self.nodes, key = lambda name: self.nodes[name]['temperature'])
@@ -362,6 +453,12 @@ class ThermalNetwork:
         limited by the smallest node's time constant, and on a network mixing a thin skin with a
         heavy structure that limit is punitive.
 
+        Radiative links are re-linearised at every step about the temperatures at the end of the
+        previous one. That is a lagged linearisation rather than a fully implicit treatment of the
+        fourth power, which is the standard compromise: it costs one matrix assembly per step and it
+        removes the error that comes from holding a conductance fixed across a transient that moves
+        hundreds of kelvin. A soakback case is exactly that transient.
+
         '''
 
         free, index, conductance, baseLoads = self._assemble()
@@ -388,7 +485,13 @@ class ThermalNetwork:
 
         capacitanceMatrix = np.diag(capacitances / self.timeStep)
 
+        radiative = any('radiation' in entry for entry in self.resistances.values())
+
         for step in range(1, steps + 1):
+
+            if radiative and step > 1:
+                self._relinearise({name: float(temperatures[index[name]]) for name in free})
+                _, _, conductance, baseLoads = self._assemble()
 
             time = times[step]
             loads = baseLoads.copy()

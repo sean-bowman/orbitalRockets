@@ -1,0 +1,58 @@
+{
+  "caseName": "An ascent heat pulse followed through TPS sizing into the soakback that reaches the avionics, then the on-orbit case",
+  "linkedCase": "hydrazineMonoprop100N",
+  "linkedCaseNote": "The ascent trajectory point is the same one environmentsAndLoads uses for its aeroheating estimate. The avionics bay and its dissipation are the fluidSystems avionics that control the feed system. Stating them here keeps the coupling between the three directories visible in the configuration rather than buried in code.",
+
+  "inherited": {
+    "_comment": "From environmentsAndLoads/ThermalEnvironment.calculateAeroheating and its on-orbit cases.",
+    "ascentVelocity": 2400.0,
+    "ascentDensity": 1.6e-3,
+    "noseRadius": 0.35,
+    "pulseDuration": 140.0,
+    "orbitAltitude": 500000.0,
+    "eclipseFraction": 0.35
+  },
+
+  "protection": {
+    "_comment": "A nose cap on a small launch vehicle. Cork is the ascent workhorse; the example checks whether it is the right answer here.",
+    "material": "cork",
+    "backfaceLimit": 420.0,
+    "initialTemperature": 293.15,
+    "thicknessMargin": 1.25,
+    "protectedArea": 0.55
+  },
+
+  "structure": {
+    "_comment": "What sits behind the heat shield. The bulkhead is the thermal path from the TPS backface to the avionics, and it is the reason soakback matters here.",
+    "bulkheadMass": 22.0,
+    "bulkheadSpecificHeat": 900.0,
+    "bulkheadContactArea": 0.040,
+    "bulkheadJoint": "bolted, bare, vacuum",
+    "avionicsMass": 6.5,
+    "avionicsSpecificHeat": 800.0,
+    "avionicsContactArea": 0.012,
+    "avionicsJoint": "bolted, with grease",
+    "avionicsDissipation": 35.0,
+    "avionicsLimit": 323.15,
+    "radiatingArea": 0.9,
+    "radiatingEmissivity": 0.85,
+    "sinkTemperature": 250.0
+  },
+
+  "transient": {
+    "_comment": "The short run stops when the heating stops, which is the defensible sounding choice and the wrong one. The long run is chosen so every node has turned over.",
+    "timeStep": 2.0,
+    "shortRun": 150.0,
+    "longRun": 6000.0
+  },
+
+  "onOrbit": {
+    "_comment": "The same avionics once the ascent is over, rejecting its own dissipation to a low Earth orbit sink.",
+    "component": "electronics",
+    "radiatingTemperature": 305.0,
+    "surfaceFinish": "white paint",
+    "coldCaseLoss": 18.0,
+    "missionDuration": 3.15e7,
+    "deadband": 5.0
+  }
+}

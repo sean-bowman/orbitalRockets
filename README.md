@@ -37,7 +37,7 @@ Two things that are meant to be used together, in every domain.
 | [propulsion](propulsion/) | Scaffolded | Liquid bipropellant engines: combustion devices, turbomachinery, engine cycles, nozzle performance, ignition and transients, hot fire test |
 | [aerospaceStructures](aerospaceStructures/) | **Complete** | Shell buckling, sandwich panels, bolted and bonded joints, modal analysis, load paths, tanks |
 | [aerospaceMaterials](aerospaceMaterials/) | **Complete** | Alloy selection, allowables, fracture, corrosion, plus ten process sub-domains covering additive, casting, wrought, forming, machining, joining and post-processing |
-| [thermalManagement](thermalManagement/) | Scaffolded | Thermal protection systems, thermal control, radiators, heat pipes, aeroheating |
+| [thermalManagement](thermalManagement/) | **Complete** | Thermal protection systems, thermal control, radiators, heat pipes, aeroheating |
 | [environmentsAndLoads](environmentsAndLoads/) | **Complete** | Random vibration, acoustics, shock, aerodynamic loads, load cases, coupled loads analysis |
 | [vehicleArchitecture](vehicleArchitecture/) | Scaffolded | Staging, sizing, mass fractions, propellant selection, trade studies, mass properties |
 | [mechanismsAndSeparation](mechanismsAndSeparation/) | Scaffolded | Pyrotechnics, separation systems, springs, latches, actuators, deployment |

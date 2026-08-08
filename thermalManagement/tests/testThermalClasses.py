@@ -12,11 +12,12 @@ Tier 2 validates against closed forms and physical law: the Stefan-Boltzmann bal
 resistances must combine in series, the fourth power law must show its fourth power, and the
 lumped capacitance limit must sit where the textbook puts it.
 
-Tier 3 covers self-consistency and the physical direction of every effect, including three
+Tier 3 covers self-consistency and the physical direction of every effect, including four
 regression guards on bugs found during the build: a transient peak at the final time step is a
 truncation artefact rather than a peak, an ablative surface temperature is an output of the energy
-balance rather than an input, and the heat pipe boiling limit is driven by the nucleation radius
-rather than the pore radius.
+balance rather than an input, the heat pipe boiling limit is driven by the nucleation radius rather
+than the pore radius, and a radiative link has to be re-linearised as the solution moves rather
+than frozen at whatever the nodes were initialised to.
 
 Author: Sean Bowman
 Date:   08/08/2026
@@ -562,6 +563,73 @@ def testWiderDeadbandLengthensTheThermostatPeriod():
 
     assert wide['period'] > tight['period']
     assert wide['cycles'] < tight['cycles']
+
+def buildRadiatingBox(initialTemperature: float) -> ThermalNetwork:
+
+    '''
+    A single node with a fixed heat load radiating to a boundary. The steady state has a closed
+    form, so the solver can be checked against it rather than against itself.
+    '''
+
+    network = ThermalNetwork()
+    network.setInputs({'timeStep': 1.0, 'endTime': 100.0})
+    network.addNodeFromMass('box', mass = 5.0, specificHeat = 900.0,
+                            temperature = initialTemperature, heatLoad = 20.0)
+    network.addNode('space', temperature = 250.0, boundary = True)
+    network.addRadiation('box', 'space', emissivity = 0.85, area = 0.2)
+
+    return network
+
+def testSteadyStateMatchesTheClosedFormRadiationBalance():
+
+    '''
+    Regression guard. The radiative conductance is a linearisation about the temperatures at both
+    ends, and it used to be frozen at whatever the nodes were initialised to. That made the answer
+    depend on the initial guess and left it 14 K from the closed form. The solve now iterates.
+    '''
+
+    exact = (20.0 / (0.85 * STEFAN_BOLTZMANN * 0.2) + 250.0 ** 4) ** 0.25
+
+    solved = buildRadiatingBox(293.15).solveSteadyState()['temperatures']['box']
+
+    assert solved == pytest.approx(exact, abs = 1.0e-3)
+
+def testSteadyStateDoesNotDependOnTheInitialGuess():
+
+    '''
+    The defining property of a steady state: it is a property of the network, not of where the
+    solver happened to start. A thousand kelvin initial guess must land in the same place as one
+    below the boundary temperature.
+    '''
+
+    answers = [buildRadiatingBox(guess).solveSteadyState()['temperatures']['box']
+               for guess in (255.0, 293.15, 400.0, 1000.0)]
+
+    assert max(answers) - min(answers) < 1.0e-3
+
+def testSteadyStateReportsItsConvergence():
+
+    findings = buildRadiatingBox(293.15).solveSteadyState()['findings']
+
+    assert any('re-linearised' in finding for finding in findings)
+
+def testTransientRelinearisesRatherThanFreezing():
+
+    '''
+    A frozen linearisation formed at the cold initial temperature understates the radiative
+    conductance as the node heats, so it overshoots. Marching to a long time must land on the
+    steady state, which is the only value both solvers can agree on if the transient re-forms the
+    link.
+    '''
+
+    equilibrium = buildRadiatingBox(293.15).solveSteadyState()['temperatures']['box']
+
+    network = buildRadiatingBox(293.15)
+    network.setInputs({'timeStep': 5.0, 'endTime': 60000.0})
+
+    final = network.solveTransient()['peaks']['box']['finalTemperature']
+
+    assert final == pytest.approx(equilibrium, abs = 0.05)
 
 def testReportsRunForAllFiveClasses():
 
