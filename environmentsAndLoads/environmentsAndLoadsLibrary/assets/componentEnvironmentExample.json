@@ -1,0 +1,57 @@
+{
+  "caseName": "Environment derivation for the 100 N hydrazine feed system, and what the generic specification assumed",
+  "linkedCase": "hydrazineMonoprop100N",
+  "linkedCaseNote": "fluidSystems/fluidSystemsTesting/codeInterface.py currently qualifies this hardware against the generic 'launch vehicle component' key. This example derives the environment instead and reports the difference, which is the point of the domain.",
+
+  "inherited": {
+    "flightDuration": 60.0,
+    "flightThermalCycles": 4,
+    "missionTemperatureRange": [253.15, 333.15],
+    "genericVibrationKey": "launch vehicle component",
+    "genericVibrationSpectrum": [[20.0, 0.01], [80.0, 0.08], [500.0, 0.08], [2000.0, 0.005]],
+    "genericShockKey": "separation",
+    "componentMass": 1.8
+  },
+
+  "flightData": {
+    "_comment": "Measured acceleration spectral density at the 200 to 400 Hz band, one value per flight, from accelerometers in the same zone. Six flights is a realistic sample for a young programme and it is at the edge of what a P95/50 basis can defend.",
+    "measurements": [0.042, 0.061, 0.038, 0.071, 0.049, 0.055],
+    "band": [200.0, 400.0],
+    "zone": "aft skirt",
+    "statisticalBasis": "P95/50"
+  },
+
+  "derivedShape": {
+    "_comment": "The spectral shape from the flight data, normalised so that its 200 to 400 Hz level equals the derived maximum predicted value. Shape comes from the measurements, level comes from the statistics.",
+    "breakpoints": [[20.0, 0.008], [120.0, 0.060], [700.0, 0.060], [2000.0, 0.009]]
+  },
+
+  "acoustic": {
+    "_comment": "The liftoff acoustic field in this zone, used as an independent cross-check on whether the vibration environment is acoustically driven.",
+    "referenceEnvironment": "engine compartment",
+    "respondingPanelSurfaceMass": 6.5
+  },
+
+  "shock": {
+    "_comment": "The component sits aft of the stage separation plane, behind structure and joints.",
+    "source": "frangible joint",
+    "distance": 0.85,
+    "jointPath": ["bolted", "bolted", "welded"]
+  },
+
+  "thermal": {
+    "_comment": "The feed system is internal, so it sees a benign radiative environment behind MLI rather than a bare surface.",
+    "surfaceFinish": "aluminised kapton",
+    "altitude": 500000.0,
+    "radiatingArea": 0.35,
+    "internalDissipation": 4.0,
+    "missionYears": 1.0
+  },
+
+  "margins": {
+    "qualificationMarginRandom": 3.0,
+    "acceptanceDuration": 60.0,
+    "durationFactor": 2.0,
+    "fatigueExponent": 4.0
+  }
+}
