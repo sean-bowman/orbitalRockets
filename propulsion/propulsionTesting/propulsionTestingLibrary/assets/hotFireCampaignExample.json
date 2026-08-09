@@ -1,0 +1,47 @@
+{
+  "caseName": "A development hot fire on the 100 kN booster, asked what it can and cannot establish",
+  "linkedCase": "boosterChamberExample",
+  "linkedCaseNote": "The chamber geometry and flow rates are the propulsion hub's design point as built out by combustionDevices. The measured channels below are those values treated as if they had been recorded on a stand, which is the honest way to run this example without inventing test data.",
+
+  "measured": {
+    "_comment": "Treated as the recorded channels. They are the hub's design point rather than real stand data, and the example says so: the point being made is about the uncertainty attached to a reduction, not about the reduction itself.",
+    "chamberPressure": 10.0e6,
+    "throatDiameter": 0.0906,
+    "massFlow": 36.81,
+    "thrust": 100000.0
+  },
+
+  "ideal": {
+    "_comment": "The equilibrium c* for LOX/RP-1 at this chamber pressure, from the propulsion hub's PROPELLANT_COMBINATIONS reference value. The comparison is only valid at the same pressure and mixture ratio as the test point.",
+    "characteristicVelocity": 1823.0,
+    "thrustCoefficient": 1.5836,
+    "thrustCoefficientNote": "The IDEAL Cf at the design area ratio of 20.35 at sea level, back-calculated from the hub's delivered 277.0 s and its two assumed efficiencies of 0.96 and 0.98. Comparing a measured Cf against a delivered one rather than an ideal one is how a thrust coefficient efficiency gets quoted as unity."
+  },
+
+  "test": {
+    "objective": "Establish the c* efficiency of the unlike impinging doublet injector at the design point",
+    "chamberDiameter": 0.1433,
+    "chamberDiameterNote": "From the contraction ratio of 2.5 on a 90.6 mm throat.",
+    "residenceTime": 0.00147,
+    "duration": 10.0,
+    "sampleRate": 5000.0,
+    "sampleRateNote": "A typical performance data system rate. The example asks whether it is adequate for the stability objective as well, and it is not."
+  },
+
+  "acceptance": {
+    "_comment": "Two candidate acceptance criteria, as half-width fractions. The first is a design validation band and the second is what a development programme would want in order to rank two injectors against each other.",
+    "validation": 0.04,
+    "ranking": 0.01
+  },
+
+  "stability": {
+    "_comment": "A pulse gun perturbation, as a fraction of chamber pressure. The reference programme recorded 37 to 58 per cent zero to peak and called that adequate.",
+    "pulseFraction": 0.45
+  },
+
+  "improvement": {
+    "_comment": "What the uncertainty would become if each channel in turn were improved, to show which one is worth the money. Values are relative uncertainties.",
+    "throatArea": 0.003,
+    "massFlow": 0.003
+  }
+}

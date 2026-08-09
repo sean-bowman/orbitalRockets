@@ -2,7 +2,7 @@
 
 **Liquid Bipropellant Rocket Propulsion**
 
-> **Status: hub complete, sub-domains scaffolded.** Three engine-level classes, six documents and 61 tests, with a worked example built around the one decision that has three defensible answers which disagree. The six sub-domains below are not written yet.
+> **Status: complete.** The hub and all six sub-domains: 20 classes, 50 documents and 404 tests, with a worked example at every level. The hub example is built around the one decision that has three defensible answers which disagree.
 
 ---
 
@@ -26,9 +26,11 @@ Reference documentation, a component class library and a tiered test suite, matc
 
 ## Where this stops
 
-**Nozzle contour generation lives in the NOVA suite**, which generates method-of-characteristics contours and cooling channel geometry and exports CAD-ready output. This domain covers nozzle performance, area ratio selection, thrust coefficient and the altitude compensation trades: the decisions, not the geometry generation. The [nozzles](nozzles/) sub-domain says so explicitly and points there.
+**Method-of-characteristics nozzle contour generation lives in the NOVA suite**, which produces the isentropic wall contour, the cooling channel geometry that follows it, and CAD-ready output. Reimplementing that here would create a second implementation with nothing enforcing agreement between them.
 
-That division is deliberate. Reimplementing a contour generator here would create a second implementation with nothing enforcing agreement between them.
+**The boundary is fidelity, not subject.** The [nozzles](nozzles/) sub-domain computes a Rao parabolic contour at conceptual fidelity, because the loss budget, the cooling area and the mass estimate all need a wall angle and a wetted area before anyone runs a characteristics solution. An earlier version of this section drew the line at geometry altogether, and that was too broad: it left the divergence loss depending on a lookup table of exit angles that was wrong by three and a half degrees and inverted a published finding.
+
+The general rule that came out of it: an argument against duplicating an external tool is not an argument against every calculation in that tool's subject.
 
 ---
 
@@ -61,12 +63,12 @@ All classes follow the repository interface: `setInputs()`, `calculate*()` or `s
 
 | Sub-domain | Covers | Status |
 |---|---|---|
-| [combustionDevices](combustionDevices/) | Injectors, chamber sizing, combustion stability, regenerative cooling | scaffolded |
-| [turbomachinery](turbomachinery/) | Pumps, turbines, inducers, cavitation, shaft dynamics | scaffolded |
-| [engineCycles](engineCycles/) | Gas generator, staged combustion, expander, pressure-fed, power balance | scaffolded |
-| [nozzles](nozzles/) | Performance, area ratio, thrust coefficient, altitude compensation | scaffolded |
+| [combustionDevices](combustionDevices/) | Injectors, chamber sizing, combustion stability, regenerative cooling | **complete** |
+| [turbomachinery](turbomachinery/) | Pumps, turbines, inducers, cavitation, shaft dynamics | **complete** |
+| [engineCycles](engineCycles/) | Gas generator, staged combustion, expander, pressure-fed, power balance | **complete** |
+| [nozzles](nozzles/) | Performance, area ratio, thrust coefficient, contour, altitude compensation | **complete** |
 | [ignitionAndStart](ignitionAndStart/) | Igniters, start and shutdown transients, chill-in, purge | **complete** |
-| [propulsionTesting](propulsionTesting/) | Hot fire campaigns, test stands, instrumentation, data reduction | scaffolded |
+| [propulsionTesting](propulsionTesting/) | Hot fire campaigns, test stands, instrumentation, data reduction | **complete** |
 
 ---
 

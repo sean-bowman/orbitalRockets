@@ -13,4 +13,5 @@ Date:   08/08/2026
 
 from propulsionTestUtils import *
 
-# Add component modules here as they are created
+from PerformanceReduction import PerformanceReduction
+from HotFireTest import HotFireTest

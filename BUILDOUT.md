@@ -5,7 +5,7 @@
 The master list of what is built and what is not, kept current as the repository is populated.
 
 **Last updated:** 09 August 2026, at commit `ee7fb9c`.
-**Repository totals:** 335 markdown documents, 933 passing tests, 6 domains complete of 16, plus the propulsion hub and five of its six sub-domains: combustionDevices, turbomachinery, engineCycles, nozzles and ignitionAndStart. Eight areas validated at hardware level and two at standard level.
+**Repository totals:** 342 markdown documents, 983 passing tests, 7 domains complete of 16. **propulsion is finished**, hub and all six sub-domains: 20 classes, 50 documents, 404 tests. Nine areas validated at hardware level and two at standard level.
 
 ---
 
@@ -16,6 +16,7 @@ The master list of what is built and what is not, kept current as the repository
 - [Build order](#build-order)
 - [Complete](#complete)
 - [In progress](#in-progress)
+- [propulsion, complete](#propulsion-complete)
 - [Scaffolded, not started](#scaffolded-not-started)
 - [Bare, not scaffolded](#bare-not-scaffolded)
 - [Repository wide verification](#repository-wide-verification)
@@ -83,7 +84,7 @@ Three `aerospaceMaterials` sub-domains are deliberately docs only: `wroughtMater
 
 Dependency driven. Propulsion first because it is the repository's stated identity and every domain it consumes is already complete. Reliability last because FMECA needs hardware to analyse.
 
-1. `propulsion` and its six sub-domains
+1. ~~`propulsion` and its six sub-domains~~ **done**
 2. `vehicleArchitecture`
 3. `mechanismsAndSeparation`
 4. `electricalPower`
@@ -134,6 +135,12 @@ physics one. Both are still listed as outstanding rather than closed.
 
 ## In progress
 
+Nothing. The next domain in the build order is [vehicleArchitecture](vehicleArchitecture/).
+
+---
+
+## propulsion, complete
+
 | Domain | Depth | Stage 1 | Stage 2 | Stage 3 | Stage 4 |
 |---|---|---|---|---|---|
 | [propulsion](propulsion/) hub | Full | **done** | **done** | **done** | **done**, and **validated** against RS-25 |
@@ -147,7 +154,7 @@ physics one. Both are still listed as outstanding rather than closed.
 | [engineCycles](propulsion/engineCycles/) | Full | **done** | **done** | **done** | **done**, **hardware validated** |
 | [nozzles](propulsion/nozzles/) | Full | **done** | **done** | **done** | **done**, bounded |
 | [ignitionAndStart](propulsion/ignitionAndStart/) | Full | **done** | **done** | **done** | **done**, one hardware source and four gaps |
-| [propulsionTesting](propulsion/propulsionTesting/) | Light | not started | not started | not started | not started |
+| [propulsionTesting](propulsion/propulsionTesting/) | Light | **done** | **done** | **done** | **done**, one hardware source and three gaps |
 
 **Nozzle contour generation for manufacture stays out of this repository, and the boundary is fidelity rather than subject.** The NOVA suite generates method of characteristics contours and cooling channel geometry, and reimplementing that here would create a second implementation with nothing enforcing agreement between them.
 

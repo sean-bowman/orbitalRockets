@@ -275,6 +275,51 @@ UNVALIDATED = {
         'nextStep': 'Integrate NIST cryogenic specific heat curves over the range per material. '
                     'This is tractable and simply has not been done.'},
 
+    'instrumentUncertainty': {
+        'domain': 'propulsion/propulsionTesting',
+        'calculation': 'INSTRUMENT_UNCERTAINTY, the per-channel relative uncertainties',
+        'reason': 'Representative of good practice on a development stand rather than taken from '
+                  'any calibration certificate. A real budget comes from the certificates and '
+                  'from an in-situ calibration, neither of which is a published quantity.',
+        'consequence': 'Every uncertainty this sub-domain reports scales with them. The two '
+                       'conclusions drawn do not: that specific impulse must not be computed as '
+                       'c* times Cf with independent uncertainties is exact algebra, and that a '
+                       'one per cent effect is unresolvable while a four per cent effect is '
+                       'marginal holds for any plausible set of channel figures.',
+        'nextStep': 'Calibration certificates from a real stand, and an in-situ thrust '
+                    'calibration at flight line pressure to quantify the load path bias, which is '
+                    'the term most often missing.'},
+
+    'stabilityDampCriterion': {
+        'domain': 'propulsion/propulsionTesting',
+        'calculation': 'Not performed. The pass or fail verdict of a dynamic stability rating',
+        'reason': 'The CPIA combustion stability guidelines specify how quickly a perturbation '
+                  'must decay for an engine to be rated stable. They were first published in 1971, '
+                  'the current revision was as of 2021 nearly 25 years old and being updated, and '
+                  'they are not openly available. The criterion has not been read.',
+        'consequence': 'HotFireTest.checkStabilityRating() reports the perturbation adequacy and '
+                       'the device viability, both of which are sourced, and deliberately does '
+                       'NOT report a pass or a fail. Stating a damp time from memory would put an '
+                       'unsourced number into the one part of this repository whose purpose is to '
+                       'prevent exactly that.',
+        'nextStep': 'Obtain the current CPIA guideline and carry its criterion with its citation. '
+                    'Until then the tool checks what it can and says what it cannot.'},
+
+    'testSettlingTimes': {
+        'domain': 'propulsion/propulsionTesting',
+        'calculation': 'CHAMBER_SETTLING_RESIDENCE_TIMES and WALL_SETTLING_TIME',
+        'reason': 'Representative time constants rather than measured ones. The wall constant in '
+                  'particular depends on the wall thickness, the material and the cooling '
+                  'circuit, none of which this class takes as an input.',
+        'consequence': 'The usable thermal window in a burn scales with the second of them. The '
+                       'conclusion drawn is that the two settling times differ by three orders of '
+                       'magnitude and that a short burn gives a valid performance number and an '
+                       'invalid wall temperature, and that ordering is robust to any plausible '
+                       'value.',
+        'nextStep': 'Compute the wall constant from the thermalManagement lumped capacitance '
+                    'model for the actual chamber, which is tractable and would replace a '
+                    'constant with a calculation.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -587,4 +632,48 @@ IGNITION_DELAYS = {
                 'flow, and that use is insensitive to which end of the range is taken because the '
                 'competing case, a spark igniter at tens of milliseconds, is an order of magnitude '
                 'away.'},
+}
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Stability rating devices -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# What a stability rating perturbation has to be, and which device can deliver it.
+#
+# This is the sourced half of stability rating. The unsourced half, the damp criterion that decides
+# a pass, is registered in UNVALIDATED as stabilityDampCriterion.
+STABILITY_RATING = {
+
+    'MSFC pulse gun development': {
+        'source': 'Osborne, Hulka, McCay, Casiano and Dumbacher, Development and Testing of Pulse '
+                  'Guns for Combustion Instability Testing, AIAA Propulsion and Energy Forum and '
+                  'Exposition 2021, NASA Marshall Space Flight Center. '
+                  'https://ntrs.nasa.gov/api/citations/20210017842, accessed 09 August 2026',
+        'kind': 'measured',
+        'level': 'hardware',
+
+        'testCount': 44,
+        'testChamberPressure': 2300.0,          # [psig], gaseous nitrogen
+        'overpressureLower': 0.37,              # [-] zero to peak, as a fraction of mean pressure
+        'overpressureUpper': 0.58,              # [-]
+        'bestBreechDiameter': 0.0102,           # [m], 0.40 inch
+        'bestCharge': 15.5,                     # [grains] of gunpowder
+        'burstDiskRating': 24000.0,             # [psid]
+
+        'pulseGunDiameterLimit': 0.3048,        # [m], about 12 inches
+        'instabilityFluxMultiplierInjector': (5.0, 10.0),
+        'instabilityFluxMultiplierThroat': 2.0,
+
+        'note': 'The overpressure band is stated by the source as adequate for typical combustion '
+                'stability rating, so the lower end is used as a floor rather than as a '
+                'specification. The diameter limit is stated as probable rather than exact: above '
+                'roughly 12 inches a pulse gun may be unable to produce an adequate response and a '
+                'bomb becomes necessary, which is a procurement and handling consequence more than '
+                'a technical one.',
+
+        'crossDomain': 'The flux multipliers are the reason a stability rating is a hardware '
+                       'survival requirement rather than a performance measurement. '
+                       'combustionDevices computes a cooling circuit that does not close with '
+                       'comfortable margin at nominal flux; at five to ten times nominal near the '
+                       'injector face there is no circuit at all.'},
 }
