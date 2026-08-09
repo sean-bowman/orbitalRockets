@@ -371,3 +371,56 @@ THROAT_HEAT_FLUX = {
                 'distribution, and the two endpoints are different propellants at different scales '
                 'and pressures. Use it to bound, not to validate.'},
 }
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Turbopumps -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The RS-25 turbopumps are the best documented in the open literature, and unusually for this
+# repository the published data includes shaft speed AND shaft power, which between them close the
+# loop on a pump model.
+TURBOPUMPS = {
+
+    'RS-25 HPFTP': {
+        'source': 'https://en.wikipedia.org/wiki/RS-25 and the NASA SSME orientation training '
+                  'material it cites, accessed 09 August 2026',
+        'kind': 'specification',
+        'level': 'hardware',
+        'propellant': 'LH2',
+        'density': 71.0,               # [kg/m^3]
+        'shaftSpeed': 35360.0,         # [rpm]
+        'shaftPower': 51.45e6,         # [W], 69 000 hp
+        'dischargePressure': 41.0e6,   # [Pa], approximately 6000 psia
+        'stages': 3,
+        'note': 'The stage count is the critical field. A pump model given the overall specific '
+                'speed of a multi-stage pump underpredicts its efficiency badly, because each '
+                'stage runs at a much higher specific speed than the machine as a whole. Given '
+                'one stage this library overpredicts the shaft power by 50 per cent; given the '
+                'published three it overpredicts by 9 per cent.'},
+
+    'RS-25 HPOTP': {
+        'source': 'as HPFTP, accessed 09 August 2026',
+        'kind': 'specification',
+        'level': 'hardware',
+        'propellant': 'LOX',
+        'shaftSpeed': 36000.0,         # [rpm]
+        'shaftPower': 18.64e6,         # [W], 25 000 hp
+        'note': 'Carried for the shaft speed rather than for a power comparison, because the '
+                'HPOTP drives a preburner boost stage on the same shaft and its published power '
+                'is not a single pump duty.'},
+
+    'RS-25 LPFTP': {
+        'source': 'as HPFTP, accessed 09 August 2026',
+        'kind': 'specification',
+        'level': 'hardware',
+        'propellant': 'LH2',
+        'shaftSpeed': 5150.0,          # [rpm]
+        'inletPressure': 0.2e6,        # [Pa]
+        'dischargePressure': 1.9e6,    # [Pa]
+        'geometry': 'axial',
+        'note': 'Retained as the case that shows where the classical specific speed to geometry '
+                'mapping does NOT apply. At a dimensionless specific speed of 0.285 the classical '
+                'chart says radial, and the real machine is axial. A rocket boost pump is axial '
+                'for cavitation reasons rather than for specific speed reasons, and reading the '
+                'industrial chart across gets it wrong.'},
+}

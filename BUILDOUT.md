@@ -4,8 +4,8 @@
 
 The master list of what is built and what is not, kept current as the repository is populated.
 
-**Last updated:** 09 August 2026, at commit `7ba70d7`.
-**Repository totals:** 308 markdown documents, 708 passing tests, 6 domains complete of 16, propulsion hub and combustionDevices done. Validation retrofit complete for four domains at hardware level and one at standard level.
+**Last updated:** 09 August 2026, at commit `65ad69d`.
+**Repository totals:** 315 markdown documents, 762 passing tests, 6 domains complete of 16, plus the propulsion hub, combustionDevices and turbomachinery. Six areas validated at hardware level and one at standard level.
 
 ---
 
@@ -143,7 +143,7 @@ physics one. Both are still listed as outstanding rather than closed.
 | Sub-domain | Depth | Stage 1 | Stage 2 | Stage 3 | Stage 4 |
 |---|---|---|---|---|---|
 | [combustionDevices](propulsion/combustionDevices/) | Full | **done** | **done** | **done** | **done**, bounded only |
-| [turbomachinery](propulsion/turbomachinery/) | Full | not started | not started | not started | not started |
+| [turbomachinery](propulsion/turbomachinery/) | Full | **done** | **done** | **done** | **done**, **hardware validated** |
 | [engineCycles](propulsion/engineCycles/) | Full | not started | not started | not started | not started |
 | [nozzles](propulsion/nozzles/) | Full | not started | not started | not started | not started |
 | [ignitionAndStart](propulsion/ignitionAndStart/) | Full | not started | not started | not started | not started |

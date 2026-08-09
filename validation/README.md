@@ -129,6 +129,7 @@ library covers, and a test asserts that it continues to disagree.
 | [fluidSystems](../fluidSystems/README.md) | **Hardware** | IAPWS-95 water density through the property backend | [refs](../fluidSystems/fluidSystemsLibrary/docs/ValidationReferences.md) |
 | [aerospaceStructures](../aerospaceStructures/README.md) | Standard | SP-8007 knockdown at five R/t, classical buckling closed form | [refs](../aerospaceStructures/docs/ValidationReferences.md) |
 | [propulsion/combustionDevices](../propulsion/combustionDevices/README.md) | Bounded | Peak throat flux inside a measured 18 to 54 MW/m^2 band. Integrated heat load unvalidated | [refs](../propulsion/combustionDevices/docs/ValidationReferences.md) |
+| [propulsion/turbomachinery](../propulsion/turbomachinery/README.md) | **Hardware** | RS-25 HPFTP shaft power at the published stage count, 9 per cent | [refs](../propulsion/turbomachinery/docs/ValidationReferences.md) |
 | [aerospaceMaterials](../aerospaceMaterials/README.md) | Internal | Seed agreement against `common/materials.py`, itself MMPDS-derived | outstanding |
 | [fluidSystems/fluidSystemsTesting](../fluidSystems/fluidSystemsTesting/README.md) | Internal | Process domain. Margin relationships only | outstanding |
 
