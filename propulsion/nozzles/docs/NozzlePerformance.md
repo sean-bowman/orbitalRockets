@@ -31,7 +31,7 @@ This document takes it apart.
 
 **The thrust coefficient itself.** The hub owns `Cf`, its altitude behaviour and the area ratio trade, and its implementation is validated against RS-25. A second implementation here would be a second thing to keep in agreement.
 
-**Contour generation.** The NOVA suite generates method of characteristics contours and cooling channel geometry. This sub-domain supplies the requirements and consumes the geometry. See [NozzleContourInterface](NozzleContourInterface.md).
+**Contour generation for manufacture.** The NOVA suite generates method of characteristics contours and cooling channel geometry. This sub-domain supplies the requirements and consumes the geometry. The conceptual wall angles and wetted area that the loss budget below is built on are computed here, by Rao's approximation, in [NozzleContour](NozzleContour.md). See [NozzleContourInterface](NozzleContourInterface.md) for where the fidelity boundary sits.
 
 Two of the four classes originally planned for this sub-domain were not built for the first reason. That decision is recorded in the sub-domain README rather than left as an absence.
 
@@ -61,33 +61,35 @@ For the reference booster nozzle, an eighty per cent bell at an area ratio of 20
 
 | Mechanism | Efficiency | Loss |
 |---|---|---|
-| Divergence | 0.9951 | 0.49 % |
+| Divergence | 0.9899 | **1.01 %** |
 | Boundary layer | 0.9920 | 0.80 % |
 | Kinetic | 0.9950 | 0.50 % |
-| **Overall** | **0.9822** | **1.78 %** |
+| **Overall** | **0.9771** | **2.29 %** |
 
-**That reproduces the hub's single 0.98**, which is the check that the decomposition is describing the same quantity.
+**That sits 0.3 points below the hub's single 0.98**, which is close enough to be describing the same quantity and far enough to be worth noting. The hub's figure is an assumed default; this is computed.
+
+The exit angle is computed by [NozzleContour](NozzleContour.md) from Rao's approximation rather than looked up. An earlier version of this document carried a table giving an 80 per cent bell an exit angle of 8 degrees regardless of area ratio, reported an overall efficiency of 0.9822, and drew the opposite conclusion from the one below. Rao gives 11.5 degrees at this area ratio, and the correction doubled the divergence loss.
 
 ---
 
 ## Where the loss actually is
 
-**The largest single loss is the boundary layer, not divergence.**
+**Divergence is the largest loss on every contour except a hundred per cent bell.**
 
-That is worth stating plainly because divergence is the term everyone reaches for, it is the one in every textbook, and it is the only one a contour shape changes. On a well shaped bell it has already been reduced to the smallest of the three.
+An earlier version of this document said the opposite, on the strength of a tabulated exit angle that was too optimistic by three and a half degrees. Computing the angle inverted the conclusion, which is recorded here rather than quietly corrected.
 
-The contour comparison makes the point:
+| Contour | Exit angle | Length | Divergence | Boundary layer | Overall | Largest loss |
+|---|---|---|---|---|---|---|
+| Conical 15 degree | 15.0 | 1.00 | 0.9830 | 0.9900 | 0.9682 | Divergence |
+| Bell 60 per cent | **15.4** | 0.60 | 0.9821 | 0.9940 | 0.9713 | Divergence |
+| Bell 80 per cent | 11.5 | 0.80 | 0.9899 | 0.9920 | **0.9771** | Divergence |
+| Bell 100 per cent | 9.2 | 1.00 | 0.9935 | 0.9900 | 0.9787 | Boundary layer |
 
-| Contour | Exit angle | Length | Divergence | Boundary layer | Overall |
-|---|---|---|---|---|---|
-| Conical 15 degree | 15 | 1.00 | 0.9830 | 0.9900 | 0.9682 |
-| Bell 60 per cent | 14 | 0.60 | 0.9851 | 0.9940 | 0.9743 |
-| Bell 80 per cent | 8 | 0.80 | 0.9951 | 0.9920 | **0.9822** |
-| Bell 100 per cent | 5 | 1.00 | 0.9981 | 0.9900 | 0.9831 |
+**Look at the 60 per cent bell.** Its exit angle of 15.4 degrees is *steeper* than the 15 degree cone it competes with, because a short bell has to turn the flow hard at the throat and has no length left to turn it back. Its divergence loss is therefore worse than the cone's, and the only reason it wins overall is its shorter wall and lower friction.
 
-**A shorter bell has more divergence loss and less boundary layer loss.** The two move in opposite directions, so the sum has a broad minimum rather than a sharp optimum, and the eighty per cent bell sits near it rather than at it.
+**A short bell is not a cheap way to buy divergence recovery. It is a way to buy wall area back.** The lookup table, which gave the 60 per cent bell 14 degrees, hid that entirely.
 
-The whole set spans **0.0149**, which is smaller than the difference between a good and a poor injector.
+The two mechanisms still move in opposite directions with length, so the sum still has a broad minimum. The whole set spans **0.0105**, which remains smaller than the difference between a good and a poor injector.
 
 ---
 
@@ -99,8 +101,8 @@ From the [worked example](../codeInterface.py), all in seconds of burn-averaged 
 |---|---|---|
 | Altitude compensation, ideal | **14.51 s** | Unreachable |
 | Altitude compensation, aerospike | **10.16 s** | Never flown operationally |
-| Bell instead of a cone | 4.29 s | Done on every flying engine |
-| A fuller bell | 0.29 s | Costs the length back |
+| Bell instead of a cone | 2.72 s | Done on every flying engine |
+| A fuller bell | 0.49 s | Costs the length back |
 | Schmucker instead of Summerfield | 0.45 s | A 36 per cent change in area ratio |
 
 **The ordering is nearly the reverse of the attention each receives.**
@@ -113,8 +115,8 @@ The one large lever is altitude compensation, it has been understood since the 1
 
 - **Decompose before optimising.** A single efficiency does not say what to work on.
 - **Use a bell rather than a cone.** Four seconds, and the decision is not controversial.
-- **Do not chase the last of the divergence loss.** An eighty to a hundred per cent bell is a third of a second for a quarter of the length.
-- **Check where the largest loss is** rather than assuming it is divergence.
+- **Compute the exit angle, do not look it up.** It depends on area ratio and a table will be wrong.
+- **Check where the largest loss is** rather than assuming. On these contours it is usually divergence, and this document said the opposite until the angle was computed.
 - **Take the area ratio and the thrust coefficient from the hub**, which owns them.
 - **Rank the levers before arguing about any of them.**
 
@@ -124,7 +126,7 @@ The one large lever is altitude compensation, it has been understood since the 1
 
 **A single efficiency used to guide improvement.** It does not decompose and the effort lands arbitrarily.
 
-**Divergence assumed to be the dominant loss.** On a well shaped bell it is the smallest of the three.
+**A tabulated exit angle used instead of a computed one.** This sub-domain did exactly that and drew the wrong conclusion from it. An 80 per cent bell does not have a fixed exit angle; it depends on area ratio.
 
 **Contour length increased to recover divergence.** It pays the recovery back in boundary layer, and the sum barely moves.
 
@@ -140,15 +142,16 @@ The reference booster nozzle, eighty per cent bell, area ratio 20.35, chamber pr
 
 | Quantity | Value |
 |---|---|
-| Divergence efficiency | 0.9951 |
+| Exit angle, computed by Rao | 11.5 degrees |
+| Divergence efficiency | 0.9899 |
 | Boundary layer efficiency | 0.9920 |
 | Kinetic efficiency | 0.9950 |
-| Overall | 0.9822 |
-| Hub's single figure | 0.98 |
-| Largest single loss | Boundary layer, 0.80 % |
-| Spread across all contours | 0.0149 |
-| Cone to eighty per cent bell | 4.29 s |
-| Eighty to a hundred per cent bell | 0.29 s |
+| Overall | 0.9771 |
+| Hub's single figure | 0.98, an assumed default |
+| Largest single loss | Divergence, 1.01 % |
+| Spread across all contours | 0.0105 |
+| Cone to eighty per cent bell | 2.72 s |
+| Eighty to a hundred per cent bell | 0.49 s |
 
 ---
 

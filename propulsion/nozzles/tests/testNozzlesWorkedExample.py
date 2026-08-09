@@ -130,9 +130,9 @@ def testABellOverAConeIsWorthSeveralSecondsAndAFullerBellIsNot(case):
 
     contour = codeInterface.reportContourLever(case)
 
-    assert contour['coneToBell'] > 3.0
+    assert contour['coneToBell'] > 2.0
     assert contour['bellToFull'] < 1.0
-    assert contour['coneToBell'] > 10.0 * contour['bellToFull']
+    assert contour['coneToBell'] > 4.0 * contour['bellToFull']
 
 def testMostOfTheCompensationGapIsAtAltitude(case):
 

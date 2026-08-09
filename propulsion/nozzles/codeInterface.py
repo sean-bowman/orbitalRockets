@@ -11,8 +11,8 @@ reverse of the attention each usually receives.
 
     altitude compensation   14.5 s available, and no flying device captures more than about
                             two thirds of it
-    bell against cone        4.3 s, and the decision was made on every flying engine decades ago
-    which bell               0.3 s between an eighty and a hundred per cent
+    bell against cone        2.7 s, and the decision was made on every flying engine decades ago
+    which bell               0.5 s between an eighty and a hundred per cent
     separation criterion     0.45 s, despite changing the permitted area ratio by 36 per cent
 
 The last one is the surprise and it is the reason this example exists. Choosing Schmucker over
@@ -51,6 +51,7 @@ from nozzleUtils import (NOZZLE_CONTOURS, SUMMERFIELD_SEPARATION_RATIO,
                          schmuckerSeparationPressure, areaRatioFromPressureRatio,
                          convertAltitudeToPressure)
 from NozzleLosses import NozzleLosses
+from NozzleContour import NozzleContour
 from AltitudeCompensation import AltitudeCompensation
 
 from EnginePerformance import EnginePerformance
@@ -136,10 +137,13 @@ def reportLossBudget(case: dict) -> dict:
 
     print()
     print(f'  The hub carries 0.98 as a single number. This is what it decomposes into, and the')
-    print(f'  largest single loss is {decomposition["largestLoss"]}, not divergence.')
+    print(f'  largest single loss is {decomposition["largestLoss"]}.')
     print()
-    print('  That matters because divergence is the only one a contour designer controls directly.')
-    print('  On a well shaped bell, the contour has stopped being where the loss is.')
+    print('  This example said the opposite until the exit angle was computed rather than looked')
+    print('  up. A table gave an eighty per cent bell 8 degrees regardless of area ratio; Rao gives')
+    print(f'  {decomposition["exitAngle"]:.1f} at this one, which doubles the divergence loss and inverts the ranking.')
+    print('  Divergence is also the only one of the three a contour designer controls directly, so')
+    print('  the correction moves the largest loss back into the designer\'s hands.')
 
     return decomposition
 
@@ -156,21 +160,25 @@ def reportContourLever(case: dict) -> dict:
 
     results = {}
 
-    print(f'    {"contour":22s} {"eta_Cf":>8s} {"Isp [s]":>9s} {"vs 80% bell":>13s}')
+    print(f'    {"contour":22s} {"exit [deg]":>11s} {"eta_Cf":>8s} {"Isp [s]":>9s} '
+          f'{"vs 80% bell":>13s}')
 
     baseline = buildLosses(case, 'bell 80 per cent').decomposeEfficiency()['overall']
 
     for contour in case['contours']:
 
-        efficiency = buildLosses(case, contour).decomposeEfficiency()['overall']
+        decomposition = buildLosses(case, contour).decomposeEfficiency()
+
+        efficiency = decomposition['overall']
 
         impulse = reference * efficiency / baseline
 
         results[contour] = {'efficiency': efficiency, 'impulse': impulse,
+                            'exitAngle': decomposition['exitAngle'],
                             'delta': impulse - reference}
 
-        print(f'    {contour:22s} {efficiency:8.4f} {impulse:9.2f} '
-              f'{impulse - reference:+13.2f}')
+        print(f'    {contour:22s} {decomposition["exitAngle"]:11.1f} {efficiency:8.4f} '
+              f'{impulse:9.2f} {impulse - reference:+13.2f}')
 
     cone = results['conical 15 degree']['impulse']
     bell = results['bell 80 per cent']['impulse']
@@ -181,11 +189,61 @@ def reportContourLever(case: dict) -> dict:
     print(f'  Eighty per cent to a hundred is worth {full - bell:.2f} s.')
     print()
     print('  The first decision is worth having and it was made on every flying engine decades')
-    print('  ago. The second is a third of a second and it costs a quarter of the nozzle length')
-    print('  back, which is why nobody flies a hundred per cent bell.')
+    print('  ago. The second is half a second and it costs a quarter of the nozzle length back,')
+    print('  which is why nobody flies a hundred per cent bell.')
+    print()
+    print('  Read the exit angle column before believing the usual story about short bells. The')
+    print(f'  sixty per cent bell leaves at {results["bell 60 per cent"]["exitAngle"]:.1f} degrees, which is STEEPER than the fifteen degree')
+    print('  cone it competes with, because a short bell turns the flow hard at the throat and has')
+    print('  no length left to turn it back. Its divergence loss is worse than the cone\'s. It wins')
+    print('  overall only on wall area. A short bell buys friction back, not divergence.')
 
     return {'results': results, 'reference': reference,
             'coneToBell': bell - cone, 'bellToFull': full - bell}
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Stage 2b: the geometry the losses were computed from -- #
+# ------------------------------------------------------------------------------------------------ #
+
+def reportContourGeometry(case: dict) -> dict:
+
+    '''
+    The Rao contour itself, at conceptual fidelity, and the one number it changes downstream.
+    '''
+
+    banner('2b. THE GEOMETRY BEHIND THOSE NUMBERS')
+
+    engine = case['engine']
+
+    geometry = NozzleContour()
+    geometry.setInputs({'throatRadius':   engine['throatRadius'],
+                        'areaRatio':      engine['areaRatio'],
+                        'lengthFraction': 0.80})
+
+    angles = geometry.wallAngles()
+    area   = geometry.surfaceArea()
+
+    print(f'    {"quantity":26s} {"value":>10s}')
+    print(f'    {"throat radius [mm]":26s} {engine["throatRadius"] * 1000.0:10.1f}')
+    print(f'    {"exit radius [mm]":26s} {geometry.exitRadius() * 1000.0:10.1f}')
+    print(f'    {"cone length [mm]":26s} {geometry.conicalLength() * 1000.0:10.1f}')
+    print(f'    {"bell length [mm]":26s} {geometry.length() * 1000.0:10.1f}')
+    print(f'    {"initial wall angle [deg]":26s} {angles["initialAngle"]:10.1f}')
+    print(f'    {"exit wall angle [deg]":26s} {angles["exitAngle"]:10.1f}')
+    print(f'    {"wetted area [cm^2]":26s} {area["area"] * 1.0e4:10.0f}')
+    print(f'    {"frustum estimate [cm^2]":26s} {area["frustumArea"] * 1.0e4:10.0f}')
+
+    print()
+    print(f'  A bell bulges outward from the straight line between throat and exit, so it carries')
+    print(f'  {area["ratio"]:.3f} times the wetted area of the cone frustum that combustionDevices uses to size')
+    print('  the cooling circuit. That circuit already fails to close on this engine, so the')
+    print('  direction is safe and the magnitude is recorded rather than propagated.')
+    print()
+    print('  This is Rao\'s parabolic approximation, which is a fit to published design data. It is')
+    print('  a conceptual answer to "roughly what shape and how much area". The coordinates for')
+    print('  manufacture come from NOVA and this does not attempt to compete with them.')
+
+    return {'angles': angles, 'area': area, 'geometry': geometry}
 
 # ------------------------------------------------------------------------------------------------ #
 # -- Stage 3: the separation criterion -- #
@@ -330,10 +388,12 @@ def summarise(case: dict, contour: dict, separation: dict, compensation: dict) -
     print('  worth a few seconds at most, and the argument most likely to be had, over which')
     print('  separation correlation to believe, is worth less than half a second.')
     print()
-    print('  Contour generation itself belongs to the NOVA suite. This sub-domain supplies the')
-    print('  requirements and consumes the geometry, and it does not reimplement the method of')
-    print('  characteristics. Two implementations with nothing enforcing agreement between them')
-    print('  would be worse than one.')
+    print('  The contour here is Rao\'s parabolic approximation at conceptual fidelity, which is')
+    print('  what the loss budget, the cooling area and the mass estimate need. The method of')
+    print('  characteristics contour and the cooling channel geometry that follows it belong to')
+    print('  the NOVA suite, and this does not reimplement them. The two answer different')
+    print('  questions: this one is roughly what shape and how much area, that one is what are')
+    print('  the coordinates.')
     print()
     print('=' * 96)
 
@@ -346,6 +406,7 @@ def main() -> None:
     reportLossBudget(case)
 
     contour      = reportContourLever(case)
+    geometry     = reportContourGeometry(case)
     separation   = reportSeparationLever(case)
     compensation = reportCompensationLever(case)
 

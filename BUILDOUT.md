@@ -5,7 +5,7 @@
 The master list of what is built and what is not, kept current as the repository is populated.
 
 **Last updated:** 09 August 2026, at commit `65ad69d`.
-**Repository totals:** 328 markdown documents, 851 passing tests, 6 domains complete of 16, plus the propulsion hub, combustionDevices, turbomachinery, engineCycles and nozzles. Seven areas validated at hardware level and one at standard level.
+**Repository totals:** 329 markdown documents, 870 passing tests, 6 domains complete of 16, plus the propulsion hub, combustionDevices, turbomachinery, engineCycles and nozzles. Seven areas validated at hardware level and one at standard level.
 
 ---
 
@@ -149,7 +149,11 @@ physics one. Both are still listed as outstanding rather than closed.
 | [ignitionAndStart](propulsion/ignitionAndStart/) | Full | not started | not started | not started | not started |
 | [propulsionTesting](propulsion/propulsionTesting/) | Light | not started | not started | not started | not started |
 
-**Nozzle contour generation stays out of this repository.** The NOVA suite generates method of characteristics contours and cooling channel geometry. The `nozzles` sub-domain covers performance, area ratio selection and the altitude compensation trades: the decisions, not the geometry generation. Reimplementing a contour generator here would create a second implementation with nothing enforcing agreement between them.
+**Nozzle contour generation for manufacture stays out of this repository, and the boundary is fidelity rather than subject.** The NOVA suite generates method of characteristics contours and cooling channel geometry, and reimplementing that here would create a second implementation with nothing enforcing agreement between them.
+
+**That argument was stretched too far once and it cost a published finding.** It was read as "compute no geometry at all", which left the divergence loss depending on a lookup table of exit angles. The table gave an 80 per cent bell 8 degrees regardless of area ratio; Rao's approximation gives 11.5 at an area ratio of 20. Correcting it doubled the divergence loss and inverted the sub-domain's conclusion about where the largest loss is. `NozzleContour` now computes the angle in closed form at conceptual fidelity, which does not overlap a characteristics solution.
+
+**The general rule this produced, carried forward to every remaining domain:** an argument against duplicating an external tool is not an argument against every calculation in that tool's subject. Check what the neighbouring tool actually computes before declining to compute anything nearby, and never let a lookup table stand in for an equation that exists in closed form.
 
 ---
 

@@ -95,18 +95,26 @@ from propulsionUtils import (PROPELLANT_COMBINATIONS, SUMMERFIELD_SEPARATION_RAT
 #
 # The exit angle is what decides the divergence loss, and it is the whole reason a bell exists: a
 # cone leaves the wall at its half angle and a bell turns the flow back toward axial before the exit.
+# An exitAngle of None means "compute it from the contour", which NozzleContour does by Rao's
+# approximation. Only the cone carries a value, because a cone's exit angle IS its half angle by
+# definition and there is nothing to approximate.
+#
+# The bells previously carried tabulated angles: 8 degrees for an 80 per cent bell, independent of
+# area ratio. Rao gives 11.5 at an area ratio of 20 and 7.4 at 100, and the tabulated value
+# understated the divergence loss by a factor of two at the low end. Computing it removed a table
+# that was wrong rather than merely approximate.
 NOZZLE_CONTOURS = {
     'conical 15 degree': {
         'exitAngle': 15.0, 'lengthFraction': 1.00,
         'note': 'the classical reference. Simple to make and it throws away 1.7 per cent'},
     'bell 60 per cent': {
-        'exitAngle': 14.0, 'lengthFraction': 0.60,
+        'exitAngle': None, 'lengthFraction': 0.60,
         'note': 'very short. The divergence loss creeps back and the drag loss falls'},
     'bell 80 per cent': {
-        'exitAngle': 8.0, 'lengthFraction': 0.80,
+        'exitAngle': None, 'lengthFraction': 0.80,
         'note': 'the common design point. Most of the recovery for four fifths of the length'},
     'bell 100 per cent': {
-        'exitAngle': 5.0, 'lengthFraction': 1.00,
+        'exitAngle': None, 'lengthFraction': 1.00,
         'note': 'diminishing returns. The last of the divergence loss costs the whole length back'},
 }
 
@@ -156,7 +164,12 @@ def divergenceEfficiency(exitAngle: float) -> float:
         eta = (1 + cos alpha) / 2
 
     The transverse component of the exit momentum produces no axial thrust. A 15 degree cone
-    throws away 1.7 per cent; an 80 per cent bell leaving at 8 degrees throws away 0.5.
+    throws away 1.7 per cent; an 80 per cent bell at an area ratio of 20 leaves at 11.5 degrees
+    and throws away 1.0.
+
+    Take the exit angle from NozzleContour rather than from a table. It varies by a factor of two
+    across the area ratios a launch vehicle uses, and this sub-domain published a wrong finding by
+    not doing so.
 
     """
 

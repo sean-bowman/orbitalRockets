@@ -37,6 +37,20 @@ Kept separate from the reference lists at the foot of each document. Those are f
   - Worth only 0.45 s of burn-averaged impulse, because the area ratio optimum is broad
   - The library reports both rather than picking one, and a test asserts they disagree at 25 so nobody later reconciles them
 
+## Rao's wall angle chart
+
+- **Source:** Rao, *Exhaust nozzle contour for optimum thrust*, Jet Propulsion 1958; the wall angle chart reproduced as Huzel and Huang figure 4-16
+- **Validation level:** Standard, against a published chart, with a stated band
+- **Relevance:** The exit wall angle sets the divergence loss, which is the largest of the three losses on every contour this sub-domain compares except a hundred per cent bell. It used to come from a lookup table.
+- **Key findings:**
+  - At an area ratio of 20 for an 80 per cent bell the chart gives an initial angle of about 33 degrees and an exit angle of about 11
+  - The logarithmic fit gives 32.2 and 11.6, inside the registered band of one degree
+  - **The band is not negligible.** A degree of exit angle is worth about 0.1 per cent of divergence efficiency at these angles
+  - It is nonetheless a quarter of the error the lookup table it replaced was making, which was three and a half degrees
+  - Registered as `CORRELATION_ACCURACY['raoWallAngles']`, because a tool cannot be validated to a tighter band than the correlation underneath it
+
+**What the correction changed.** The table gave an 80 per cent bell 8 degrees regardless of area ratio. The divergence efficiency at 8 degrees is 0.9951 and at 11.5 it is 0.9899, so the table understated the divergence loss by a factor of two, and [NozzlePerformance](NozzlePerformance.md) concluded the boundary layer was the largest loss when it is not. **A published finding was withdrawn on the strength of this reference**, which is the clearest case in this repository of an external check earning its cost.
+
 ---
 
 ## RS-25, and what it cannot validate
@@ -65,5 +79,7 @@ Kept separate from the reference lists at the foot of each document. Those are f
 **The altitude compensation recovery fractions.** What fraction of the ideal benefit each arrangement captures: 55 per cent for an extendible nozzle, 45 for a dual bell, 70 for an aerospike. These encode an ordering and they are not predictions for a specific device.
 
 **The mass penalties** for the same arrangements, on the same basis.
+
+**The wetted area.** Published engines give channel counts and coolant paths rather than wetted areas, so neither the cone frustum estimate nor the integrated Rao contour has an external anchor. Only their ratio is being claimed, 1.097 on the reference booster, and it is registered as `bellWettedArea` with what depends on it: [combustionDevices](../../combustionDevices/docs/RegenerativeCooling.md) sizes its cooling circuit on the frustum and therefore understates the total wetted area by about 6.6 per cent.
 
 **The bound itself is computed rather than assumed**, and it is the part of the altitude compensation document that does not depend on any of the above. That 14.5 s is a property of the ascent profile and the chamber pressure, not of a model of any device.

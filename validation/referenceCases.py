@@ -132,6 +132,20 @@ CORRELATION_ACCURACY = {
                 'overestimates inner wall temperature, because it does not account for boundary '
                 'layer thickness variation along the wall. A cooling design that closes on a ten '
                 'per cent margin against Bartz has not closed.'},
+
+    'raoWallAngles': {
+        'source': 'Rao 1958, Exhaust nozzle contour for optimum thrust; the wall angle chart '
+                  'reproduced as Huzel and Huang figure 4-16',
+        'kind': 'estimate',
+        'band': 1.0,
+        'bandUnit': 'degrees',
+        'bias': 'none',
+        'note': 'The logarithmic fit reproduces the published chart to about a degree between area '
+                'ratios of 10 and 100. It is a fit to design data rather than a derivation, and '
+                'the length fraction correction outside 0.6 to 1.0 is an extrapolation. A degree '
+                'of exit angle is worth roughly 0.1 per cent of divergence efficiency at these '
+                'angles, so the band is not negligible; it is smaller than the error the lookup '
+                'table it replaced was making, which was three and a half degrees.'},
 }
 
 # ------------------------------------------------------------------------------------------------ #
@@ -184,6 +198,26 @@ UNVALIDATED = {
                        'times.',
         'nextStep': 'Hot fire data relating measured c* efficiency to film fraction on a single '
                     'chamber.'},
+
+    'bellWettedArea': {
+        'domain': 'propulsion/combustionDevices, using propulsion/nozzles',
+        'calculation': 'The nozzle wetted area that the cooling circuit is sized against',
+        'reason': 'combustionDevices treats the nozzle as a cone frustum from throat to exit. A '
+                  'Rao bell bulges outward from that straight line, so it has more wetted area, '
+                  'and NozzleContour integrates the real contour to get it. Neither number has '
+                  'been checked against a measured wetted area, because published engines give '
+                  'channel counts rather than areas.',
+        'consequence': 'On the reference booster the integrated area is 4308 cm^2 against a '
+                       'frustum estimate of 3928 cm^2, a ratio of 1.097. The nozzle is about two '
+                       'thirds of the wetted area, so the total is understated by about 6.6 per '
+                       'cent and the integrated heat load rises from 8.13 to roughly 8.66 MW. '
+                       'That circuit already fails to close, so the direction is safe and the '
+                       'correction has been recorded rather than propagated into the '
+                       'combustionDevices example.',
+        'nextStep': 'Either propagate the contour area into RegenerativeCooling, which couples the '
+                    'two sub-domains, or accept the frustum as a stated conservatism in the wrong '
+                    'direction. The second is the current position and it is a position, not an '
+                    'oversight.'},
 
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',

@@ -42,6 +42,7 @@ try:
                              areaRatioFromPressureRatio, PROPELLANT_COMBINATIONS,
                              applyInputs, formatReportTable, createErrorContext,
                              InvalidInputError, ContourError, SeparationError)
+    from NozzleContour import NozzleContour
 except ImportError:
     from .nozzleUtils import (NOZZLE_CONTOURS, TYPICAL_BOUNDARY_LAYER_LOSS, TYPICAL_KINETIC_LOSS,
                               SUMMERFIELD_SEPARATION_RATIO, divergenceEfficiency,
@@ -49,6 +50,7 @@ except ImportError:
                               areaRatioFromPressureRatio, PROPELLANT_COMBINATIONS,
                               applyInputs, formatReportTable, createErrorContext,
                               InvalidInputError, ContourError, SeparationError)
+    from .NozzleContour import NozzleContour
 
 # ------------------------------------------------------------------------------------------------ #
 # -- NozzleLosses -- #
@@ -125,7 +127,25 @@ class NozzleLosses:
 
         contour = NOZZLE_CONTOURS[self.contour]
 
-        divergence = divergenceEfficiency(contour['exitAngle'])
+        # The exit angle is computed from the contour rather than looked up. The lookup table this
+        # replaced gave an 80 per cent bell 8 degrees regardless of area ratio; Rao gives 11.5 at
+        # an area ratio of 20, and the difference doubles the divergence loss.
+        #
+        # A cone is exempt: its exit angle IS its half angle by definition, and there is nothing to
+        # approximate.
+        if contour['exitAngle'] is None:
+
+            geometry = NozzleContour()
+            geometry.setInputs({'throatRadius':   0.05,
+                                'areaRatio':      self.areaRatio,
+                                'lengthFraction': contour['lengthFraction']})
+
+            exitAngle = geometry.exitAngle()
+
+        else:
+            exitAngle = contour['exitAngle']
+
+        divergence = divergenceEfficiency(exitAngle)
 
         # boundary layer loss scales with wetted area, which scales with the contour length
         boundaryLayer = 1.0 - TYPICAL_BOUNDARY_LAYER_LOSS * contour['lengthFraction']
@@ -163,7 +183,7 @@ class NozzleLosses:
                 'overall':         overall,
                 'losses':          losses,
                 'largestLoss':     largest,
-                'exitAngle':       contour['exitAngle'],
+                'exitAngle':       exitAngle,
                 'lengthFraction':  contour['lengthFraction'],
                 'findings':        findings}
 

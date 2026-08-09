@@ -8,7 +8,9 @@
     "chamberPressure": 10.0e6,
     "areaRatio": 20.35,
     "characteristicVelocity": 1750.1,
-    "contour": "bell 80 per cent"
+    "contour": "bell 80 per cent",
+    "throatRadius": 0.0453,
+    "throatRadiusNote": "Half the 90.6 mm throat diameter the hub sized and combustionDevices built its chamber around. Geometry only; none of the loss numbers depend on it."
   },
 
   "ascent": {
