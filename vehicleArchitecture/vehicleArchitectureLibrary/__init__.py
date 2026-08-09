@@ -12,6 +12,9 @@ Date:   08/06/2026
 
 '''
 
-from utils import *
+from vehicleUtils import *
 
-# Add component modules here as they are created
+from StagedVehicle import StagedVehicle
+from MassBudget import MassBudget
+from AscentTrajectory import AscentTrajectory
+from SizingLoop import SizingLoop

@@ -320,6 +320,51 @@ UNVALIDATED = {
                     'model for the actual chamber, which is tractable and would replace a '
                     'constant with a calculation.'},
 
+    'ascentLossModel': {
+        'domain': 'vehicleArchitecture',
+        'calculation': 'The gravity, drag and steering loss correlations in AscentTrajectory',
+        'reason': 'Representative reference losses and power-law exponents rather than a '
+                  'trajectory integration. A real ascent loss comes from optimising a trajectory '
+                  'with a steering law, atmospheric data and a vehicle aerodynamic model, none of '
+                  'which this repository carries.',
+        'consequence': 'The absolute loss total, and therefore the delta-V target every vehicle '
+                       'here is sized to, moves with these numbers. The conclusion drawn does not: '
+                       'that the loss-minimising thrust to weight sits far above the practical '
+                       'band, so the loss budget sets a floor rather than a target, holds for any '
+                       'exponent pair where gravity loss falls faster than drag loss rises, which '
+                       'is the whole plausible range.',
+        'nextStep': 'A trajectory integration, or published loss breakdowns for several vehicles '
+                    'with their liftoff thrust to weight stated alongside.'},
+
+    'nonTankDryFraction': {
+        'domain': 'vehicleArchitecture',
+        'calculation': 'NON_TANK_DRY_FRACTION, everything in a stage that is not tank',
+        'reason': 'Engines, thrust structure, avionics, feed lines, separation hardware and skirts '
+                  'as a single fraction of propellant mass. That is how a conceptual estimate is '
+                  'made before any of it exists, and it is not a measurement.',
+        'consequence': 'It is doing as much work as the tank model in setting the structural '
+                       'coefficient, and unlike the tank model it is a constant rather than a '
+                       'calculation. The mass chain amplification is insensitive to it because it '
+                       'is a difference rather than a level, but the closed vehicle mass is not.',
+        'nextStep': 'Build it from the domains that own the parts: engine mass from propulsion, '
+                    'thrust structure from aerospaceStructures, feed lines from fluidSystems. '
+                    'Every one of those already exists in this repository, which makes this the '
+                    'most tractable gap in the register.'},
+
+    'massGrowthAllowance': {
+        'domain': 'vehicleArchitecture',
+        'calculation': 'MASS_GROWTH_ALLOWANCE and DEFAULT_MARGIN_POLICY',
+        'reason': 'The shape follows AIAA and ANSI mass properties practice, where an allowance is '
+                  'applied by design maturity because estimates at that maturity have historically '
+                  'grown by about that much. The specific percentages here were not taken from the '
+                  'standard, which was not read.',
+        'consequence': 'Every predicted mass and every margin verdict scales with them. The '
+                       'distinction the domain actually makes, that growth allowance and margin '
+                       'are different things and adding one while calling it the other leaves a '
+                       'programme with neither, is structural and does not depend on the values.',
+        'nextStep': 'Obtain AIAA S-120 or the ANSI/AIAA mass properties standard and carry its '
+                    'table with the citation, replacing the representative percentages.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -676,4 +721,67 @@ STABILITY_RATING = {
                        'combustionDevices computes a cooling circuit that does not close with '
                        'comfortable margin at nominal flux; at five to ten times nominal near the '
                        'injector face there is no circuit at all.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Launch vehicles -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# Published stage masses for real launch vehicles, which is the only external anchor the
+# vehicleArchitecture domain has.
+#
+# What these validate is the BOOKKEEPING rather than any model: each stage lifts everything above
+# it, and getting that wrong produces a plausible number rather than an obvious error. Put the
+# published masses and engine performance through the rocket equation and the answer has to land
+# near the delta-V a real mission needs, or the accounting is wrong.
+#
+# They do not validate a mass estimating relationship, because these are the answers rather than
+# the inputs. A domain that predicted these masses from a payload requirement would be validated by
+# them; this one takes them as given.
+LAUNCH_VEHICLES = {
+
+    'Falcon 9 Block 5': {
+        'source': 'https://en.wikipedia.org/wiki/Falcon_9_Block_5, accessed 09 August 2026, and '
+                  'the SpaceX specifications it cites',
+        'kind': 'specification',
+        'level': 'hardware',
+        'propellant': 'LOX/RP-1',
+
+        'stageOneDryMass':    22200.0,     # [kg]
+        'stageOneGrossMass':  433100.0,    # [kg]
+        'stageOneOxidiser':   287400.0,    # [kg]
+        'stageOneFuel':       123500.0,    # [kg]
+        'stageOneThrust':     7607.0e3,    # [N] sea level, nine engines
+        'stageOneEngineCount': 9,
+
+        'stageTwoDryMass':    4000.0,      # [kg]
+        'stageTwoGrossMass':  111500.0,    # [kg]
+        'stageTwoOxidiser':   75200.0,     # [kg]
+        'stageTwoFuel':       32300.0,     # [kg]
+        'stageTwoThrust':     934.0e3,     # [N] vacuum
+
+        'payloadToLeoExpended': 22800.0,   # [kg] 28.5 degree inclination
+        'payloadToLeoReusable': 18500.0,   # [kg]
+        'payloadToGtoExpended': 8300.0,    # [kg]
+        'payloadToGtoReusable': 5500.0,    # [kg]
+
+        'note': 'The mixture ratios implied by the tabulated propellant loads are 2.327 and 2.328 '
+                'on the two stages, which agree to three figures and are a useful check that the '
+                'four masses were read from a consistent source. The structural coefficients '
+                'against GROSS mass are 0.0513 and 0.0359. Note the denominator: some sources use '
+                'propellant mass and the two differ by enough to change a design.',
+
+        'engineNote': 'Specific impulse is NOT published in the same source and the values used in '
+                      'this repository, about 297 s effective for the first stage and 348 s for '
+                      'the second, are widely cited rather than sourced alongside the masses. They '
+                      'carry lower confidence than the masses do, and the delta-V check is '
+                      'therefore a check to a few per cent rather than to one.',
+
+        'reuseNote': 'The expended and reusable payloads come from the same source, so their '
+                     'RATIO is a sourced quantity even though neither is a measurement this '
+                     'repository can reproduce. Recovery costs 18.9 per cent of low Earth orbit '
+                     'payload and 33.7 per cent of geostationary transfer payload, and the '
+                     'difference between those two is the recovery propellant being a larger '
+                     'share of a smaller margin.'},
 }

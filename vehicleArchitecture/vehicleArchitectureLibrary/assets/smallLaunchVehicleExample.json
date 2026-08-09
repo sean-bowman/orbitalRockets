@@ -1,0 +1,62 @@
+{
+  "caseName": "A 1.5 t to LEO two stage kerolox vehicle, closed from the tank outward, and one bar of feed pressure traced to the payload",
+  "linkedCase": "firstStageEngineExample",
+  "linkedCaseNote": "The specific impulses are the propulsion hub's design point family. The tank model is the aerospaceStructures PressureVessel, imported rather than reimplemented, so this example spans three domains and a change in the structures allowables reaches the payload without anyone reconciling two tank models.",
+
+  "mission": {
+    "payloadMass": 1500.0,
+    "targetDeltaV": 9300.0,
+    "targetDeltaVNote": "From the ascent budget below, rounded. Circular LEO less the rotation assist plus the losses.",
+    "latitude": 28.5,
+    "launchAzimuth": 90.0
+  },
+
+  "stages": [
+    {"name": "first stage",  "specificImpulse": 297.0, "deltaVFraction": 0.45},
+    {"name": "second stage", "specificImpulse": 340.0, "deltaVFraction": 0.55}
+  ],
+
+  "tank": {
+    "_comment": "Radius is a configuration choice; the barrel length follows from the propellant load. The pressure is what a pump-fed vehicle needs at the pump inlet plus the feed system drop, and it is the input the whole mass chain starts from.",
+    "radius": 0.9,
+    "pressure": 0.35e6,
+    "material": "2219-T87",
+    "propellantDensity": 1030.0,
+    "propellantDensityNote": "Bulk density of LOX/RP-1 at a mixture ratio of 2.56, from the propulsion hub's PropellantCombination."
+  },
+
+  "massChain": {
+    "_comment": "The pressure increment traced through to payload. One bar is a realistic feed system pressure drop change: a smaller line, a tighter filter, an extra valve.",
+    "pressureIncrement": 0.1e6,
+    "pressureFedComparison": 3.5e6,
+    "pressureFedNote": "What the same vehicle needs if the engine is pressure fed rather than pump fed."
+  },
+
+  "ascent": {
+    "thrustToWeight": 1.35
+  },
+
+  "avionicsBudget": {
+    "_comment": "A second stage avionics and control assembly, used to show that growth allowance and margin are different things. Stations are metres from the engine gimbal plane.",
+    "allocatedMass": 210.0,
+    "programmePhase": "preliminary",
+    "items": [
+      {"name": "flight computer",     "mass": 12.0, "maturity": "preliminary", "station": 3.2},
+      {"name": "harness",             "mass": 38.0, "maturity": "estimated",   "station": 2.0},
+      {"name": "batteries",           "mass": 46.0, "maturity": "calculated",  "station": 2.8},
+      {"name": "telemetry and comms", "mass": 22.0, "maturity": "estimated",   "station": 3.4},
+      {"name": "thrust vector actuators", "mass": 54.0, "maturity": "calculated", "station": 0.3}
+    ]
+  },
+
+  "reference": {
+    "_comment": "Falcon 9 Block 5, from published stage masses. Used to check that the rocket equation implementation reproduces a real vehicle rather than only itself.",
+    "vehicle": "Falcon 9 Block 5",
+    "stageOneDryMass": 22200.0,
+    "stageOneGrossMass": 433100.0,
+    "stageTwoDryMass": 4000.0,
+    "stageTwoGrossMass": 111500.0,
+    "payloadToLeoExpended": 22800.0,
+    "payloadToLeoReusable": 18500.0
+  }
+}

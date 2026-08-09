@@ -5,7 +5,7 @@
 The master list of what is built and what is not, kept current as the repository is populated.
 
 **Last updated:** 09 August 2026, at commit `11795d6`.
-**Repository totals:** 342 markdown documents, 983 passing tests, 7 domains complete of 16. **propulsion is finished**, hub and all six sub-domains: 20 classes, 50 documents, 404 tests. Nine areas validated at hardware level and two at standard level.
+**Repository totals:** 356 markdown documents, 1044 passing tests, 8 domains complete of 16. **propulsion and vehicleArchitecture are finished.** Ten areas validated at hardware level and two at standard level.
 
 ---
 
@@ -85,7 +85,7 @@ Three `aerospaceMaterials` sub-domains are deliberately docs only: `wroughtMater
 Dependency driven. Propulsion first because it is the repository's stated identity and every domain it consumes is already complete. Reliability last because FMECA needs hardware to analyse.
 
 1. ~~`propulsion` and its six sub-domains~~ **done**
-2. `vehicleArchitecture`
+2. ~~`vehicleArchitecture`~~ **done**
 3. `mechanismsAndSeparation`
 4. `electricalPower`
 5. `avionicsAndGNC`
@@ -107,6 +107,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [aerospaceStructures](aerospaceStructures/) | Full | 16 | 9 | standard, SP-8007 knockdown |
 | [environmentsAndLoads](environmentsAndLoads/) | Full | 14 | 6 | **hardware**, GEVS 14.1 Grms |
 | [thermalManagement](thermalManagement/) | Full | 13 | 6 | **hardware**, Stefan-Boltzmann and solar constant |
+| [vehicleArchitecture](vehicleArchitecture/) | Full | 14 | 4 | **hardware**, Falcon 9 Block 5 stage masses |
 
 **Four of the six now reach hardware level and one reaches standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
@@ -135,7 +136,11 @@ physics one. Both are still listed as outstanding rather than closed.
 
 ## In progress
 
-Nothing. The next domain in the build order is [vehicleArchitecture](vehicleArchitecture/).
+Nothing. The next domain in the build order is [mechanismsAndSeparation](mechanismsAndSeparation/).
+
+### A naming rule the scaffold does not follow
+
+Every unbuilt domain still ships a library helper called `utils.py`, which violates the first of the three naming rules above. `vehicleArchitecture` renamed its to `vehicleUtils.py` on build-out and the remaining nine should do the same as they are built. The two legacy domains that still import from `utils`, `aerospaceMaterials` and `fluidSystems`, predate the rule and are left alone rather than churned.
 
 ---
 
@@ -170,7 +175,6 @@ These have a `utils.py` bootstrap stub, an empty `docs/`, an empty `tests/`, and
 
 | Domain | Planned depth | Why that depth |
 |---|---|---|
-| [vehicleArchitecture](vehicleArchitecture/) | Full | Tsiolkovsky, staging optimisation, mass fractions and propellant selection are all computable, and the domain closes the loop back to propulsion |
 | [mechanismsAndSeparation](mechanismsAndSeparation/) | Full | Spring energy, separation dynamics, pyrotechnic shock and latch kinematics are real mechanics |
 | [electricalPower](electricalPower/) | Full | Battery sizing, harness voltage drop, load profiles and grounding topology all compute |
 | [recoveryAndReusability](recoveryAndReusability/) | Full | Entry ballistic coefficient, parachute sizing, propulsive landing budgets, and life tracking against the fatigue work already in structures |
