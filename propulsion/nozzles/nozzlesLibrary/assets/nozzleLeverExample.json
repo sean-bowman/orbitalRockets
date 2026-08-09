@@ -1,0 +1,28 @@
+{
+  "caseName": "Where the performance actually is in a nozzle, ranked, on the hub's booster",
+  "linkedCase": "firstStageEngineExample",
+  "linkedCaseNote": "The chamber pressure, area ratio and ascent profile are the propulsion hub's design point. Restated here so the example runs standalone; a cross-domain test asserts they still match.",
+
+  "engine": {
+    "combination": "LOX/RP-1",
+    "chamberPressure": 10.0e6,
+    "areaRatio": 20.35,
+    "characteristicVelocity": 1750.1,
+    "contour": "bell 80 per cent"
+  },
+
+  "ascent": {
+    "_comment": "The same representative first stage profile the hub uses, sampled at equal intervals of burn time.",
+    "altitudes": [0.0, 3000.0, 8000.0, 15000.0, 25000.0, 38000.0, 55000.0]
+  },
+
+  "contours": ["conical 15 degree", "bell 60 per cent", "bell 80 per cent", "bell 100 per cent"],
+
+  "hubResult": {
+    "_comment": "What the propulsion hub concluded, carried here so the example can test it against a different separation criterion. The hub used Summerfield, which forbade its own burn-average optimum.",
+    "burnAverageOptimum": 25.75,
+    "summerfieldLimit": 21.42,
+    "designPoint": 20.35,
+    "separationMargin": 0.95
+  }
+}

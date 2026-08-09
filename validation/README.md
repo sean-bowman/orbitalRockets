@@ -131,6 +131,7 @@ library covers, and a test asserts that it continues to disagree.
 | [propulsion/combustionDevices](../propulsion/combustionDevices/README.md) | Bounded | Peak throat flux inside a measured 18 to 54 MW/m^2 band. Integrated heat load unvalidated | [refs](../propulsion/combustionDevices/docs/ValidationReferences.md) |
 | [propulsion/turbomachinery](../propulsion/turbomachinery/README.md) | **Hardware** | RS-25 HPFTP shaft power at the published stage count, 9 per cent | [refs](../propulsion/turbomachinery/docs/ValidationReferences.md) |
 | [propulsion/engineCycles](../propulsion/engineCycles/README.md) | **Hardware** | RS-25 pressure ladder to 11 per cent; expander ceiling brackets RL10 | [refs](../propulsion/engineCycles/docs/ValidationReferences.md) |
+| [propulsion/nozzles](../propulsion/nozzles/README.md) | Bounded | Divergence and separation relations exactly; the loss decomposition cannot be separated from c* efficiency by published data | [refs](../propulsion/nozzles/docs/ValidationReferences.md) |
 | [aerospaceMaterials](../aerospaceMaterials/README.md) | Internal | Seed agreement against `common/materials.py`, itself MMPDS-derived | outstanding |
 | [fluidSystems/fluidSystemsTesting](../fluidSystems/fluidSystemsTesting/README.md) | Internal | Process domain. Margin relationships only | outstanding |
 
