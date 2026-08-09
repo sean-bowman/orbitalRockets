@@ -1,0 +1,46 @@
+{
+  "caseName": "A first stage booster engine, from the propellant trade through area ratio selection into the geometry and the interfaces it hands to other domains",
+  "linkedCase": "hydrazineMonoprop100N",
+  "linkedCaseNote": "The vehicle is the one the rest of the repository sizes against. This engine is its first stage; the hydrazine system in fluidSystems is the upper stage reaction control. They share nothing but the vehicle, which is the point of stating it here rather than implying it.",
+
+  "requirement": {
+    "_comment": "A small launch vehicle booster. 100 kN is the class where a single chamber is still sensible and the numbers stay readable.",
+    "thrust": 100000.0,
+    "thrustAmbientPressure": 101325.0,
+    "chamberPressure": 10.0e6,
+    "burnTime": 155.0
+  },
+
+  "selection": {
+    "_comment": "The propellant shortlist. Restricted to combinations a first stage would actually consider: nothing cryogenic-hydrogen for a booster, and nothing requiring a catalyst bed.",
+    "candidates": ["LOX/RP-1", "LOX/LCH4", "N2O4/MMH", "LOX/LH2"],
+    "chosen": "LOX/RP-1",
+    "comparisonAreaRatio": 40.0
+  },
+
+  "ascent": {
+    "_comment": "A representative first stage altitude profile, sampled at equal intervals of burn time. This is a stated assumption and not a trajectory simulation: the burn-averaged impulse it produces is only as good as this profile, and the conclusion it supports is robust to the profile while the exact numbers are not.",
+    "altitudeSamples": [0.0, 3000.0, 8000.0, 15000.0, 25000.0, 38000.0, 55000.0],
+    "massRatio": 3.0
+  },
+
+  "expansion": {
+    "_comment": "The sweep bounds used to find the candidate answers, and the margin held off the separation limit. Summerfield's criterion is a crude correlation and designing exactly on it is designing on a coin toss, so the design point is held back from it. Five per cent on area ratio costs 0.2 s of burn-averaged impulse, which is the cheapest margin in this example.",
+    "sweepLower": 6.0,
+    "sweepUpper": 40.0,
+    "sweepStep": 0.25,
+    "separationMargin": 0.95
+  },
+
+  "geometry": {
+    "contractionRatio": 2.5
+  },
+
+  "interfaces": {
+    "_comment": "What this engine hands to the domains either side of it. The numbers are produced by the sizing rather than asserted here; these are the limits and conditions those domains impose back.",
+    "feedInletPressureMargin": 1.25,
+    "chamberMaterial": "GRCop-42",
+    "chamberWallLimit": 800.0,
+    "thrustStructureFactorOfSafety": 1.25
+  }
+}
