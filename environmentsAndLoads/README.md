@@ -41,6 +41,7 @@ Reference documentation, a component class library and a tiered test suite, matc
 | [LoadCyclesAndCLA.md](docs/LoadCyclesAndCLA.md) | The loads cycle process, coupled loads analysis, model validation | **written** |
 | [EnvironmentDerivation.md](docs/EnvironmentDerivation.md) | Flight data to specification: statistics, enveloping, margin policy | **written** |
 | [StandardsIndex.md](docs/StandardsIndex.md) | Annotated index of the governing environments standards | **written** |
+| [ValidationReferences.md](docs/ValidationReferences.md) | The external sources the tools are checked against, and what is not checked | **written** |
 
 ## Planned library
 

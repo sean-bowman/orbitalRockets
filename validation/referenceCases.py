@@ -45,6 +45,19 @@ REFERENCE_KINDS = {
     'estimate': 'An order-of-magnitude or typical value. Usable as a sanity bound, not as a check',
 }
 
+# How strong a check a comparison actually is. Recording this stops a weaker check being described
+# as a stronger one, which is the failure mode that made this directory necessary in the first
+# place.
+VALIDATION_LEVELS = {
+    'hardware': 'Compared against measured or specified performance of real hardware. The '
+                'strongest available and the only one that can catch a wrong model',
+    'standard': 'Reproduces a published standard formula or tabulated level exactly. Catches an '
+                'implementation error and cannot catch an error in the standard',
+    'internal': 'Checked only against other parts of this repository. Catches drift and catches '
+                'nothing else',
+    'unvalidated': 'No external anchor. Recorded with what depends on it',
+}
+
 # ------------------------------------------------------------------------------------------------ #
 # -- Liquid rocket engines -- #
 # ------------------------------------------------------------------------------------------------ #
@@ -186,3 +199,130 @@ def impliedEfficiency(publishedImpulse: float, idealImpulse: float) -> float:
     '''
 
     return publishedImpulse / idealImpulse
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Environments: published test levels -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# GEVS is unusually good validation material, because it publishes both a spectrum and the Grms that
+# spectrum integrates to. The Grms is therefore an independent check on the spectrum, and a tool
+# that computes one from the other sits in the middle of a closed loop.
+#
+# It also resolved a contradiction between two secondary sources during this work. One quoted a
+# 0.16 g^2/Hz plateau at 14.1 Grms, another quoted 0.016 g^2/Hz at 10.0 Grms. Integrating the first
+# gives 14.14 Grms, which matches; integrating the second gives 6.18, which does not. The 10.0 in
+# the second source is the acceptance level, qualification less 3 dB, which is 14.14 / sqrt(2) =
+# 10.00 exactly. Both sources were right about different things and neither said which.
+RANDOM_VIBRATION_LEVELS = {
+
+    'GEVS qualification, 22.7 kg or less': {
+        'source': 'GSFC-STD-7000A, General Environmental Verification Standard, Table 2.4-3; '
+                  'https://experiorlabs.com/wp-content/uploads/2019/10/'
+                  'GSFC-STD-7000A-General-Environmental-Verification-Standard-GEVS-for-GSFC-'
+                  'Flight-Programs-and-Projects-4-22-2013.pdf, accessed 08 August 2026',
+        'kind': 'specification',
+        'level': 'hardware',
+        'breakpoints': [(20.0, 0.026), (50.0, 0.16), (800.0, 0.16), (2000.0, 0.026)],
+        'overallRms': 14.1,
+        'acceptanceRms': 10.0,
+        'note': 'The generalised level a component qualifies to before flight data exists. The '
+                'plateau is reached by a +6 dB per octave slope from 20 Hz, and 0.026 x (50/20)^2 '
+                '= 0.1625, so the table is self-consistent. Acceptance is qualification less 3 dB, '
+                'which is a factor of sqrt(2) in Grms rather than in density.'},
+}
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Structures: published empirical factors -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The shell buckling knockdown is the most consequential empirical factor in this repository. It is
+# a curve fitted to test scatter in the 1960s, it is still what everyone uses, and it turns a
+# classical buckling stress that is wrong by a factor of five into a design value.
+#
+# What can be checked here is that the implementation reproduces the published formula at stated
+# radius-to-thickness ratios. What cannot be checked is the formula itself, because the test scatter
+# it was fitted to is not in the document in a form that can be re-fitted. That distinction is the
+# difference between the 'standard' and 'hardware' levels.
+SHELL_BUCKLING = {
+
+    'NASA SP-8007 knockdown': {
+        'source': 'NASA SP-8007, Buckling of Thin-Walled Circular Cylinders, 1968 revision. The '
+                  'correlation factor for axially compressed cylinders',
+        'kind': 'derived',
+        'level': 'standard',
+        'formula': 'gamma = 1 - 0.901 (1 - exp(-phi)), phi = (1/16) sqrt(R/t)',
+        'points': {100.0: 0.5813, 300.0: 0.4042, 500.0: 0.3217, 1000.0: 0.2238, 1500.0: 0.1791},
+        'note': 'Values computed from the published closed form at each radius-to-thickness ratio. '
+                'This validates the implementation and cannot validate the correlation, which was '
+                'fitted to test scatter the document does not reproduce in re-fittable form. A '
+                'knockdown of 0.22 at R/t 1000 means the classical stress overpredicts by a factor '
+                'of four and a half, which is the reason the factor exists.'},
+}
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Thermal: published constants and optical properties -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# A flat plate normal to the sun with no other load reaches (alpha/eps x G / sigma)^0.25. Every term
+# is a published constant or a published property, so the equilibrium temperature is a closed-form
+# check on the radiation implementation and on the optical property table together.
+THERMAL_EQUILIBRIUM = {
+
+    'solar constant': {
+        'source': 'ASTM E490 solar spectral irradiance, total solar irradiance at 1 AU',
+        'kind': 'measured',
+        'level': 'hardware',
+        'value': 1361.0,    # [W/m^2]
+        'note': 'The measured total solar irradiance at one astronomical unit. It varies by about '
+                '0.1 per cent over a solar cycle, which is far below anything this repository '
+                'resolves.'},
+
+    'Stefan-Boltzmann constant': {
+        'source': 'CODATA 2018, exact by the 2019 SI redefinition',
+        'kind': 'measured',
+        'level': 'hardware',
+        'value': 5.670374419e-8,    # [W/m^2 K^4]
+        'note': 'Exact by definition since the 2019 SI revision, so an implementation that '
+                'disagrees is simply wrong rather than approximate.'},
+
+    'white paint equilibrium': {
+        'source': 'NASA-HDBK-2001 optical properties, with the equilibrium computed from them',
+        'kind': 'derived',
+        'level': 'standard',
+        'absorptivity': 0.20,
+        'emissivity': 0.88,
+        'equilibrium': 271.8,    # [K]
+        'note': 'A flat plate normal to the sun at 1 AU with no other heat load. The check is on '
+                'the fourth-power balance and the property table together, and it is a standard '
+                'level check because the properties are tabulated rather than measured here.'},
+}
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Fluids: exact relations and property ground truth -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# Fluid systems is the one domain that already had external ground truth before this directory
+# existed, because REFPROP and CoolProp are independent implementations of measured equations of
+# state. A property lookup that agrees with them is validated in a way nothing else here is.
+FLUID_RELATIONS = {
+
+    'Joukowsky surge': {
+        'source': 'Joukowsky 1898, and every water hammer text since. dP = rho a dV',
+        'kind': 'derived',
+        'level': 'standard',
+        'formula': 'dP = rho a dV',
+        'note': 'Exact for instantaneous valve closure and an upper bound for any real closure. '
+                'A tool that exceeds it has an error rather than a conservative answer.'},
+
+    'water at standard conditions': {
+        'source': 'IAPWS-95 through REFPROP or CoolProp, both independent implementations',
+        'kind': 'measured',
+        'level': 'hardware',
+        'temperature': 293.15,    # [K]
+        'pressure': 101325.0,     # [Pa]
+        'density': 998.2,         # [kg/m^3]
+        'note': 'The property backend is itself the external reference, which is why this domain '
+                'started ahead of the others. The check is that the repository calls it correctly '
+                'rather than that the equation of state is right.'},
+}

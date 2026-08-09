@@ -121,20 +121,26 @@ library covers, and a test asserts that it continues to disagree.
 
 ## Current state
 
-| Domain | State | Against what |
-|---|---|---|
-| [propulsion](../propulsion/README.md) | **Validated** | RS-25 vacuum and sea level impulse, throat diameter |
-| [propulsion/combustionDevices](../propulsion/combustionDevices/README.md) | Bounded | Bartz accuracy band only. Heat load unvalidated |
-| [fluidSystems](../fluidSystems/README.md) | Not yet | |
-| [fluidSystems/fluidSystemsTesting](../fluidSystems/fluidSystemsTesting/README.md) | Not yet | |
-| [aerospaceMaterials](../aerospaceMaterials/README.md) | Partial | Seeded from and tested against `common/materials.py`, itself MMPDS-derived |
-| [aerospaceStructures](../aerospaceStructures/README.md) | Not yet | |
-| [environmentsAndLoads](../environmentsAndLoads/README.md) | Not yet | |
-| [thermalManagement](../thermalManagement/README.md) | Not yet | |
+| Domain | Level | Against what | Bibliography |
+|---|---|---|---|
+| [propulsion](../propulsion/README.md) | **Hardware** | RS-25 vacuum and sea level impulse, throat diameter | [refs](../propulsion/docs/ValidationReferences.md) |
+| [environmentsAndLoads](../environmentsAndLoads/README.md) | **Hardware** | GEVS qualification spectrum against its published 14.1 Grms | [refs](../environmentsAndLoads/docs/ValidationReferences.md) |
+| [thermalManagement](../thermalManagement/README.md) | **Hardware** | Stefan-Boltzmann exact, solar constant, white paint equilibrium | [refs](../thermalManagement/docs/ValidationReferences.md) |
+| [fluidSystems](../fluidSystems/README.md) | **Hardware** | IAPWS-95 water density through the property backend | [refs](../fluidSystems/fluidSystemsLibrary/docs/ValidationReferences.md) |
+| [aerospaceStructures](../aerospaceStructures/README.md) | Standard | SP-8007 knockdown at five R/t, classical buckling closed form | [refs](../aerospaceStructures/docs/ValidationReferences.md) |
+| [propulsion/combustionDevices](../propulsion/combustionDevices/README.md) | Bounded | Bartz accuracy band only. Heat load unvalidated | [refs](../propulsion/combustionDevices/docs/ValidationReferences.md) |
+| [aerospaceMaterials](../aerospaceMaterials/README.md) | Internal | Seed agreement against `common/materials.py`, itself MMPDS-derived | outstanding |
+| [fluidSystems/fluidSystemsTesting](../fluidSystems/fluidSystemsTesting/README.md) | Internal | Process domain. Margin relationships only | outstanding |
 
-**Retrofitting the completed domains is outstanding work and is tracked in
-[BUILDOUT.md](../BUILDOUT.md).** Validation is now stage 5 of the build process for every new
-domain, and the completed ones predate the rule.
+**Four domains now reach hardware level and one reaches standard level.** The two remaining are the
+two with least to get numerically wrong: materials is already seeded from an MMPDS-derived table and
+tested against it, and testing is a process domain rather than a physics one.
+
+**The distinction between hardware and standard is not cosmetic.** aerospaceStructures reproduces
+the SP-8007 knockdown curve to 1e-4 at five radius-to-thickness ratios, which proves the
+implementation and proves nothing about the curve. The curve is a lower bound fitted to 1960s test
+scatter that the document does not reproduce in re-fittable form, and it remains the least validated
+consequential number in the repository.
 
 ---
 

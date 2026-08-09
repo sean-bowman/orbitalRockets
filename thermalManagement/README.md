@@ -40,6 +40,7 @@ Reference documentation, a component class library and a tiered test suite, matc
 | [ThermalModelling.md](docs/ThermalModelling.md) | Nodal networks, implicit marching, radiative nonlinearity, run length, soakback | **written** |
 | [ThermalTesting.md](docs/ThermalTesting.md) | Thermal balance, vacuum and cycling, instrumentation, ground test artefacts | **written** |
 | [StandardsIndex.md](docs/StandardsIndex.md) | Annotated index of the governing thermal standards | **written** |
+| [ValidationReferences.md](docs/ValidationReferences.md) | The external sources the tools are checked against, and what is not checked | **written** |
 
 ## Library
 

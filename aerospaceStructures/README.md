@@ -43,6 +43,7 @@ Reference documentation, a component class library and a tiered test suite, matc
 | [StabilityAndCollapse.md](docs/StabilityAndCollapse.md) | External pressure, vacuum jacket collapse, general instability | **written** |
 | [MassPropertiesAndOptimization.md](docs/MassPropertiesAndOptimization.md) | Mass estimating relationships, sizing loops, structural efficiency | **written** |
 | [StandardsIndex.md](docs/StandardsIndex.md) | Annotated index of the governing structural standards | **written** |
+| [ValidationReferences.md](docs/ValidationReferences.md) | The external sources the tools are checked against, and what is not checked | **written** |
 
 ## Planned library
 

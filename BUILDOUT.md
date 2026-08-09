@@ -4,8 +4,8 @@
 
 The master list of what is built and what is not, kept current as the repository is populated.
 
-**Last updated:** 08 August 2026, at commit `d2129c4`.
-**Repository totals:** 294 markdown documents, 621 passing tests, 6 domains complete of 16, propulsion hub done.
+**Last updated:** 08 August 2026, at commit `b465de1`.
+**Repository totals:** 301 markdown documents, 695 passing tests, 6 domains complete of 16, propulsion hub done. Validation retrofit complete for four domains at hardware level and one at standard level.
 
 ---
 
@@ -100,17 +100,20 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 
 | Domain | Depth | Docs | Classes | Stage 5 validation |
 |---|---|---|---|---|
-| [fluidSystems](fluidSystems/) | Full | 24 | 17 | **outstanding** |
-| [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | Full | 17 | 8 | **outstanding** |
-| [aerospaceMaterials](aerospaceMaterials/) | Full | 18 | 8 | partial, against MMPDS through `common/materials.py` |
-| [aerospaceStructures](aerospaceStructures/) | Full | 15 | 9 | **outstanding** |
-| [environmentsAndLoads](environmentsAndLoads/) | Full | 13 | 6 | **outstanding** |
-| [thermalManagement](thermalManagement/) | Full | 12 | 6 | **outstanding** |
+| [fluidSystems](fluidSystems/) | Full | 25 | 17 | **hardware**, IAPWS-95 water density |
+| [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | Full | 17 | 8 | internal, outstanding |
+| [aerospaceMaterials](aerospaceMaterials/) | Full | 18 | 8 | internal, against MMPDS through `common/materials.py`, outstanding |
+| [aerospaceStructures](aerospaceStructures/) | Full | 16 | 9 | standard, SP-8007 knockdown |
+| [environmentsAndLoads](environmentsAndLoads/) | Full | 14 | 6 | **hardware**, GEVS 14.1 Grms |
+| [thermalManagement](thermalManagement/) | Full | 13 | 6 | **hardware**, Stefan-Boltzmann and solar constant |
 
-**The six completed domains predate stage 5 and none of them is validated against published
-hardware.** That is the largest single piece of outstanding work in the repository and it is not
-optional: a domain that has only been checked against itself has not been checked. The retrofit
-order is below.
+**Four of the six now reach hardware level and one reaches standard level.** Each carries a
+`docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
+and what remains unchecked.
+
+Two remain internal and both are defensible for now: aerospaceMaterials is seeded from an
+MMPDS-derived table and tested against it, and fluidSystemsTesting is a process domain rather than a
+physics one. Both are still listed as outstanding rather than closed.
 
 ### aerospaceMaterials sub-domains
 
@@ -183,18 +186,20 @@ Six domains were completed before stage 5 existed. Each needs at least one compa
 published hardware, in this order, chosen by how much downstream work depends on the domain being
 right.
 
-| Order | Domain | Candidate reference |
-|---|---|---|
-| 1 | [aerospaceStructures](aerospaceStructures/) | NASA SP-8007 shell buckling test correlation data, which is the basis of the knockdown factor already implemented |
-| 2 | [thermalManagement](thermalManagement/) | A published spacecraft thermal balance case, or the Stefan-Boltzmann equilibrium of a known coated surface |
-| 3 | [fluidSystems](fluidSystems/) | Crane TP-410 worked examples for line pressure drop, and REFPROP as ground truth for properties |
-| 4 | [environmentsAndLoads](environmentsAndLoads/) | A published qualification specification, GEVS or a launch vehicle user guide, against a derived level |
-| 5 | [aerospaceMaterials](aerospaceMaterials/) | Extend the existing MMPDS seed agreement into a real allowables comparison with published k-factors |
-| 6 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | Lowest priority: the domain is process rather than physics and has less to get numerically wrong |
+| Domain | Done | Level reached | What still limits it |
+|---|---|---|---|
+| [aerospaceStructures](aerospaceStructures/) | yes | Standard | The SP-8007 curve itself is unvalidated. Reproducing it proves the implementation and nothing about the correlation |
+| [thermalManagement](thermalManagement/) | yes | Hardware | Only the radiation path. Conduction and the contact conductance table remain unchecked |
+| [fluidSystems](fluidSystems/) | yes | Hardware | Properties only. Line pressure drop against Crane TP-410 worked examples is still outstanding |
+| [environmentsAndLoads](environmentsAndLoads/) | yes | Hardware | Random vibration only. Acoustics and shock remain unchecked |
+| [aerospaceMaterials](aerospaceMaterials/) | no | Internal | Needs a real allowables comparison with published k-factors |
+| [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | no | Internal | Process domain, lowest priority |
 
-**aerospaceStructures is first** because shell buckling knockdowns are the single most consequential
-empirical factor in the repository, they are used by more than one domain, and SP-8007 carries the
-scatter data the knockdown was fitted to.
+**The most consequential unvalidated number in the repository is the SP-8007 shell buckling
+knockdown.** It converts a classical stress that overpredicts by four and a half into a design value,
+more than one domain depends on it, and reproducing the published curve to 1e-4 says nothing about
+whether the curve is right. Closing that needs the shell buckling test databases compiled since
+1968.
 
 ---
 

@@ -43,6 +43,7 @@ That division is deliberate. Reimplementing a contour generator here would creat
 | [ThrottlingAndMixtureRatio.md](docs/ThrottlingAndMixtureRatio.md) | Injector authority, the separation floor, propellant utilisation | **written** |
 | [EngineIntegration.md](docs/EngineIntegration.md) | The interfaces either side, the fuel-as-coolant coupling, gimbal, heat soak | **written** |
 | [StandardsIndex.md](docs/StandardsIndex.md) | Annotated index of the governing propulsion standards | **written** |
+| [ValidationReferences.md](docs/ValidationReferences.md) | The external sources the tools are checked against, and what is not checked | **written** |
 
 ## Library
 
