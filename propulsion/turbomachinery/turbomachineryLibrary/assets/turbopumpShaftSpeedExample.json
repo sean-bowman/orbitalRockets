@@ -1,0 +1,59 @@
+{
+  "caseName": "The turbopump for the hub's 100 kN booster, and the shaft speed that four constraints and two cycles cannot agree on",
+  "linkedCase": "firstStageEngineExample",
+  "linkedCaseNote": "The two pump duties are the oxidiser and fuel flows the propulsion hub sizes, at the feed pressure its interface section states. Restated here so the example runs standalone; a cross-domain test asserts they still match.",
+
+  "duty": {
+    "_comment": "Both pumps deliver to the same engine inlet pressure, which the hub sets at a 1.25 margin over its 10 MPa chamber.",
+    "dischargePressure": 12.5e6,
+    "burnTime": 155.0,
+    "oxidiser": {
+      "propellant": "LOX",
+      "density": 1141.0,
+      "massFlow": 26.47,
+      "vapourPressure": 101325.0,
+      "tankVolume": 3.60,
+      "impellerMaterial": "Monel K-500"
+    },
+    "fuel": {
+      "propellant": "RP-1",
+      "density": 810.0,
+      "massFlow": 10.34,
+      "vapourPressure": 2000.0,
+      "tankVolume": 1.98,
+      "impellerMaterial": "titanium"
+    }
+  },
+
+  "feed": {
+    "_comment": "The static column above the pump inlet and the feed line loss, both in metres of the propellant being pumped.",
+    "staticHead": 3.0,
+    "lineLoss": 5.0
+  },
+
+  "turbine": {
+    "_comment": "A gas generator exhaust at a temperature an uncooled superalloy tolerates. The mean diameter is held fixed across the sweep, which is a simplification: a real design would shrink the turbine as the shaft speeds up.",
+    "inletTemperature": 1000.0,
+    "pressureRatio": 20.0,
+    "meanDiameter": 0.15
+  },
+
+  "massModel": {
+    "_comment": "ASSUMPTIONS, all three of them, and the conclusion moves with them. The tank model is a thin wall pressure vessel in 2219 aluminium at a 300 MPa allowable, with a factor of three covering domes, welds and non-optimum. The turbopump scaling is the common empirical form, mass proportional to power^0.6 over speed^0.6, anchored at 30 kg for the reference duty. The gas generator charge is the fraction of dumped propellant treated as lost, since it produces roughly thirty per cent of main chamber impulse. None of the three is sourced and all are registered as unvalidated.",
+    "tankMaterialDensity": 2840.0,
+    "tankAllowable": 300.0e6,
+    "tankShapeFactor": 3.0,
+    "turbopumpReferenceMass": 30.0,
+    "turbopumpReferencePower": 0.624e6,
+    "turbopumpReferenceSpeed": 30000.0,
+    "turbopumpPowerExponent": 0.6,
+    "turbopumpSpeedExponent": 0.6,
+    "gasGeneratorLostFraction": 0.70
+  },
+
+  "sweep": {
+    "lower": 16000.0,
+    "upper": 66000.0,
+    "step": 1000.0
+  }
+}
