@@ -2,7 +2,7 @@
 
 **Liquid Bipropellant Rocket Propulsion**
 
-> **Status: scaffolded.** The topic coverage below is defined and the documents are planned. Nothing in this domain is written yet. See [../fluidSystems/](../fluidSystems/) for a completed domain.
+> **Status: hub complete, sub-domains scaffolded.** Three engine-level classes, six documents and 61 tests, with a worked example built around the one decision that has three defensible answers which disagree. The six sub-domains below are not written yet.
 
 ---
 
@@ -32,25 +32,25 @@ That division is deliberate. Reimplementing a contour generator here would creat
 
 ---
 
-## Planned documentation
+## Documentation
 
 | Document | Covers | Status |
 |---|---|---|
-| `docs/PropulsionOverview.md` | Hub: the engine as a system, the parameter relationships, document index | planned |
-| `docs/PerformanceFundamentals.md` | Isp, c*, Cf, efficiencies, and how they fail independently | planned |
-| `docs/PropellantSelection.md` | Bipropellant combinations, density Isp, storability, handling, the real trades | planned |
-| `docs/EngineSizing.md` | From thrust and Isp to a chamber, a throat and a mass estimate | planned |
-| `docs/ThrottlingAndMixtureRatio.md` | Deep throttle, injector authority, mixture ratio control, propellant utilisation | planned |
-| `docs/EngineIntegration.md` | Gimbal, plumbing, heat soak, the interfaces to structure and fluid systems | planned |
-| `docs/StandardsIndex.md` | Annotated index of the governing propulsion standards | planned |
+| [PropulsionOverview.md](docs/PropulsionOverview.md) | Hub: the Cf and c* factorisation, the decision order, what sizes an engine | **written** |
+| [PerformanceFundamentals.md](docs/PerformanceFundamentals.md) | Isp, c*, Cf, the two efficiencies, altitude behaviour, flow separation | **written** |
+| [PropellantSelection.md](docs/PropellantSelection.md) | Density impulse against specific impulse, the volume split, storability | **written** |
+| [EngineSizing.md](docs/EngineSizing.md) | Thrust to throat to chamber to mass, and what governs each step | **written** |
+| [ThrottlingAndMixtureRatio.md](docs/ThrottlingAndMixtureRatio.md) | Injector authority, the separation floor, propellant utilisation | **written** |
+| [EngineIntegration.md](docs/EngineIntegration.md) | The interfaces either side, the fuel-as-coolant coupling, gimbal, heat soak | **written** |
+| [StandardsIndex.md](docs/StandardsIndex.md) | Annotated index of the governing propulsion standards | **written** |
 
-## Planned library
+## Library
 
 | Class | Computes | Status |
 |---|---|---|
-| `EnginePerformance` | Isp, c*, Cf, efficiencies, altitude performance, throttle behaviour | planned |
-| `EngineSizing` | Throat and chamber geometry from thrust, Pc and mixture ratio, plus mass | planned |
-| `PropellantCombination` | Property lookup, density Isp, mixture ratio optimum, hazard classification | planned |
+| `EnginePerformance` | c*, Cf, Isp, the two efficiencies separately, altitude sweep, expansion trade | **written** |
+| `EngineSizing` | Throat and chamber geometry, the cooling cross-check, nozzle length, mass | **written** |
+| `PropellantCombination` | Bulk density, density impulse, the volume split, the combination trade | **written** |
 
 All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../common/](../common/) through this domain's `propulsionUtils.py`.
 
@@ -66,6 +66,25 @@ All classes follow the repository interface: `setInputs()`, `calculate*()` or `s
 | [nozzles](nozzles/) | Performance, area ratio, thrust coefficient, altitude compensation | scaffolded |
 | [ignitionAndStart](ignitionAndStart/) | Igniters, start and shutdown transients, chill-in, purge | scaffolded |
 | [propulsionTesting](propulsionTesting/) | Hot fire campaigns, test stands, instrumentation, data reduction | scaffolded |
+
+---
+
+## Worked example
+
+`codeInterface.py` sizes a first stage booster, and is built around the area ratio decision because three reasonable questions give three different answers.
+
+| Question asked | Area ratio | Burn-averaged Isp | Flyable |
+|---|---|---|---|
+| What maximises thrust at liftoff | 10.75 | 296.2 s | Yes |
+| What maximises impulse over the burn | 25.75 | 302.3 s | No, separates on the pad |
+| What the flow will tolerate | 21.42 | 302.0 s | On the limit |
+| **The design point, with margin** | **20.35** | **301.8 s** | **Yes** |
+
+The intuitive answer is not a bad answer. It is the right answer to the wrong question: it genuinely does maximise sea level impulse, and it costs 61 m/s of stage delta-V. The true optimum is unreachable. The constraint that rules it out sits half a second away from it.
+
+```bash
+python propulsion/codeInterface.py
+```
 
 ---
 

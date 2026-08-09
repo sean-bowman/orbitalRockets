@@ -4,8 +4,8 @@
 
 The master list of what is built and what is not, kept current as the repository is populated.
 
-**Last updated:** 08 August 2026, at commit `b036ae0`.
-**Repository totals:** 286 markdown documents, 559 passing tests, 6 domains complete of 16.
+**Last updated:** 08 August 2026, at commit `d2129c4`.
+**Repository totals:** 294 markdown documents, 621 passing tests, 6 domains complete of 16, propulsion hub done.
 
 ---
 
@@ -110,7 +110,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 
 | Domain | Depth | Stage 1 | Stage 2 | Stage 3 | Stage 4 |
 |---|---|---|---|---|---|
-| [propulsion](propulsion/) | Full | not started | not started | not started | not started |
+| [propulsion](propulsion/) hub | Full | **done** | **done** | **done** | **done** |
 
 ### propulsion sub-domains
 

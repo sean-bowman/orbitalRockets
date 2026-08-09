@@ -36,7 +36,7 @@ Six of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist:
 |---|---|---|
 | [fluidSystems](fluidSystems/) | **Complete** | Valves, lines, orifices, fittings, seals, leaks, welds, insulation, water hammer, hydrazine, catalyst beds, monopropellant thrusters, pressurization |
 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | **Complete** | Test campaigns from concept through development, qualification and flight acceptance |
-| [propulsion](propulsion/) | Scaffolded | Liquid bipropellant engines: combustion devices, turbomachinery, engine cycles, nozzle performance, ignition and transients, hot fire test |
+| [propulsion](propulsion/) | Hub complete | Liquid bipropellant engines: combustion devices, turbomachinery, engine cycles, nozzle performance, ignition and transients, hot fire test |
 | [aerospaceStructures](aerospaceStructures/) | **Complete** | Shell buckling, sandwich panels, bolted and bonded joints, modal analysis, load paths, tanks |
 | [aerospaceMaterials](aerospaceMaterials/) | **Complete** | Alloy selection, allowables, fracture, corrosion, plus ten process sub-domains covering additive, casting, wrought, forming, machining, joining and post-processing |
 | [thermalManagement](thermalManagement/) | **Complete** | Thermal protection systems, thermal control, radiators, heat pipes, aeroheating |
