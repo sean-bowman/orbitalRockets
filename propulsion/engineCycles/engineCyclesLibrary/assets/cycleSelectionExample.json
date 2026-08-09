@@ -1,0 +1,42 @@
+{
+  "caseName": "Which cycle the hub's 100 kN booster should use, and the pressure ceiling that rules one of them out",
+  "linkedCase": "firstStageEngineExample",
+  "linkedCaseNote": "The thrust, chamber pressure, impulse and flow rates are the propulsion hub's design point. Restated here so the example runs standalone; a cross-domain test asserts they still match.",
+
+  "engine": {
+    "combination": "LOX/RP-1",
+    "thrust": 100000.0,
+    "chamberPressure": 10.0e6,
+    "idealImpulse": 298.6,
+    "deliveredImpulse": 277.0,
+    "mixtureRatio": 2.56,
+    "totalFlow": 36.81,
+    "oxidiserFlow": 26.47,
+    "fuelFlow": 10.34,
+    "burnTime": 155.0,
+    "areaRatio": 20.35,
+    "contractionRatio": 2.5,
+    "throatDiameter": 0.0906,
+    "barrelLength": 0.4091,
+    "convergentLength": 0.0456,
+    "divergentLength": 0.475
+  },
+
+  "candidates": ["pressure fed", "gas generator", "staged combustion", "expander"],
+
+  "shaftSpeed": 30000.0,
+
+  "expanderSweep": {
+    "_comment": "Chamber pressures to test the expander heat balance at. The engine is rescaled at each point to hold thrust, so the throat shrinks as pressure rises and the jacket area shrinks with it.",
+    "pressures": [2.0e6, 3.0e6, 4.0e6, 4.5e6, 5.0e6, 7.0e6, 10.0e6]
+  },
+
+  "tankModel": {
+    "_comment": "For the pressure fed comparison only. Same thin wall pressure vessel model the turbomachinery example uses, and the same assumption: 2219 aluminium at a 300 MPa allowable with a factor of three for domes, welds and non-optimum. Registered as unvalidated.",
+    "materialDensity": 2840.0,
+    "allowable": 300.0e6,
+    "shapeFactor": 3.0,
+    "oxidiserVolume": 3.60,
+    "fuelVolume": 1.98
+  }
+}

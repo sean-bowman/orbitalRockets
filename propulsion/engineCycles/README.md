@@ -2,7 +2,7 @@
 
 **Cycle Selection and Power Balance**
 
-> **Status: scaffolded.** The topic coverage below is defined and the documents are planned. Nothing in this sub-domain is written yet. See [../../fluidSystems/](../../fluidSystems/) for a completed domain.
+> **Status: complete.** Two classes, seven documents and 67 tests, with a worked example that finds three of four candidate cycles eliminated by arithmetic before any performance number is compared. Validated at hardware level against the RS-25 pressure ladder and the RL10 expander ceiling.
 
 ---
 
@@ -16,25 +16,46 @@ Reference documentation, a component class library and a tiered test suite, matc
 
 ---
 
-## Planned documentation
+## Documentation
 
 | Document | Covers | Status |
 |---|---|---|
-| `docs/CycleSelection.md` | The cycles, their honest trades, and what each one is actually for | planned |
-| `docs/PowerBalance.md` | Turbine power equals pump power, and what makes a cycle close or not | planned |
-| `docs/GasGeneratorCycle.md` | Open cycle, the turbine exhaust penalty, and why it persists | planned |
-| `docs/StagedCombustion.md` | Oxidiser rich, fuel rich, and full flow. The pressure ladder | planned |
-| `docs/ExpanderCycle.md` | The heat transfer limit, and why there is a thrust ceiling | planned |
-| `docs/PressureFedSystems.md` | No turbomachinery, and the tank mass that pays for it | planned |
+| [CycleSelection.md](docs/CycleSelection.md) | One question decides everything, and most candidates are eliminated rather than chosen | **written** |
+| [PowerBalance.md](docs/PowerBalance.md) | Turbine power equals pump power, and the expansion term that separates the cycles | **written** |
+| [GasGeneratorCycle.md](docs/GasGeneratorCycle.md) | The dump penalty, and why it is invisible to a thrust chamber model | **written** |
+| [StagedCombustion.md](docs/StagedCombustion.md) | The pressure ladder, fuel rich against oxidiser rich, and full flow | **written** |
+| [ExpanderCycle.md](docs/ExpanderCycle.md) | The heat balance ceiling, why it exists, and why RL10 sits at it | **written** |
+| [PressureFedSystems.md](docs/PressureFedSystems.md) | The tank as the pump, and the factor of forty eight | **written** |
+| [ValidationReferences.md](docs/ValidationReferences.md) | The external sources the tools are checked against, and what is not checked | **written** |
 
-## Planned library
+## Library
 
 | Class | Computes | Status |
 |---|---|---|
-| `EngineCycle` | Cycle definition, the pressure ladder, and the discarded flow fraction | planned |
-| `PowerBalance` | Turbine and pump power matching, drive gas conditions, closure check | planned |
+| `EngineCycle` | The pressure ladder, the discarded flow, and the impulse each cycle delivers | **written** |
+| `PowerBalance` | Turbine and pump matching, the driving flow, and whether the cycle closes | **written** |
 
 All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../../common/](../../common/) through this sub-domain's `cycleUtils.py`.
+
+---
+
+
+## Worked example
+
+`codeInterface.py` asks which cycle the hub's 100 kN booster should use.
+
+| Cycle | Verdict | Decided by |
+|---|---|---|
+| Pressure fed | **Eliminated** | Tank mass: 2219 kg of pressure vessel against 46 kg pumped |
+| Expander | **Eliminated** | Heat balance: ceiling near 4 MPa against a 10 MPa chamber |
+| Staged combustion | Admitted | Costs pump discharge, 2.20 x chamber pressure |
+| Gas generator | Admitted | Costs impulse, 2.5 per cent |
+
+Only the last two are a trade. The expander ceiling falls between 4.0 and 4.5 MPa, and RL10 runs at 4.4.
+
+```bash
+python propulsion/engineCycles/codeInterface.py
+```
 
 ---
 
