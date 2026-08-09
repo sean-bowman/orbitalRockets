@@ -34,7 +34,11 @@ Reference documentation, a component class library and a tiered test suite, matc
 | `Pump` | Specific speed, head rise, impeller sizing, efficiency and power | planned |
 | `Inducer` | Suction specific speed, NPSH required, and the cavitation margin | planned |
 | `Turbine` | Blade speed ratio, admission, stage sizing, power and inlet temperature | planned |
-| `ShaftSystem` | Critical speeds, bearing loads and life, and the rotordynamic check | planned |
+| `ShaftSystem` | Critical speeds, bearing loads and life, and the rotordynamic check | **not built, see below** |
+
+**`ShaftSystem` was planned and is not built.** The shaft speed constraint it existed to carry turned out to belong in the three classes that already own the physics: the bearing DN limit sits in `Pump.sizeImpeller` because it follows from the impeller diameter, and the cavitation ceiling sits in `Inducer.maximumShaftSpeed`. What is left is critical speed and bearing life, and bearing life needs manufacturer load-rating data this repository does not have. A class that computed a critical speed from an assumed shaft stiffness would be inventing the input that decides the answer.
+
+The shaft speed reconciliation across all three constraints is a system result and it belongs in the worked example rather than in a class.
 
 All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../../common/](../../common/) through this sub-domain's `turbomachineryUtils.py`.
 
