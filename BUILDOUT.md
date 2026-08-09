@@ -33,7 +33,17 @@ Four stages, in this order. Library before documents, so that every number a doc
 | **3** | Documents, written against stage 2 numbers | Every numeric claim produced by code, every snippet executes |
 | **4** | Verification, README status, commit, push | Links resolve, no dashes, snippets run, full suite green |
 
-**The helper module in every domain must be uniquely named** (`structuresUtils`, `environmentsUtils`, `thermalUtils`, `propulsionUtils`) rather than `utils`. A flat `sys.path` resolves every domain's `utils.py` to the same `sys.modules` entry, which works by accident for shared re-exported names and fails for domain specific ones.
+### Three naming rules, all from the same cause
+
+A flat `sys.path` resolves identically named modules in different domains to one entry in `sys.modules`. The first one imported wins and the rest silently receive it. This has bitten the repository three times in three different places, so all three rules are written down here rather than rediscovered.
+
+**The library helper module must be uniquely named**: `structuresUtils`, `environmentsUtils`, `thermalUtils`, `propulsionUtils`, never `utils`. Sharing the name works by accident for the shared re-exported foundation and fails for anything only one domain defines.
+
+**Test file basenames must be unique across the whole repository.** `propulsion/tests/testWorkedExample.py` and `thermalManagement/tests/testWorkedExample.py` cannot coexist: pytest imports test modules by basename and raises an import file mismatch. Name them for the domain, as `testPropulsionWorkedExample.py`.
+
+**`codeInterface.py` must be loaded by explicit path, never by `import codeInterface`.** Every domain has one at its root and they cannot be renamed without breaking the documented `python <domain>/codeInterface.py` entry point, so the fix belongs at the import rather than the file. Load it with `importlib.util.spec_from_file_location` under a domain-unique module name.
+
+That last one is the dangerous member of the family, because it fails silently rather than loudly: a second domain's example tests pass while asserting against the first domain's module. Both worked-example test files carry a `testTheExampleLoadedIsThisDomainsOwn` guard, and every new domain should copy it.
 
 ---
 

@@ -16,6 +16,7 @@ Date:   08/08/2026
 
 '''
 
+import importlib.util
 import os
 import sys
 
@@ -26,7 +27,28 @@ DOMAIN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DOMAIN)
 sys.path.insert(0, os.path.join(DOMAIN, 'thermalManagementLibrary'))
 
-import codeInterface
+# Every domain has a codeInterface.py at its root, and a flat sys.path resolves all of them to
+# the same 'codeInterface' entry in sys.modules. The second domain to be imported in a single
+# pytest process silently receives the first domain's example, and its tests then pass while
+# testing the wrong file.
+#
+# Loading by explicit path under a domain-unique module name is the fix. It is the same problem the
+# libraries solve by naming their helper module thermalUtils rather than utils, and it has to be
+# solved again here because the example modules cannot be renamed without breaking the documented
+# 'python thermalManagement/codeInterface.py' entry point.
+
+def _loadExample():
+
+    specification = importlib.util.spec_from_file_location(
+        'thermalCodeInterface', os.path.join(DOMAIN, 'codeInterface.py'))
+
+    module = importlib.util.module_from_spec(specification)
+    sys.modules['thermalCodeInterface'] = module
+    specification.loader.exec_module(module)
+
+    return module
+
+codeInterface = _loadExample()
 
 @pytest.fixture(scope = 'module')
 def case():
@@ -189,6 +211,21 @@ def testRadiationToTheSinkCarriesMostOfTheResistance(transient):
 # ------------------------------------------------------------------------------------------------ #
 # -- The example runs end to end -- #
 # ------------------------------------------------------------------------------------------------ #
+
+def testTheExampleLoadedIsThisDomainsOwn():
+
+    '''
+    Guard on a real failure. Every domain has a codeInterface.py, a flat sys.path resolves them all
+    to one entry in sys.modules, and a plain `import codeInterface` in a second domain returns the
+    first domain's module. The tests then pass while asserting against the wrong example.
+
+    It was caught by a pytest collection error on the duplicate test basename rather than by
+    anything checking the import, which is luck. This checks it.
+    '''
+
+    assert os.path.abspath(codeInterface.__file__) == os.path.abspath(
+        os.path.join(DOMAIN, 'codeInterface.py'))
+
 
 def testTheExampleRunsWithoutRaising(capsys):
 
