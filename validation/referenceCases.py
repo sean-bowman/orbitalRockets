@@ -219,6 +219,62 @@ UNVALIDATED = {
                     'direction. The second is the current position and it is a position, not an '
                     'oversight.'},
 
+    'ignitionOverpressureBound': {
+        'domain': 'propulsion/ignitionAndStart',
+        'calculation': 'The constant-volume ignition overpressure, as accumulated mass over steady '
+                       'chamber gas mass',
+        'reason': 'Hard start pressure spikes are recorded on test stands and essentially never '
+                  'published with the geometry, the flow schedule and the ignition delay needed to '
+                  'reconstruct them. Nothing found states all four.',
+        'consequence': 'The bound is loose in a known direction and by an unknown amount. It '
+                       'assumes everything admitted is at the right mixture ratio, fully '
+                       'vaporised, burns to completion, and burns faster than the nozzle vents. '
+                       'None of those holds, so the absolute spike is an overestimate. What the '
+                       'sub-domain uses it for is the RANKING of ignition delays and start flow '
+                       'fractions, which is robust to all four assumptions because they scale '
+                       'every case the same way.',
+        'nextStep': 'A hot fire record with chamber geometry, measured ignition delay, the valve '
+                    'schedule and the recorded spike. Failing that, restrict every claim to the '
+                    'ranking, which is what the tests assert.'},
+
+    'igniterEnergy': {
+        'domain': 'propulsion/ignitionAndStart',
+        'calculation': 'The energy figures in IGNITER_TYPES',
+        'reason': 'Order of magnitude figures for what each device delivers, with no single '
+                  'sourced value found per type.',
+        'consequence': 'They must not be used to size an igniter. They exist to support the '
+                       'statement that every device on the list delivers far more than the '
+                       'minimum ignition energy of the mixture, which is the point being made, '
+                       'and no selection in this sub-domain depends on them.',
+        'nextStep': 'Either source delivered energy per device type or remove the numbers and keep '
+                    'the qualitative statement.'},
+
+    'shutdownImpulseScatter': {
+        'domain': 'propulsion/ignitionAndStart',
+        'calculation': 'The tailoff impulse efficiency of 0.5 and the run-to-run scatter of 15 per '
+                       'cent',
+        'reason': 'The dribble volume burns at a falling and badly controlled mixture ratio, in a '
+                  'collapsing chamber, through a separating nozzle. No published figure was found '
+                  'for either the efficiency or its repeatability.',
+        'consequence': 'The residual impulse magnitude moves directly with the first number. The '
+                       'conclusion the sub-domain draws does NOT: it is that the scatter rather '
+                       'than the magnitude reaches the trajectory, and that holds for any scatter '
+                       'that is not zero.',
+        'nextStep': 'Flight or stand data on cutoff impulse repeatability for a single engine '
+                    'type. This is measured routinely and rarely published.'},
+
+    'chillDownMeanSpecificHeat': {
+        'domain': 'propulsion/ignitionAndStart',
+        'calculation': 'MEAN_SPECIFIC_HEAT, the mean metal specific heat over the chill-down range',
+        'reason': 'Representative means over roughly 90 to 300 K rather than integrated from '
+                  'measured cp curves.',
+        'consequence': 'The chill-down mass scales linearly with them. They are deliberately not '
+                       'the room-temperature values in common/materials.py, which would overstate '
+                       'the stored enthalpy by roughly a third, and a test asserts they stay '
+                       'different so the correction is not undone by someone tidying up.',
+        'nextStep': 'Integrate NIST cryogenic specific heat curves over the range per material. '
+                    'This is tractable and simply has not been done.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -457,4 +513,78 @@ TURBOPUMPS = {
                 'chart says radial, and the real machine is axial. A rocket boost pump is axial '
                 'for cavitation reasons rather than for specific speed reasons, and reading the '
                 'industrial chart across gets it wrong.'},
+}
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Start and shutdown transients -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The RS-25 is the only large liquid engine whose start and shutdown sequences are published to the
+# hundredth of a second, which makes this the anchor for the whole ignitionAndStart sub-domain.
+#
+# Everything here is quoted from Biggs and nothing is inferred. The numbers themselves live in
+# ignitionUtils as SSME_START_SEQUENCE, SSME_SHUTDOWN_LIMITS and SSME_SEQUENCE_TOLERANCE; this entry
+# records where they came from and what they can and cannot validate.
+START_SEQUENCES = {
+
+    'RS-25': {
+        'source': 'Biggs, Space Shuttle Main Engine: The First Ten Years, part 3, Start and '
+                  'Shutdown. Originally presented at the Liquid Rocket Propulsion History '
+                  'Colloquium, AAS Annual Meeting, November 1989, published in History of Liquid '
+                  'Rocket Engine Development in the United States 1955-1980, AAS History Series '
+                  'volume 13, pages 69-122. Retrieved from enginehistory.org, accessed 09 August '
+                  '2026',
+        'kind': 'specification',
+        'level': 'hardware',
+
+        'timeToRatedPower':   5.0,       # [s]
+        'mainChamberPrime':   1.5,       # [s]
+        'primeSpacing':       0.1,       # [s], the three combustors prime about a tenth apart
+        'damagingTimingError': 0.1,      # [s]
+        'damagingValveError': 2.0,       # [per cent], and one per cent for the OPOV
+        'speedCheckTime':     1.25,      # [s]
+        'speedCheckThreshold': 4600.0,   # [rpm]
+
+        'thrustDecayLimit':   700.0e3,   # [lbf/s], an orbiter structural limit, not an engine one
+        'oxidiserCloseRate':  45.0,      # [per cent per second]
+        'boiloutSafeSpeed':   7000.0,    # [rpm]
+
+        'note': 'What this validates and what it does not. It validates that the sub-domain\'s '
+                'sequencing constants are the published ones, and it anchors the statement that '
+                'the design prime spacing and the damaging timing error are the same number, '
+                'which is the sub-domain\'s central claim about how little margin a start sequence '
+                'has. It does NOT validate the accumulation model, because the source gives no '
+                'ignition delay and no overpressure. A start sequence is a schedule; this '
+                'repository models the accumulation that a schedule controls, and the two meet '
+                'only qualitatively.',
+
+        'boundingUse': 'The thrust decay limit is a vehicle structural limit and it transfers to '
+                       'no other vehicle. It is carried as the one published example of a decay '
+                       'rate being owned by the airframe rather than the engine, which is the '
+                       'point the shutdown document makes.'},
+}
+
+# Hypergolic ignition delay, from drop test and impinging jet measurements at ambient conditions.
+#
+# Carried as a range rather than a value because the scatter between methods is larger than the
+# scatter within any one of them. The liquid phase induction time is tens of microseconds; the
+# observed delay is milliseconds, and the difference is physical transport and heat transfer, which
+# is why the delay depends on the injector rather than only on the chemistry.
+IGNITION_DELAYS = {
+
+    'MMH/NTO': {
+        'source': 'Comparative reviews of conventional and green hypergolic propellant ignition '
+                  'delays at ambient conditions, drop test and impinging jet methods; searched 09 '
+                  'August 2026',
+        'kind': 'measured',
+        'level': 'standard',
+        'lower': 1.0,     # [ms]
+        'upper': 5.0,     # [ms]
+        'representative': 1.45,   # [ms], a commonly cited controlled drop test value
+        'note': 'The primary source was not directly retrievable and the values are taken from a '
+                'search summary of it, which is weaker than the RS-25 sequence above and is '
+                'recorded as such. The sub-domain uses the range to bound the permitted start '
+                'flow, and that use is insensitive to which end of the range is taken because the '
+                'competing case, a spark igniter at tens of milliseconds, is an order of magnitude '
+                'away.'},
 }

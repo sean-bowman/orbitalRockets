@@ -65,7 +65,7 @@ All classes follow the repository interface: `setInputs()`, `calculate*()` or `s
 | [turbomachinery](turbomachinery/) | Pumps, turbines, inducers, cavitation, shaft dynamics | scaffolded |
 | [engineCycles](engineCycles/) | Gas generator, staged combustion, expander, pressure-fed, power balance | scaffolded |
 | [nozzles](nozzles/) | Performance, area ratio, thrust coefficient, altitude compensation | scaffolded |
-| [ignitionAndStart](ignitionAndStart/) | Igniters, start and shutdown transients, chill-in, purge | scaffolded |
+| [ignitionAndStart](ignitionAndStart/) | Igniters, start and shutdown transients, chill-in, purge | **complete** |
 | [propulsionTesting](propulsionTesting/) | Hot fire campaigns, test stands, instrumentation, data reduction | scaffolded |
 
 ---

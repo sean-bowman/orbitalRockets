@@ -5,7 +5,7 @@
 The master list of what is built and what is not, kept current as the repository is populated.
 
 **Last updated:** 09 August 2026, at commit `65ad69d`.
-**Repository totals:** 329 markdown documents, 870 passing tests, 6 domains complete of 16, plus the propulsion hub, combustionDevices, turbomachinery, engineCycles and nozzles. Seven areas validated at hardware level and one at standard level.
+**Repository totals:** 335 markdown documents, 933 passing tests, 6 domains complete of 16, plus the propulsion hub and five of its six sub-domains: combustionDevices, turbomachinery, engineCycles, nozzles and ignitionAndStart. Eight areas validated at hardware level and two at standard level.
 
 ---
 
@@ -146,7 +146,7 @@ physics one. Both are still listed as outstanding rather than closed.
 | [turbomachinery](propulsion/turbomachinery/) | Full | **done** | **done** | **done** | **done**, **hardware validated** |
 | [engineCycles](propulsion/engineCycles/) | Full | **done** | **done** | **done** | **done**, **hardware validated** |
 | [nozzles](propulsion/nozzles/) | Full | **done** | **done** | **done** | **done**, bounded |
-| [ignitionAndStart](propulsion/ignitionAndStart/) | Full | not started | not started | not started | not started |
+| [ignitionAndStart](propulsion/ignitionAndStart/) | Full | **done** | **done** | **done** | **done**, one hardware source and four gaps |
 | [propulsionTesting](propulsion/propulsionTesting/) | Light | not started | not started | not started | not started |
 
 **Nozzle contour generation for manufacture stays out of this repository, and the boundary is fidelity rather than subject.** The NOVA suite generates method of characteristics contours and cooling channel geometry, and reimplementing that here would create a second implementation with nothing enforcing agreement between them.

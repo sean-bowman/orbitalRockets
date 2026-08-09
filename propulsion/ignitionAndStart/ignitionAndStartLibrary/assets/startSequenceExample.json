@@ -1,0 +1,51 @@
+{
+  "caseName": "The 100 kN booster taken through its start and shutdown transients, against the published RS-25 sequence",
+  "linkedCase": "boosterChamberExample",
+  "linkedCaseNote": "The chamber pressure, throat area, flow rates and chamber volume are the propulsion hub's design point as built out by combustionDevices. Restated here so the example runs standalone; a cross-domain test asserts the residence time still matches what combustionDevices computes.",
+
+  "engine": {
+    "combination": "LOX/RP-1",
+    "thrust": 100000.0,
+    "chamberPressure": 10.0e6,
+    "throatDiameter": 0.0906,
+    "oxidiserFlow": 26.47,
+    "fuelFlow": 10.34,
+    "startsRequired": 1,
+    "startsRequiredNote": "A first stage booster lights once. The restart case is run as a comparison because it changes the igniter answer completely."
+  },
+
+  "feed": {
+    "_comment": "Liquid volume downstream of the main propellant valves, which has to be primed at start and arrives in the chamber at shutdown whatever the controller does. Representative for a booster with the valves close-coupled to the injector; it is an assumption and it is registered as such.",
+    "volume": 0.008,
+    "volumeNote": "8 litres between the main valves and the injector face"
+  },
+
+  "conditioning": {
+    "_comment": "The wetted metal mass on the oxidiser side: the line, the valve, the pump and the injector manifold. LOX is the only cryogen in this engine; RP-1 is stored at ambient and needs no conditioning, which is half of why kerosene boosters are operationally simpler.",
+    "material": "stainless 304",
+    "metalMass": 45.0,
+    "cryogens": ["LOX", "LCH4", "LH2"]
+  },
+
+  "sequence": {
+    "_comment": "A candidate start sequence for this engine, in seconds from the start command. Checked for ordering and for spacing against the RS-25 tolerance.",
+    "fuelValveOpen": 0.00,
+    "igniterFire": 0.30,
+    "oxidiserValveCrack": 0.45,
+    "chamberPrime": 0.90,
+    "mainstage": 1.60
+  },
+
+  "shutdown": {
+    "_comment": "Oxidiser leads the fuel closed, so the transient runs fuel-rich. The lead is compared against the RS-25's one second hold.",
+    "oxidiserCloseTime": 0.00,
+    "fuelCloseTime": 1.20
+  },
+
+  "ignitionDelays": {
+    "_comment": "The delay cases compared, in seconds. 'hypergolic slug' is what a TEA-TEB cartridge achieves; the spark cases bracket what a torch igniter does on a cold engine.",
+    "hypergolic slug": 0.003,
+    "spark, prompt": 0.020,
+    "spark, cold and marginal": 0.050
+  }
+}
