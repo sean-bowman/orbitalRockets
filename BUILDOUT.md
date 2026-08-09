@@ -32,6 +32,7 @@ Four stages, in this order. Library before documents, so that every number a doc
 | **2** | `codeInterface.py` worked example, driven by a JSON asset | Runs end to end, numbers verified, example tests written |
 | **3** | Documents, written against stage 2 numbers | Every numeric claim produced by code, every snippet executes |
 | **4** | Verification, README status, commit, push | Links resolve, no dashes, snippets run, full suite green |
+| **5** | Validation against published hardware | At least one external reference case, or an entry in the unvalidated register saying why not |
 
 ### Three naming rules, all from the same cause
 
@@ -44,6 +45,23 @@ A flat `sys.path` resolves identically named modules in different domains to one
 **`codeInterface.py` must be loaded by explicit path, never by `import codeInterface`.** Every domain has one at its root and they cannot be renamed without breaking the documented `python <domain>/codeInterface.py` entry point, so the fix belongs at the import rather than the file. Load it with `importlib.util.spec_from_file_location` under a domain-unique module name.
 
 That last one is the dangerous member of the family, because it fails silently rather than loudly: a second domain's example tests pass while asserting against the first domain's module. Both worked-example test files carry a `testTheExampleLoadedIsThisDomainsOwn` guard, and every new domain should copy it.
+
+### Stage 5 exists because stage 4 does not catch a wrong model
+
+Stages 1 to 4 check that the code does what it was written to do. They do not check whether what it
+was written to do is right, and 666 passing tests did not catch a placeholder heat flux that was
+wrong by a factor of three and had a document written against its conclusion.
+
+Every domain must therefore compare at least one result against something published for real
+hardware, or record in [validation/referenceCases.py](validation/referenceCases.py) why it cannot.
+The methodology, and the rule that no reference may be adjusted to make a test pass, are in
+[validation/README.md](validation/README.md).
+
+**The hard part is not finding a reference, it is establishing that it is the same quantity.** The
+propulsion library models a thrust chamber; a published engine specific impulse is a whole-engine
+figure that includes the cycle. RS-25 is closed cycle and validates the library to 1.7 per cent.
+F-1 is open cycle and disagrees by 8.1 per cent, and is kept in the reference set precisely because
+it marks the boundary of what the library covers.
 
 ---
 
@@ -80,14 +98,19 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 
 ## Complete
 
-| Domain | Depth | Docs | Classes | Worked example |
+| Domain | Depth | Docs | Classes | Stage 5 validation |
 |---|---|---|---|---|
-| [fluidSystems](fluidSystems/) | Full | 24 | 17 | Hydrazine monopropellant feed system |
-| [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | Full | 17 | 8 | Test campaign from concept to flight acceptance |
-| [aerospaceMaterials](aerospaceMaterials/) | Full | 18 | 8 | Helium pressurant bottle, allowables to design value |
-| [aerospaceStructures](aerospaceStructures/) | Full | 15 | 9 | Tank and thrust structure sizing |
-| [environmentsAndLoads](environmentsAndLoads/) | Full | 13 | 6 | Component environment derived from flight data |
-| [thermalManagement](thermalManagement/) | Full | 12 | 6 | Ascent heat pulse through TPS into avionics soakback |
+| [fluidSystems](fluidSystems/) | Full | 24 | 17 | **outstanding** |
+| [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | Full | 17 | 8 | **outstanding** |
+| [aerospaceMaterials](aerospaceMaterials/) | Full | 18 | 8 | partial, against MMPDS through `common/materials.py` |
+| [aerospaceStructures](aerospaceStructures/) | Full | 15 | 9 | **outstanding** |
+| [environmentsAndLoads](environmentsAndLoads/) | Full | 13 | 6 | **outstanding** |
+| [thermalManagement](thermalManagement/) | Full | 12 | 6 | **outstanding** |
+
+**The six completed domains predate stage 5 and none of them is validated against published
+hardware.** That is the largest single piece of outstanding work in the repository and it is not
+optional: a domain that has only been checked against itself has not been checked. The retrofit
+order is below.
 
 ### aerospaceMaterials sub-domains
 
@@ -110,13 +133,13 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 
 | Domain | Depth | Stage 1 | Stage 2 | Stage 3 | Stage 4 |
 |---|---|---|---|---|---|
-| [propulsion](propulsion/) hub | Full | **done** | **done** | **done** | **done** |
+| [propulsion](propulsion/) hub | Full | **done** | **done** | **done** | **done**, and **validated** against RS-25 |
 
 ### propulsion sub-domains
 
 | Sub-domain | Depth | Stage 1 | Stage 2 | Stage 3 | Stage 4 |
 |---|---|---|---|---|---|
-| [combustionDevices](propulsion/combustionDevices/) | Full | not started | not started | not started | not started |
+| [combustionDevices](propulsion/combustionDevices/) | Full | **done** | not started | not started | not started |
 | [turbomachinery](propulsion/turbomachinery/) | Full | not started | not started | not started | not started |
 | [engineCycles](propulsion/engineCycles/) | Full | not started | not started | not started | not started |
 | [nozzles](propulsion/nozzles/) | Full | not started | not started | not started | not started |
@@ -154,6 +177,27 @@ README and `objectives.md` only. No `docs/`, no `tests/`, no library, and not ye
 
 ---
 
+## Validation retrofit, outstanding
+
+Six domains were completed before stage 5 existed. Each needs at least one comparison against
+published hardware, in this order, chosen by how much downstream work depends on the domain being
+right.
+
+| Order | Domain | Candidate reference |
+|---|---|---|
+| 1 | [aerospaceStructures](aerospaceStructures/) | NASA SP-8007 shell buckling test correlation data, which is the basis of the knockdown factor already implemented |
+| 2 | [thermalManagement](thermalManagement/) | A published spacecraft thermal balance case, or the Stefan-Boltzmann equilibrium of a known coated surface |
+| 3 | [fluidSystems](fluidSystems/) | Crane TP-410 worked examples for line pressure drop, and REFPROP as ground truth for properties |
+| 4 | [environmentsAndLoads](environmentsAndLoads/) | A published qualification specification, GEVS or a launch vehicle user guide, against a derived level |
+| 5 | [aerospaceMaterials](aerospaceMaterials/) | Extend the existing MMPDS seed agreement into a real allowables comparison with published k-factors |
+| 6 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | Lowest priority: the domain is process rather than physics and has less to get numerically wrong |
+
+**aerospaceStructures is first** because shell buckling knockdowns are the single most consequential
+empirical factor in the repository, they are used by more than one domain, and SP-8007 carries the
+scatter data the knockdown was fitted to.
+
+---
+
 ## Repository wide verification
 
 Run before every commit that touches documents.
@@ -167,6 +211,7 @@ Run before every commit that touches documents.
 | Snippet execution | Every documented python fence, run in a subprocess |
 | Worked example run | That the example still produces the numbers its documents cite |
 | Cross-domain drift tests | Tables duplicated across domains, read with `ast` rather than imported |
+| Validation against published hardware | A model that is wrong in a way internal consistency cannot see |
 
 **Every numeric claim in a document has to be produced by running code.** That rule has caught more errors than every other check combined, including twenty seven broken snippets in `aerospaceMaterials` that only failed when executed.
 
