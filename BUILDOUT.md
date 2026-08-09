@@ -4,7 +4,7 @@
 
 The master list of what is built and what is not, kept current as the repository is populated.
 
-**Last updated:** 09 August 2026, at commit `65ad69d`.
+**Last updated:** 09 August 2026, at commit `ee7fb9c`.
 **Repository totals:** 335 markdown documents, 933 passing tests, 6 domains complete of 16, plus the propulsion hub and five of its six sub-domains: combustionDevices, turbomachinery, engineCycles, nozzles and ignitionAndStart. Eight areas validated at hardware level and two at standard level.
 
 ---
