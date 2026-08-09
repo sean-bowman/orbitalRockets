@@ -68,6 +68,15 @@ MAXIMUM_ORIFICE_DIAMETER = 2.0e-3    # [m]
 # ratio that was chosen for the wall rather than for performance.
 TYPICAL_FILM_FRACTION = 0.05    # [-]
 
+# The c* efficiency penalty per unit of film fraction. Film propellant is not simply lost: it burns
+# partly, at a mixture ratio chosen for the wall rather than for impulse. The loss is therefore a
+# fraction of the diverted flow.
+#
+# These bounds are an estimate and are registered as unvalidated. They exist to stop the penalty
+# being stated as equal to the film fraction, which overstates it by two to three times.
+FILM_EFFICIENCY_PENALTY_LOWER = 0.30    # [-]
+FILM_EFFICIENCY_PENALTY_UPPER = 0.50    # [-]
+
 # ------------------------------------------------------------------------------------------------ #
 # -- Injector -- #
 # ------------------------------------------------------------------------------------------------ #
@@ -392,16 +401,32 @@ class Injector:
         coreRatio    = self.oxidiserFlow / coreFuel
         overallRatio = self.oxidiserFlow / self.fuelFlow
 
-        efficiencyLoss = self.filmFraction
+        # The c* penalty is NOT the film fraction. Film propellant partly burns, so the loss is a
+        # fraction of the diverted flow rather than all of it. Commonly quoted as 0.3 to 0.5 times
+        # the film fraction, and that range is an estimate rather than a sourced value, so both
+        # ends are reported instead of a single number.
+        #
+        # An earlier version of this class asserted the loss equalled the film fraction. That is the
+        # pessimistic end of the range stated as a value, and it overstated the penalty by two to
+        # three times.
+        lowerLoss = FILM_EFFICIENCY_PENALTY_LOWER * self.filmFraction
+        upperLoss = FILM_EFFICIENCY_PENALTY_UPPER * self.filmFraction
+
+        efficiencyLoss = 0.5 * (lowerLoss + upperLoss)
 
         findings.append(
             f'{self.filmFraction:.0%} of the fuel to the outer row lifts the core mixture ratio '
             f'from {overallRatio:.2f} to {coreRatio:.2f}.')
 
         findings.append(
-            f'The c* efficiency cost is roughly {efficiencyLoss:.0%}, because that propellant '
-            f'burns at a ratio chosen for the wall rather than for impulse. It is bought back in '
-            f'not having to replace the chamber.')
+            f'The c* efficiency cost is {lowerLoss:.1%} to {upperLoss:.1%}, because the diverted '
+            f'propellant burns at a ratio chosen for the wall rather than for impulse and only '
+            f'partly burns at all. It is bought back in not having to replace the chamber.')
+
+        findings.append(
+            'That range is an estimate rather than a sourced value and it is recorded as '
+            'unvalidated. The loss is not the film fraction itself, which is a common '
+            'overstatement by a factor of two to three.')
 
         if not compatible:
             findings.append(
@@ -422,6 +447,8 @@ class Injector:
 
         return {'wallCompatible':  compatible,
                 'filmFraction':    self.filmFraction,
+                'efficiencyLossLower': lowerLoss,
+                'efficiencyLossUpper': upperLoss,
                 'coreMixtureRatio': coreRatio,
                 'overallMixtureRatio': overallRatio,
                 'efficiencyLoss':  efficiencyLoss,

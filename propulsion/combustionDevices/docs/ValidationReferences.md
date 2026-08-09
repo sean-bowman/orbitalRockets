@@ -44,6 +44,20 @@ changing with it. The methodology is in [validation/README.md](../../../validati
   - The coolant path is described but neither the heat load nor the coolant temperature rise is given
   - **The search did not produce a validation case.** Published engine data commonly gives coolant flow and channel counts and rarely the heat load
 
+## Measured throat heat flux, open literature survey
+
+- **URL:** <https://www.sciencedirect.com/science/article/pii/S0094576521001417> and the accompanying dataset at <https://www.sciencedirect.com/science/article/pii/S2352340921004571>
+- **Accessed:** 08 August 2026
+- **Validation level:** Hardware, but bounding only. A range rather than a case to reproduce
+- **Relevance:** The nearest anchor found for the heat transfer side. It cannot validate the integrated heat load, which is what actually matters here, but it can bound the peak throat flux the integration is built on.
+- **Key findings:**
+  - Pizzarelli et al. survey roughly 500 experimental points on throat heat transfer from hot-fire tests
+  - Individual reported values surfaced alongside it: 54 MW/m^2 at the throat at 41.4 bar and a mixture ratio of 6.0, and 18 MW/m^2 as a maximum in another campaign
+  - The library computes 52.1 MW/m^2 for the reference engine, which sits **inside** that band and at 95 per cent of the way up it
+  - Sitting near the top is consistent with the documented tendency of Bartz to overpredict
+  - **The limit of this check:** the band spans a factor of three across different propellants, scales and pressures. It would catch an order-of-magnitude error and would not catch the factor of three that made this directory necessary
+  - The full dataset was not retrievable, so this is a range rather than a distribution
+
 ---
 
 ## What is not validated

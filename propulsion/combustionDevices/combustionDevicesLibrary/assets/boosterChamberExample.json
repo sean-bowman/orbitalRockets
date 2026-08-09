@@ -1,0 +1,53 @@
+{
+  "caseName": "The 100 kN booster chamber handed over by the propulsion hub, taken through heat load, cooling closure and the film cooling that makes it possible",
+  "linkedCase": "firstStageEngineExample",
+  "linkedCaseNote": "Every geometry and flow rate below is an output of propulsion/codeInterface.py at its design point, an area ratio of 20.35. They are restated here rather than imported so this example runs standalone, and a cross-domain test asserts they still match.",
+
+  "inherited": {
+    "_comment": "From the propulsion hub worked example. hubHeatLoadPlaceholder is what the hub computed from its stated placeholder and is carried here specifically so the replacement is visible.",
+    "combination": "LOX/RP-1",
+    "thrust": 100000.0,
+    "specificImpulse": 277.0,
+    "chamberPressure": 10.0e6,
+    "throatDiameter": 0.0906,
+    "contractionRatio": 2.5,
+    "areaRatio": 20.35,
+    "barrelLength": 0.4091,
+    "convergentLength": 0.0456,
+    "divergentLength": 0.475,
+    "oxidiserFlow": 26.47,
+    "fuelFlow": 10.34,
+    "hubHeatLoadPlaceholder": 2.72e6,
+    "hubPlaceholderFraction": 0.02
+  },
+
+  "wall": {
+    "_comment": "A copper alloy liner is the only realistic choice at this flux. The gas-side temperature is an input rather than an output because Bartz is implicit in it, and 800 K is the GRCop-42 limit.",
+    "material": "GRCop-42",
+    "thickness": 0.001,
+    "gasSideTemperature": 800.0
+  },
+
+  "film": {
+    "_comment": "Effectiveness is the fraction of wall heat load removed per unit film fraction. Four is a representative figure for a hydrocarbon film on a copper wall and it is an ASSUMPTION, not a sourced value. The trade below moves with it, and it is registered as unvalidated.",
+    "effectiveness": 4.0,
+    "fractionsTried": [0.02, 0.05, 0.08, 0.10, 0.15]
+  },
+
+  "injector": {
+    "_comment": "An unlike impinging doublet core, which is the workhorse and is not wall tolerant. The outer row would be a different element, which is why the film fraction exists at all.",
+    "elementType": "unlike impinging doublet",
+    "elementCount": 160,
+    "stiffness": 0.20
+  },
+
+  "stability": {
+    "_comment": "Six blades cover tangential modes to third order and do nothing to radial ones, which is the point the stability stage makes.",
+    "baffleBlades": 6
+  },
+
+  "validation": {
+    "_comment": "The measured throat heat flux band from the open literature, used to bound the Bartz result. See validation/referenceCases.py, THROAT_HEAT_FLUX. It is a bound and not a validation.",
+    "measuredThroatFluxBand": [18.0, 54.0]
+  }
+}

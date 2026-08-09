@@ -171,6 +171,20 @@ UNVALIDATED = {
         'nextStep': 'Either source real c* efficiency data per element type or remove the numbers '
                     'and keep the ordering.'},
 
+    'filmCoolingPenalty': {
+        'domain': 'propulsion/combustionDevices',
+        'calculation': 'The c* efficiency penalty per unit film fraction, 0.3 to 0.5',
+        'reason': 'A commonly quoted range with no single sourced value found. The real penalty '
+                  'depends on how much of the film propellant reaches the core and burns, which '
+                  'depends on the element pattern and the chamber length.',
+        'consequence': 'The worked example trades film fraction against cooling closure, and the '
+                       'trade moves with this number. An earlier version of the Injector class '
+                       'asserted the penalty equalled the film fraction, which is the pessimistic '
+                       'end of the range stated as a value and overstates it by two to three '
+                       'times.',
+        'nextStep': 'Hot fire data relating measured c* efficiency to film fraction on a single '
+                    'chamber.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -325,4 +339,35 @@ FLUID_RELATIONS = {
         'note': 'The property backend is itself the external reference, which is why this domain '
                 'started ahead of the others. The check is that the repository calls it correctly '
                 'rather than that the equation of state is right.'},
+}
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Measured throat heat flux -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The nearest thing to an anchor found for the heat transfer side. Not a single case to reproduce,
+# but a measured range that a computed peak flux has to fall inside to be credible.
+#
+# This is a bounding check rather than a validation. It can catch a result that is wrong by an order
+# of magnitude and it cannot catch one that is wrong by fifty per cent, which is roughly the size of
+# the disagreement that started this directory.
+THROAT_HEAT_FLUX = {
+
+    'measured range, open literature': {
+        'source': 'Pizzarelli et al., Overview and analysis of the experimentally measured throat '
+                  'heat transfer in liquid rocket engine thrust chambers, Acta Astronautica 184 '
+                  '(2021) 46, and the accompanying dataset in Data in Brief; plus individual test '
+                  'campaign values surfaced alongside it. Accessed 08 August 2026',
+        'kind': 'measured',
+        'level': 'hardware',
+        'lower': 18.0e6,    # [W/m^2]
+        'upper': 54.0e6,    # [W/m^2]
+        'anchorPoint': {'flux': 54.0e6, 'chamberPressure': 41.4e5, 'mixtureRatio': 6.0,
+                        'note': 'a specific test configuration, hydrogen at 41.4 bar'},
+        'note': 'The survey collects roughly 500 experimental points from hot-fire tests. The band '
+                'quoted here spans individual reported values: 18 MW/m^2 as a maximum in one '
+                'campaign, 54 MW/m^2 at the throat in another at 41.4 bar and a mixture ratio of '
+                '6.0. The full dataset was not retrievable, so this is the range rather than a '
+                'distribution, and the two endpoints are different propellants at different scales '
+                'and pressures. Use it to bound, not to validate.'},
 }
