@@ -4,7 +4,7 @@
 
 The master list of what is built and what is not, kept current as the repository is populated.
 
-**Last updated:** 09 August 2026, at commit `11795d6`.
+**Last updated:** 09 August 2026, at commit `4a64d50`.
 **Repository totals:** 356 markdown documents, 1044 passing tests, 8 domains complete of 16. **propulsion and vehicleArchitecture are finished.** Ten areas validated at hardware level and two at standard level.
 
 ---
