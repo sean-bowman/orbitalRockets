@@ -412,6 +412,48 @@ UNVALIDATED = {
                     'coefficient within a lot. The second is what decides whether the statistical '
                     'model is usable at all.'},
 
+    'wireAmpacity': {
+        'domain': 'electricalPower',
+        'calculation': 'SINGLE_WIRE_AMPACITY, BUNDLE_DERATING and ALTITUDE_DERATING',
+        'reason': 'AS50881 gives these as curves rather than tables and the standard is not '
+                  'openly available. The values here are consistent with common practice and are '
+                  'not read from it.',
+        'consequence': 'The ampacity-limited gauge moves with them. The conclusion the domain '
+                       'draws does NOT: that voltage drop rather than ampacity chooses the gauge '
+                       'on a launch vehicle harness is a resistance calculation, and the AWG '
+                       'resistance is exact. The derating would have to be wrong by several gauge '
+                       'steps to change which constraint binds.',
+        'nextStep': 'Obtain AS50881 and carry its curves with the citation. The bundle derating is '
+                    'the larger of the two effects and the one worth getting first.'},
+
+    'batteryDerating': {
+        'domain': 'electricalPower',
+        'calculation': 'DEPTH_OF_DISCHARGE, TEMPERATURE_CAPACITY_FACTOR, PACK_FRACTION and the '
+                       'BATTERY_CHEMISTRIES specific energies',
+        'reason': 'Representative values across a chemistry class rather than a specific cell '
+                  'datasheet. Real capacity against temperature is a measured curve per part '
+                  'number, and pack fraction depends on the mechanical and thermal design.',
+        'consequence': 'The pack mass scales with all of them. The structural result does not: '
+                       'that the nameplate is close to twice the energy delivered once depth of '
+                       'discharge and cold multiply, and that neither factor is a margin, holds '
+                       'for any plausible values.',
+        'nextStep': 'A cell datasheet for the actual part, which turns every one of these into a '
+                    'measured curve. This is the most tractable gap in the domain because the '
+                    'data is published by every cell manufacturer.'},
+
+    'harnessRoutingAllowance': {
+        'domain': 'electricalPower',
+        'calculation': 'ROUTING_ALLOWANCE, INSULATION_MASS_FACTOR and the connector masses',
+        'reason': 'Representative. Real routed length depends on the structure, and insulation '
+                  'mass depends on the wire specification and the wall thickness.',
+        'consequence': 'The harness mass scales with them, and harness mass is reliably '
+                       'underestimated. The domain argues that counting runs and connectors beats '
+                       'taking a fraction of dry mass, and that argument is about the METHOD '
+                       'rather than about these numbers: a counted estimate with imperfect factors '
+                       'converges and a fractional one does not.',
+        'nextStep': 'Measure a real harness. This is the one gap in the repository that could be '
+                    'closed with a set of scales.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -906,4 +948,55 @@ MECHANISM_STANDARDS = {
                        'only. The standard excludes incidental, unreliable and uncharacterised '
                        'contributors such as joint friction, harness bending and blanket rubbing, '
                        'which is the opposite of what a conservative analyst might assume.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Wire gauge -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The American Wire Gauge definition, which is exact rather than tabulated.
+#
+# 36 AWG is exactly 0.005 inches and each gauge step multiplies the diameter by the 39th root of 92.
+# Combined with the standard copper resistivity that makes every wire resistance in the
+# electricalPower library a computed quantity, and it reproduces published resistance tables to
+# four figures across the whole range.
+#
+# This is one of very few places in this repository where a validation is exact rather than
+# bounded, and it is worth having for that reason: it anchors the voltage drop calculation, which
+# is the calculation the domain's central result rests on.
+WIRE_GAUGE = {
+
+    'AWG definition': {
+        'source': 'The American Wire Gauge definition, and the standard annealed copper '
+                  'resistivity of 1.724e-8 ohm m at 20 C. Both are long-established standard '
+                  'values rather than a single retrievable document',
+        'kind': 'specification',
+        'level': 'standard',
+
+        'referenceGauge':    36,
+        'referenceDiameter': 0.127e-3,     # [m], 0.005 inches exactly
+        'ratio':             92.0,
+        'steps':             39.0,
+        'copperResistivity': 1.724e-8,     # [ohm m] at 20 C
+
+        # published resistance per kilometre at 20 C, for the computed values to reproduce
+        'publishedResistance': {
+            10: 3.277,     # [ohm/km]
+            12: 5.211,
+            14: 8.286,
+            16: 13.17,
+            18: 20.95,
+            20: 33.31,
+            22: 52.96,
+            24: 84.22,
+        },
+
+        'note': 'The computed values reproduce these to four significant figures, which is the '
+                'tightest agreement anywhere in this repository. That matters because the '
+                'electricalPower domain concludes that voltage drop rather than ampacity chooses '
+                'the wire gauge on a launch vehicle, and voltage drop is a pure resistance '
+                'calculation: the exact half of the comparison is the half the conclusion rests '
+                'on, and the representative half, ampacity, would have to be wrong by several '
+                'gauge steps to overturn it.'},
 }

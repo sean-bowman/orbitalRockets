@@ -12,6 +12,9 @@ Date:   08/06/2026
 
 '''
 
-from utils import *
+from powerUtils import *
 
-# Add component modules here as they are created
+from PowerBudget import PowerBudget
+from Battery import Battery
+from HarnessSizing import HarnessSizing
+from SolenoidDrive import SolenoidDrive

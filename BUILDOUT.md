@@ -5,7 +5,7 @@
 The master list of what is built and what is not, kept current as the repository is populated.
 
 **Last updated:** 09 August 2026, at commit `1b9dc1a`.
-**Repository totals:** 368 markdown documents, 1105 passing tests, 9 domains complete of 16. Ten areas validated at hardware level and three at standard level.
+**Repository totals:** 380 markdown documents, 1166 passing tests, 10 domains complete of 16. Ten areas validated at hardware level and four at standard level.
 
 ---
 
@@ -87,7 +87,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 1. ~~`propulsion` and its six sub-domains~~ **done**
 2. ~~`vehicleArchitecture`~~ **done**
 3. ~~`mechanismsAndSeparation`~~ **done**
-4. `electricalPower`
+4. ~~`electricalPower`~~ **done**
 5. `avionicsAndGNC`
 6. `groundSystemsAndOperations`
 7. `recoveryAndReusability`
@@ -109,6 +109,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [thermalManagement](thermalManagement/) | Full | 13 | 6 | **hardware**, Stefan-Boltzmann and solar constant |
 | [vehicleArchitecture](vehicleArchitecture/) | Full | 14 | 4 | **hardware**, Falcon 9 Block 5 stage masses |
 | [mechanismsAndSeparation](mechanismsAndSeparation/) | Full | 12 | 5 | **standard**, NASA-STD-5017B read in full |
+| [electricalPower](electricalPower/) | Full | 12 | 4 | **standard**, the AWG definition, exact to four figures |
 
 **Four of the six now reach hardware level and one reaches standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
@@ -137,7 +138,7 @@ physics one. Both are still listed as outstanding rather than closed.
 
 ## In progress
 
-Nothing. The next domain in the build order is [electricalPower](electricalPower/).
+Nothing. The next domain in the build order is [avionicsAndGNC](avionicsAndGNC/), which needs a scaffold first.
 
 ### A naming rule the scaffold does not follow
 
@@ -176,7 +177,6 @@ These have a `utils.py` bootstrap stub, an empty `docs/`, an empty `tests/`, and
 
 | Domain | Planned depth | Why that depth |
 |---|---|---|
-| [electricalPower](electricalPower/) | Full | Battery sizing, harness voltage drop, load profiles and grounding topology all compute |
 | [recoveryAndReusability](recoveryAndReusability/) | Full | Entry ballistic coefficient, parachute sizing, propulsive landing budgets, and life tracking against the fatigue work already in structures |
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Light | FMECA and fault trees are process. The computable part is reliability allocation, redundancy arithmetic and confidence from test counts, which is a small library |
 

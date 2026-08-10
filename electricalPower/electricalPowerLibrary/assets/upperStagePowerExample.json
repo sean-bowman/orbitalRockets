@@ -1,0 +1,73 @@
+{
+  "caseName": "An upper stage electrical system: the heater that dominates the energy, the wire that voltage drop sizes, and the valve drive that gives three quarters of it back",
+  "linkedCase": "hydrazineMonoprop100N",
+  "linkedCaseNote": "The heater load and the valve count come from the fluidSystems hydrazine monopropellant case. Restated here so the example runs standalone; the coupling is that a fluid system full of solenoid valves, heaters and transducers is an electrical system.",
+
+  "bus": {
+    "voltage": 28.0,
+    "voltageNote": "28 V is the launch vehicle default. The example also sweeps it, because bus voltage is the one architecture decision that moves harness mass quadratically."
+  },
+
+  "phases": [
+    {"name": "pad hold",   "duration": 7200.0, "note": "Two hours on internal power before launch, cold soaked."},
+    {"name": "ascent",     "duration": 540.0,  "note": "Nine minutes to orbit."},
+    {"name": "coast",      "duration": 3600.0, "note": "One hour coast before the circularisation burn."},
+    {"name": "burn",       "duration": 60.0,   "note": "The circularisation burn itself."}
+  ],
+
+  "loads": [
+    {"name": "propellant line heaters", "power": 42.0,
+     "dutyCycle": {"pad hold": 0.35, "ascent": 0.40, "coast": 0.60, "burn": 0.20},
+     "note": "Keeping hydrazine above its 2 C freezing point. The duty cycle is a thermal assumption rather than an electrical one, and it is the least examined number in the budget."},
+
+    {"name": "avionics",   "power": 35.0,
+     "dutyCycle": {"pad hold": 1.0, "ascent": 1.0, "coast": 1.0, "burn": 1.0}},
+
+    {"name": "telemetry",  "power": 22.0,
+     "dutyCycle": {"pad hold": 1.0, "ascent": 1.0, "coast": 1.0, "burn": 1.0}},
+
+    {"name": "valve drive", "power": 53.0,
+     "dutyCycle": {"pad hold": 0.0, "ascent": 0.02, "coast": 0.0, "burn": 1.0},
+     "note": "Four solenoid valves driven continuously. The example shows what peak and hold does to this line."},
+
+    {"name": "thrust vector actuators", "power": 180.0,
+     "dutyCycle": {"pad hold": 0.0, "ascent": 0.15, "coast": 0.0, "burn": 0.30},
+     "note": "The peak driver, and not the energy driver."},
+
+    {"name": "pyro bus", "power": 120.0,
+     "dutyCycle": {"pad hold": 0.0, "ascent": 0.001, "coast": 0.0, "burn": 0.0},
+     "note": "Two NSI initiators fired in parallel. Large power for milliseconds, so it sizes nothing."}
+  ],
+
+  "battery": {
+    "chemistry": "lithium ion",
+    "temperature": -20.0,
+    "temperatureNote": "Cold soaked on the pad. This is the case that decides the capacity, not the flight temperature.",
+    "cycleClass": "single use",
+    "energyMargin": 0.25
+  },
+
+  "harness": {
+    "_comment": "A representative run from the power distribution unit to a load at the far end of the stage. The bundle size and altitude are what turn a free-air ampacity into a real one.",
+    "current": 3.0,
+    "length": 12.0,
+    "bundleSize": 15,
+    "altitude": 30000.0,
+    "runs": [
+      {"gauge": 14, "length": 12.0, "count": 2,  "note": "Main bus feed, out and return."},
+      {"gauge": 20, "length": 9.0,  "count": 24, "note": "Valve and heater drive."},
+      {"gauge": 24, "length": 14.0, "count": 48, "note": "Instrumentation and signals."}
+    ],
+    "connectors": {"circular, 8 way": 12, "circular, 19 way": 6, "circular, 37 way": 4, "power, 4 way": 3}
+  },
+
+  "solenoid": {
+    "_comment": "One of the four propellant valves. The coil resistance is quoted at 20 C and the hot case is what the design has to work at.",
+    "coilResistance": 45.0,
+    "coilInductance": 0.12,
+    "coilTemperature": 100.0,
+    "holdFraction": 0.50,
+    "openDuration": 60.0,
+    "valveCount": 4
+  }
+}
