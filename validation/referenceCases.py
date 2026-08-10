@@ -365,6 +365,53 @@ UNVALIDATED = {
         'nextStep': 'Obtain AIAA S-120 or the ANSI/AIAA mass properties standard and carry its '
                     'table with the citation, replacing the representative percentages.'},
 
+    'pyroshockMagnitude': {
+        'domain': 'mechanismsAndSeparation',
+        'calculation': 'Not performed. The shock response spectrum produced by a band release or a '
+                       'pyrotechnic device',
+        'reason': 'Pyroshock prediction is a test-derived discipline. The response depends on the '
+                  'joint, the structure behind it, the path and the mounting of whatever is being '
+                  'protected, and no analytic model in the open literature predicts it to better '
+                  'than an order of magnitude.',
+        'consequence': 'ClampBand computes the released strain energy and deliberately stops '
+                       'there. The energy is the right quantity to compare designs against each '
+                       'other and against a device with a measured signature; a shock response '
+                       'spectrum from this library would carry more authority than it earns.',
+        'nextStep': 'A measured shock signature for a comparable device, which turns the energy '
+                    'into a scaling parameter rather than an absolute. Failing that, keep the '
+                    'boundary where it is.'},
+
+    'preloadRelaxation': {
+        'domain': 'mechanismsAndSeparation',
+        'calculation': 'PRELOAD_RELAXATION, the embedment, short-term and storage losses',
+        'reason': 'Representative fractions rather than measured ones. Real relaxation depends on '
+                  'the surface finish, the coating, the contact pressure and the temperature '
+                  'history, none of which this class takes as an input.',
+        'consequence': 'Every retained preload and every joint margin scales with them. The '
+                       'conclusion the domain draws does not: that the losses compound rather than '
+                       'add, that storage is the term nobody plans for because it depends on a '
+                       'schedule, and that a margin has to be carried against the relaxed preload '
+                       'rather than the installed one, all hold for any non-zero values.',
+        'nextStep': 'Preload retention test data on a representative joint, which is a standard '
+                    'bolted-joint test and is the most tractable gap in this domain.'},
+
+    'springRateTolerance': {
+        'domain': 'mechanismsAndSeparation',
+        'calculation': 'SPRING_RATE_TOLERANCE, and the statistical tipoff model built on it',
+        'reason': 'Ten per cent is a common commercial spring rate tolerance and it is not a '
+                  'measurement of any particular supply. The statistical combination also assumes '
+                  'the rate errors are independent, which springs from a single production lot '
+                  'are not.',
+        'consequence': 'The tipoff rate scales with the tolerance directly. The deterministic '
+                       'worst case is independent of spring count and the statistical case falls '
+                       'as one over its root, and BOTH of those structural results are '
+                       'independent of the value. The independence assumption is the weaker of '
+                       'the two and the domain says so: a lot-correlated set has bought the '
+                       'statistical case and specified the worst one.',
+        'nextStep': 'Measured rate distributions for a real spring supply, and a correlation '
+                    'coefficient within a lot. The second is what decides whether the statistical '
+                    'model is usable at all.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -784,4 +831,79 @@ LAUNCH_VEHICLES = {
                      'payload and 33.7 per cent of geostationary transfer payload, and the '
                      'difference between those two is the recovery propellant being a larger '
                      'share of a smaller margin.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Mechanism standards -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# NASA-STD-5017B, read directly from the standard rather than from a summary of it.
+#
+# That distinction earned its keep immediately. A search summary of this same standard reported the
+# required torque margin as 1.0 or greater. The standard says a margin greater than or equal to
+# ZERO indicates the requirement is met, because the reserve is inside the safety factors rather
+# than applied on top of the result. Building the library on the summary would have made every
+# mechanism in it look twice as marginal as it is.
+MECHANISM_STANDARDS = {
+
+    'NASA-STD-5017B': {
+        'source': 'NASA-STD-5017B, Design and Development Requirements for Mechanisms, approved '
+                  '06 December 2022. Read from the standard PDF at '
+                  'https://ntrs.nasa.gov/api/citations/20220014671, accessed 09 August 2026',
+        'kind': 'specification',
+        'level': 'standard',
+
+        'marginEquation': 'margin = T_avail / (sum FSf Tf + sum FSv Tv + sum FSa Ta) - 1',
+        'requiredMargin': 0.0,
+
+        'torqueMarginFactors': {
+            'theory or analysis':        {'variable': 3.00, 'fixed': 1.50, 'acceleration': 1.25},
+            'development test':          {'variable': 2.50, 'fixed': 1.35, 'acceleration': 1.15},
+            'qualification test':        {'variable': 2.50, 'fixed': 1.35, 'acceleration': 1.15},
+            'lot acceptance test':       {'variable': 2.50, 'fixed': 1.35, 'acceleration': 1.15},
+            'acceptance test, ambient':  {'variable': 2.50, 'fixed': 1.35, 'acceleration': 1.15},
+            'acceptance test, extremes': {'variable': 2.00, 'fixed': 1.25, 'acceleration': 1.10},
+            'one spring out':            {'variable': 1.00, 'fixed': 1.00, 'acceleration': 1.00},
+        },
+
+        'bearingContactAllowable': {
+            '440C':  {'quiet': 2310.0e6, 'nonQuiet': 2760.0e6},
+            '52100': {'quiet': 2480.0e6, 'nonQuiet': 2960.0e6},
+            'M50':   {'quiet': 2480.0e6, 'nonQuiet': 2960.0e6},
+            'M62':   {'quiet': 3790.0e6, 'nonQuiet': 4070.0e6},
+        },
+
+        'requirements': {
+            'DDMR 9':  'Torque margin applied under worst-case conditions throughout life',
+            'DDMR 10': 'Torque multipliers meet margin at BOTH input and output',
+            'DDMR 11': 'All torque margins verified during acceptance test at the highest '
+                       'possible level of assembly',
+            'DDMR 12': 'Static torque margin greater than zero within the full range of motion',
+            'DDMR 13': 'Dynamic torque margin greater than zero',
+            'DDMR 14': 'Holding torque margin greater than zero at the specified positions',
+            'DDMR 29': 'The mechanism remains functional after exposure to stall at any point',
+            'DDMR 30': 'Non-jamming mechanical stops where over-travel would be detrimental',
+            'DDMR 31': 'Positive margin with full design factors under worst-case transient loads '
+                       'from mechanical stop impact',
+        },
+
+        'correctionNote': 'A web search summary of this standard reported the required margin as '
+                          '1.0 or greater. The standard itself states that a margin greater than '
+                          'or equal to zero indicates the requirements are met, and that setting '
+                          'the safety factors to unity represents the torque at which no reserve '
+                          'is available. Reading the standard rather than the summary changed '
+                          'every margin verdict in this domain.',
+
+        'scopeNote': 'The standard is explicit that torque margin does NOT apply to mechanisms '
+                     'required to provide a specific value within a narrow tolerance rather than '
+                     'a minimum, and it names an ejection mechanism requiring a specific '
+                     'separation velocity as an example. That is exactly the SeparationSystem '
+                     'case, which is why that class computes velocities and clearances rather '
+                     'than margins.',
+
+        'holdingNote': 'For holding margin the available torque is the INTENTIONAL holding torque '
+                       'only. The standard excludes incidental, unreliable and uncharacterised '
+                       'contributors such as joint friction, harness bending and blanket rubbing, '
+                       'which is the opposite of what a conservative analyst might assume.'},
 }

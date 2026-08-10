@@ -12,6 +12,10 @@ Date:   08/06/2026
 
 '''
 
-from utils import *
+from mechanismUtils import *
 
-# Add component modules here as they are created
+from SeparationSystem import SeparationSystem
+from ClampBand import ClampBand
+from PyrotechnicInitiator import PyrotechnicInitiator
+from MechanismActuator import MechanismActuator
+from DeploymentKinematics import DeploymentKinematics

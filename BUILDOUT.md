@@ -5,7 +5,7 @@
 The master list of what is built and what is not, kept current as the repository is populated.
 
 **Last updated:** 09 August 2026, at commit `4a64d50`.
-**Repository totals:** 356 markdown documents, 1044 passing tests, 8 domains complete of 16. **propulsion and vehicleArchitecture are finished.** Ten areas validated at hardware level and two at standard level.
+**Repository totals:** 368 markdown documents, 1105 passing tests, 9 domains complete of 16. Ten areas validated at hardware level and three at standard level.
 
 ---
 
@@ -86,7 +86,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 
 1. ~~`propulsion` and its six sub-domains~~ **done**
 2. ~~`vehicleArchitecture`~~ **done**
-3. `mechanismsAndSeparation`
+3. ~~`mechanismsAndSeparation`~~ **done**
 4. `electricalPower`
 5. `avionicsAndGNC`
 6. `groundSystemsAndOperations`
@@ -108,6 +108,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [environmentsAndLoads](environmentsAndLoads/) | Full | 14 | 6 | **hardware**, GEVS 14.1 Grms |
 | [thermalManagement](thermalManagement/) | Full | 13 | 6 | **hardware**, Stefan-Boltzmann and solar constant |
 | [vehicleArchitecture](vehicleArchitecture/) | Full | 14 | 4 | **hardware**, Falcon 9 Block 5 stage masses |
+| [mechanismsAndSeparation](mechanismsAndSeparation/) | Full | 12 | 5 | **standard**, NASA-STD-5017B read in full |
 
 **Four of the six now reach hardware level and one reaches standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
@@ -136,7 +137,7 @@ physics one. Both are still listed as outstanding rather than closed.
 
 ## In progress
 
-Nothing. The next domain in the build order is [mechanismsAndSeparation](mechanismsAndSeparation/).
+Nothing. The next domain in the build order is [electricalPower](electricalPower/).
 
 ### A naming rule the scaffold does not follow
 
@@ -175,7 +176,6 @@ These have a `utils.py` bootstrap stub, an empty `docs/`, an empty `tests/`, and
 
 | Domain | Planned depth | Why that depth |
 |---|---|---|
-| [mechanismsAndSeparation](mechanismsAndSeparation/) | Full | Spring energy, separation dynamics, pyrotechnic shock and latch kinematics are real mechanics |
 | [electricalPower](electricalPower/) | Full | Battery sizing, harness voltage drop, load profiles and grounding topology all compute |
 | [recoveryAndReusability](recoveryAndReusability/) | Full | Entry ballistic coefficient, parachute sizing, propulsive landing budgets, and life tracking against the fatigue work already in structures |
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Light | FMECA and fault trees are process. The computable part is reliability allocation, redundancy arithmetic and confidence from test counts, which is a small library |

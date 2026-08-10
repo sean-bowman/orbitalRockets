@@ -1,0 +1,59 @@
+{
+  "caseName": "A stage separation event end to end: the band that holds, the initiator that cuts it, the springs that push, and the panel that deploys afterwards",
+  "linkedCase": "smallLaunchVehicleExample",
+  "linkedCaseNote": "The separating and remaining masses are the second stage and first stage of the vehicle vehicleArchitecture closed. Restated here so this example runs standalone; a cross-domain test asserts they still match.",
+
+  "interface": {
+    "_comment": "A clamp band joint at the interstage. The band tension is what a torque wrench on the tensioning bolt sets; everything downstream follows from it through the wedge.",
+    "radius": 0.60,
+    "bandTension": 12000.0,
+    "wedgeAngle": 15.0,
+    "bandArea": 1.2e-4,
+    "flightLoad": 95000.0,
+    "flightLoadNote": "Maximum axial load trying to open the joint, from the max-Q bending case plus axial acceleration.",
+    "storageMonths": 9.0
+  },
+
+  "initiator": {
+    "_comment": "Two NSI initiators fired in parallel to cut the band, which is the usual redundancy: two ways to release rather than two of the same device in series.",
+    "type": "NSI",
+    "firingVoltage": 28.0,
+    "harnessResistance": 0.9,
+    "parallelCount": 2,
+    "strayCurrent": 0.15,
+    "strayCurrentNote": "From an electromagnetic environment analysis of the vehicle. Assuming zero is the assumption that makes the no-fire check pointless."
+  },
+
+  "separation": {
+    "_comment": "Four compression springs on a bolt circle inside the interface. The inertia is the separating stage about its own transverse axis through its centre of gravity, which is dominated by its length rather than its diameter.",
+    "springCount": 4,
+    "springStiffness": 8000.0,
+    "springStroke": 0.10,
+    "springRadius": 0.55,
+    "separatingMass": 1800.0,
+    "remainingMass": 6000.0,
+    "inertia": 2653.0,
+    "clearanceLength": 0.30,
+    "radialGap": 0.020,
+    "springCountsTried": [2, 4, 6, 8, 12]
+  },
+
+  "deployable": {
+    "_comment": "A hinged panel deploying after separation. The spring is sized on its stowed torque and it arrives weakest, which is the failure the stall check catches.",
+    "springTorque": 4.0,
+    "springRate": 1.2,
+    "inertia": 2.5,
+    "travelDegrees": 90.0,
+    "resistingTorque": 0.6,
+    "latchEnergyLimit": 1.0
+  },
+
+  "actuator": {
+    "_comment": "A separate electromechanical actuator, used to show what test evidence buys in the NASA-STD-5017B margin. The split between fixed and variable resisting torques is the input most worth checking: it changes the safety factor by a factor of two.",
+    "availableTorque": 4.5,
+    "fixedTorques": [0.80, 0.35],
+    "fixedTorquesNote": "Bearing drag and a return spring.",
+    "variableTorques": [0.42, 0.25],
+    "variableTorquesNote": "Seal friction and harness torque from flexing and set."
+  }
+}
