@@ -4,7 +4,7 @@
 
 The master list of what is built and what is not, kept current as the repository is populated.
 
-**Last updated:** 09 August 2026, at commit `1b9dc1a`.
+**Last updated:** 09 August 2026, at commit `71079fa`.
 **Repository totals:** 380 markdown documents, 1166 passing tests, 10 domains complete of 16. Ten areas validated at hardware level and four at standard level.
 
 ---
