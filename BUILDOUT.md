@@ -90,7 +90,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 4. ~~`electricalPower`~~ **done**
 5. ~~`avionicsAndGNC`~~ **done**
 6. ~~`groundSystemsAndOperations`~~ **done**
-7. `recoveryAndReusability`
+7. ~~`recoveryAndReusability`~~ **done**
 8. `manufacturingAndAssembly`
 9. `rangeSafetyAndFTS`
 10. `reliabilityAndMissionAssurance`
@@ -112,8 +112,9 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [electricalPower](electricalPower/) | Full | 12 | 4 | **standard**, the AWG definition, exact to four figures |
 | [avionicsAndGNC](avionicsAndGNC/) | Full | 12 | 3 | internal, no external anchor, outstanding |
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | Light | 13 | 4 | **standard**, DESR 6055.09 read in full |
+| [recoveryAndReusability](recoveryAndReusability/) | Full | 12 | 5 | **standard**, Allen-Eggers, plus bounded Sutton-Graves |
 
-**Four reach hardware level and three reach standard level.** Each carries a
+**Four reach hardware level and four reach standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
 and what remains unchecked.
 
@@ -142,11 +143,11 @@ orders and sums rather than from values. All three are listed as outstanding rat
 
 ## In progress
 
-Nothing. The next domain in the build order is [recoveryAndReusability](recoveryAndReusability/), which is scaffolded and planned to full depth.
+Nothing. The next domain in the build order is [manufacturingAndAssembly](manufacturingAndAssembly/), which is bare and needs a scaffold first.
 
 ### A naming rule the scaffold does not follow
 
-Every unbuilt domain still ships a library helper called `utils.py`, which violates the first of the three naming rules above. `vehicleArchitecture` renamed its to `vehicleUtils.py` on build-out and the remaining nine should do the same as they are built. The two legacy domains that still import from `utils`, `aerospaceMaterials` and `fluidSystems`, predate the rule and are left alone rather than churned.
+Every unbuilt domain still ships a library helper called `utils.py`, which violates the first of the three naming rules above. Each build-out has renamed its own on the way through: `vehicleUtils.py`, `mechanismUtils.py`, `powerUtils.py`, `avionicsUtils.py`, `groundUtils.py`, `recoveryUtils.py`. The two legacy domains that still import from `utils`, `aerospaceMaterials` and `fluidSystems`, predate the rule and are left alone rather than churned.
 
 ---
 
@@ -181,7 +182,6 @@ These have a `utils.py` bootstrap stub, an empty `docs/`, an empty `tests/`, and
 
 | Domain | Planned depth | Why that depth |
 |---|---|---|
-| [recoveryAndReusability](recoveryAndReusability/) | Full | Entry ballistic coefficient, parachute sizing, propulsive landing budgets, and life tracking against the fatigue work already in structures |
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Light | FMECA and fault trees are process. The computable part is reliability allocation, redundancy arithmetic and confidence from test counts, which is a small library |
 
 ---

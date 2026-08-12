@@ -30,7 +30,7 @@ Two things that are meant to be used together, in every domain.
 
 ## Domains
 
-Twelve of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist: what is built, what is not, the build order, and the depth each remaining domain is planned to.
+Thirteen of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist: what is built, what is not, the build order, and the depth each remaining domain is planned to.
 
 [validation/](validation/) holds the comparisons against published hardware, and the register of what has not been checked against anything external. A tool that has only been checked against itself has not been checked.
 
@@ -46,7 +46,7 @@ Twelve of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checkli
 | [vehicleArchitecture](vehicleArchitecture/) | **Complete** | Staging, sizing, mass fractions, propellant selection, trade studies, mass properties |
 | [mechanismsAndSeparation](mechanismsAndSeparation/) | **Complete** | Pyrotechnics, separation systems, springs, latches, actuators, deployment |
 | [electricalPower](electricalPower/) | **Complete** | Batteries, power distribution, harnessing, grounding and bonding, EMI |
-| [recoveryAndReusability](recoveryAndReusability/) | Scaffolded | Entry, descent and landing, refurbishment, life tracking, economics |
+| [recoveryAndReusability](recoveryAndReusability/) | **Complete** | Entry, descent and landing, refurbishment, life tracking, economics |
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Scaffolded | FMECA, fault trees, reliability allocation, redundancy, quality systems |
 | [avionicsAndGNC](avionicsAndGNC/) | **Complete** | Flight computers, sensors, guidance, navigation, control, telemetry |
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | **Complete** | Pads, umbilicals, propellant handling, countdown, launch operations |

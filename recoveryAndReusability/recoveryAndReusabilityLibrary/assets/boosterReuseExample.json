@@ -1,0 +1,86 @@
+{
+  "case": "firstStageBoosterReuse",
+  "description": "One reusable first stage taken through entry, touchdown, life and economics, using the Falcon 9 Block 5 masses already in the validation register as the vehicle. The published expendable and reusable payloads are used to invert the mass chain rather than to tune it.",
+
+  "vehicle": {
+    "name": "Falcon 9 Block 5 class first stage",
+    "stageDryMass": 22200.0,
+    "stagePropellant": 410900.0,
+    "baselinePayload": 22800.0,
+    "publishedReusablePayload": 18500.0,
+    "publishedGtoExpended": 8300.0,
+    "publishedGtoReusable": 5500.0,
+    "source": "validation/referenceCases.py, LAUNCH_VEHICLES['Falcon 9 Block 5']"
+  },
+
+  "entry": {
+    "entryVelocity": 2200.0,
+    "flightPathAngle": 25.0,
+    "mass": 26000.0,
+    "dragCoefficient": 1.1,
+    "referenceArea": 10.5,
+    "noseRadius": 1.8,
+    "note": "a first stage returns from a suborbital lofted trajectory, not from orbit, which is why the entry velocity is a fifth of an orbital one and the heating is a different problem entirely"
+  },
+
+  "orbitalComparison": {
+    "entryVelocity": 7800.0,
+    "flightPathAngle": 6.0,
+    "mass": 26000.0,
+    "dragCoefficient": 1.1,
+    "referenceArea": 10.5,
+    "noseRadius": 1.8,
+    "note": "the same body returning from orbit, for scale"
+  },
+
+  "recovery": {
+    "mode": "downrangeLanding",
+    "hardwareItems": {
+      "landing legs": 2100.0,
+      "grid fins": 450.0,
+      "entry and landing avionics": 160.0,
+      "thrust structure reinforcement": 390.0
+    }
+  },
+
+  "landing": {
+    "landedMass": 26000.0,
+    "sinkRate": 2.0,
+    "horizontalRate": 0.5,
+    "stroke": 0.45,
+    "absorber": "hydraulicDamper",
+    "legCount": 4,
+    "footprintRadius": 9.0,
+    "centreOfGravity": 11.0,
+    "groundSlope": 2.0,
+    "limitLoadFactor": 4.5,
+    "droneshipSlope": 6.0,
+    "droneshipHorizontalRate": 1.5
+  },
+
+  "life": {
+    "flightsFlown": 10.0,
+    "certifiedLife": 20.0,
+    "fleetFlights": [36.0, 22.0, 18.0, 14.0, 9.0],
+    "fleetNote": "the published flight leader had reached 36 flights by mid 2026 against a stated qualification goal of 40"
+  },
+
+  "economics": {
+    "refurbishmentCost": 0.08,
+    "recoveryCost": 0.04,
+    "expendableElements": 0.25,
+    "recoverySuccess": 0.97,
+    "flightsPerArticle": 20.0,
+    "note": "every cost is a fraction of one expendable unit cost, so the case carries no currency and does not go stale"
+  },
+
+  "precedent": {
+    "shuttleDesignTurnaroundDays": 14.0,
+    "shuttleShortestTurnaroundDays": 54.0,
+    "shuttleFlightLeader": 39.0,
+    "falconShortestTurnaroundDays": 9.15,
+    "falconFlightLeader": 36.0,
+    "falconQualificationGoal": 40.0,
+    "note": "Shuttle design goal and STS-51-J to STS-61-B actual; Falcon 9 booster B1088 turnaround and B1067 flight count as of July 2026"
+  }
+}

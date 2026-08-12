@@ -549,6 +549,64 @@ UNVALIDATED = {
         'nextStep': 'Day to day persistence of launch commit criteria violations from range '
                     'climatology, which is exactly what a launch weather officer computes.'},
 
+    'exchangeRatios': {
+        'domain': 'recoveryAndReusability',
+        'calculation': 'DRY_MASS_EXCHANGE_RATIO and RESERVE_EXCHANGE_RATIO in RecoveryBudget',
+        'reason': 'Payload lost per kilogram of stage dry mass and per kilogram of reserve '
+                  'propellant are properties of the VEHICLE rather than of the recovery system, '
+                  'and the domain that owns them is vehicleArchitecture. They are representative '
+                  'defaults here and are exposed as inputs.',
+        'consequence': 'The absolute payload penalty scales with them, and the modelled Falcon 9 '
+                       'penalty comes out at 23.5 per cent against a published 18.9. The '
+                       'structural results do not scale: that the reserve costs more payload than '
+                       'the hardware follows from the reserve being an order of magnitude the '
+                       'larger mass, and that the penalty FRACTION rises with mission difficulty '
+                       'follows from the penalty MASS being fixed. The class inverts the '
+                       'published penalty rather than tuning to it, which is a different and '
+                       'honest claim: tuning the ratios and then reporting the agreement would be '
+                       'calibration.',
+        'nextStep': 'StagedVehicle.payloadSensitivity in vehicleArchitecture already computes the '
+                    'payload elasticity of a specific vehicle. Wiring that output into this input '
+                    'closes the gap entirely and needs no new source. It also has to be done per '
+                    'mission: the model over-predicts at low orbit and over-predicts far more at '
+                    'transfer orbit, which says one pair of ratios cannot cover both.'},
+
+    'lifeDamageRates': {
+        'domain': 'recoveryAndReusability',
+        'calculation': 'LIFE_LIMITED_ITEMS damage per flight, and INSPECTION_LEVELS relative cost',
+        'reason': 'Representative of the items that usually set a refurbishment interval rather '
+                  'than measured for any article. A real damage per flight comes from a stress '
+                  'spectrum through a fatigue curve, which aerospaceMaterials owns, applied to a '
+                  'measured flight environment, which almost nothing records.',
+        'consequence': 'Every flight count in the domain scales with them. The structural results '
+                       'do not: that one item limits and extending it buys the gap to the next is '
+                       'the same arithmetic as a turnaround driver, and that the limiting item is '
+                       'not the one that looks worst after a flight is a statement about '
+                       'appearance and damage rate being unrelated. Both hold for any rates.',
+        'nextStep': 'A stress spectrum per flight and a fatigue curve per item, which '
+                    'aerospaceStructures and aerospaceMaterials can supply between them. The '
+                    'harder half is the measured flight environment, which is a telemetry '
+                    'requirement rather than an analysis one.'},
+
+    'recoveryModeFractions': {
+        'domain': 'recoveryAndReusability',
+        'calculation': 'RECOVERY_MODES reserve propellant and hardware dry fractions, and the '
+                       'ABSORBER_EFFICIENCY table in LandingLoads',
+        'reason': 'Representative. A real reserve comes from integrating the boost-back, entry and '
+                  'landing burns on a specific trajectory, and a real absorber efficiency comes '
+                  'from a measured force-stroke curve.',
+        'consequence': 'The penalty by mode scales with the reserve fractions and the load factor '
+                       'scales with the efficiency. The orderings do not: a return to the launch '
+                       'site costs more than a downrange landing because it has to cancel and '
+                       'reverse the downrange velocity, and a crushable core fills its '
+                       'force-stroke rectangle better than a damper because a damper force follows '
+                       'the velocity and falls as the vehicle stops. Both are mechanisms rather '
+                       'than values.',
+        'nextStep': 'A landing trajectory integration for the reserve, which is a guidance problem '
+                    'this repository has declined twice for stated reasons, and a force-stroke '
+                    'curve from a drop test for the efficiency. The second is far the more '
+                    'tractable.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -1180,4 +1238,79 @@ EXPLOSIVE_SITING = {
                     'Change 1 and NASA-STD-8719.12A. This library computes in the English form '
                     'and converts, and asserts the discrepancy in a test rather than silently '
                     'correcting it.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Entry environment: Allen-Eggers and Sutton-Graves -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The recoveryAndReusability anchor. Both halves are closed forms rather than measurements, which
+# makes this standard level rather than hardware level, but the Sutton-Graves half was pinned
+# against published entry cases because its published UNITS are wrong in several sources.
+ENTRY_ENVIRONMENT = {
+
+    'Allen-Eggers': {
+        'source': 'H. J. Allen and A. J. Eggers, A Study of the Motion and Aerodynamic Heating of '
+                  'Ballistic Missiles Entering the Earth Atmosphere at High Supersonic Speeds, '
+                  'NACA Report 1381, 1958. Relations reproduced from the NASA TFAWS 2012 '
+                  'aerothermodynamics course notes, '
+                  'https://tfaws.nasa.gov/TFAWS12/Proceedings/Aerothermodynamics%20Course.pdf, '
+                  'accessed 10 August 2026',
+        'kind': 'closed form',
+        'level': 'standard',
+
+        'velocityProfile': 'V(rho) = V_e exp(-rho H / (2 beta sin|gamma|))',
+
+        'peakDeceleration': 'a_max = V_e**2 sin|gamma| / (2 e H), INDEPENDENT of beta',
+        'peakDecelerationVelocityFraction': 0.6065306597126334,   # exp(-1/2)
+        'peakDecelerationDensity': 'rho = beta sin|gamma| / H',
+
+        'peakHeatingVelocityFraction': 0.8464817248906141,        # exp(-1/6)
+        'peakHeatingDensity': 'rho = beta sin|gamma| / (3 H)',
+        'peakHeatFluxScaling': 'q_max ~ sqrt(beta sin|gamma| / Rn) V_e**3',
+        'heatLoadScaling':     'Q ~ V_e**2 sqrt(pi beta H / (Rn sin|gamma|))',
+
+        'altitudeSeparation': 'h_q - h_g = H ln(3), exactly, for every entry',
+
+        'correctionNote': 'The course notes state that peak heating sits at about 1.1 times the '
+                          'altitude of peak deceleration. That RATIO holds only for an orbital '
+                          'entry, where the deceleration peak is high enough that the separation '
+                          'is a tenth of it. The separation itself is H ln(3), about 7.9 km, and '
+                          'it is the same for every entry of every vehicle. On a booster returning '
+                          'from a lofted suborbital trajectory the peaks are near 16 and 24 km and '
+                          'the ratio is 1.5 rather than 1.1. This library reports the separation.',
+
+        'scopeNote': 'The solution assumes a constant flight path angle, an exponential '
+                     'atmosphere and no lift. It is a shape rather than a trajectory: which '
+                     'quantity peaks first, what each depends on, and which of them is '
+                     'independent of the vehicle. A single scale height is a coarse fit at the '
+                     '40 to 70 km altitudes where an orbital entry peaks.'},
+
+    'Sutton-Graves': {
+        'source': 'K. Sutton and R. A. Graves, A General Stagnation Point Convective Heating '
+                  'Equation for Arbitrary Gas Mixtures, NASA TR R-376, 1971. Constant read from '
+                  'the NASA TFAWS 2012 aerothermodynamics course notes',
+        'kind': 'correlation',
+        'level': 'bounded',
+
+        'equation': 'q = k sqrt(rho / Rn) V**3',
+        'constantEarth': 1.7415e-4,
+
+        'unitNote': 'The units on this constant are quoted inconsistently and it matters by four '
+                    'orders of magnitude. Several sources state that the expression returns W/cm2 '
+                    'with density in kg/m3, nose radius in metres and velocity in m/s. Reproducing '
+                    'published entry cases shows the raw expression is W/m2: Stardust at 12.6 km/s '
+                    'with a 0.23 m nose radius gives 1,027 W/cm2 against a published peak '
+                    'convective heating around 1,200, and Apollo at 11.1 km/s with a 4.69 m radius '
+                    'gives 196 against a published convective component of 200 to 250. Read as '
+                    'W/cm2 both are absurd by 1e4. The library works in W/m2 and converts, and a '
+                    'test asserts the two cases rather than the units statement.',
+
+        'boundedNote': 'This is BOUNDED rather than validated: the two cases bracket the '
+                       'correlation to within tens of per cent, and the densities used are read '
+                       'off a standard atmosphere at the published peak heating altitudes rather '
+                       'than taken from the flight reconstructions. It is enough to fix the units '
+                       'convention, which is what it was done for, and not enough to claim the '
+                       'correlation itself is reproduced.'},
 }
