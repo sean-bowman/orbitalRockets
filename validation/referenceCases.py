@@ -499,6 +499,56 @@ UNVALIDATED = {
         'nextStep': 'The telemetry standard the programme uses, which fixes the framing, and a '
                     'link budget, which fixes the margin. Neither is a research problem.'},
 
+    'loadingPhaseFractions': {
+        'domain': 'groundSystemsAndOperations',
+        'calculation': 'LOADING_PHASES rate fractions and load fractions, and DEFAULT_DETANK_RECOVERY',
+        'reason': 'Representative of cryogenic tanking practice rather than taken from a procedure. '
+                  'Real phase rates come from the vehicle tank geometry, the geyser and water '
+                  'hammer limits on the transfer line, and the level sensor arrangement, and the '
+                  'detank recovery depends on whether the ground tank can accept warm return flow '
+                  'at all.',
+        'consequence': 'The tanking duration and the phase that dominates it both scale with them. '
+                       'The structural result does not: chill-down runs at a fraction of the '
+                       'transfer rate BECAUSE the point of it is to boil, so it takes a share of '
+                       'the elapsed time out of all proportion to the mass it moves. That holds '
+                       'for any rate fraction below one.',
+        'nextStep': 'A tanking procedure with its phase transitions and rates, which every '
+                    'programme writes and none publishes. The transfer line limits are already '
+                    'computable in fluidSystems, so half of this could be closed internally.'},
+
+    'scrubCauseSplit': {
+        'domain': 'groundSystemsAndOperations',
+        'calculation': 'SCRUB_CAUSES, and the launch commit criteria violation rates in the '
+                       'worked example asset',
+        'reason': 'The weather share is BOUNDED rather than unvalidated: roughly half of scrubs '
+                  'at the Eastern Range across three decades were weather, which is a published '
+                  'record. The split of the remaining half, and every individual criterion '
+                  'violation rate, are representative.',
+        'consequence': 'The per-attempt go probability and therefore the whole campaign figure '
+                       'scale with the violation rates. The two results the domain reports do '
+                       'not. That independent criteria multiply rather than average is arithmetic. '
+                       'That attempts beat criteria as a lever follows from the cumulative '
+                       'probability being one minus a product, and it holds for any rates.',
+        'nextStep': 'Published launch commit criteria violation statistics by criterion, which '
+                    'the range weather squadrons compile and which appear in conference papers '
+                    'rather than in a standard.'},
+
+    'weatherCorrelation': {
+        'domain': 'groundSystemsAndOperations',
+        'calculation': 'DEFAULT_CORRELATION and the two state chain in '
+                       'LaunchAvailability.calculateCampaign',
+        'reason': 'The chain is internally exact: its two conditional probabilities reproduce the '
+                  'unconditional rate and give a lag one correlation coefficient of exactly the '
+                  'input, and a test asserts both. The VALUE of the correlation is representative, '
+                  'and a two state chain is a coarse model of a weather system in any case.',
+        'consequence': 'The gap between the independent and correlated campaign figures scales '
+                       'with it, and that gap is offered as the honest uncertainty in the answer '
+                       'rather than as a result. The direction does not scale: correlation always '
+                       'costs campaign probability, because a scrub makes the next attempt less '
+                       'likely than the unconditional rate.',
+        'nextStep': 'Day to day persistence of launch commit criteria violations from range '
+                    'climatology, which is exactly what a launch weather officer computes.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -1044,4 +1094,90 @@ WIRE_GAUGE = {
                 'calculation: the exact half of the comparison is the half the conclusion rests '
                 'on, and the representative half, ampacity, would have to be wrong by several '
                 'gauge steps to overturn it.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Explosives siting, read from DESR 6055.09 and NASA-STD-8719.12A -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The groundSystemsAndOperations anchor, and it is a strong one: both the equivalence table and the
+# K factor table were read from the standards themselves rather than from a summary.
+#
+# Reading them turned up two things a summary would not have. The first is that the widely quoted
+# sixty per cent equivalence for LO2/LH2 is not the siting rule at all. The standard's rule is the
+# larger of a sublinear term and a flat fourteen per cent, and it is the sublinear term that governs
+# for anything smaller than a heavy lift core stage.
+#
+# The second is a unit inconsistency inside the standard, recorded below.
+EXPLOSIVE_SITING = {
+
+    'DESR-6055.09': {
+        'source': 'DESR 6055.09, Defense Explosives Safety Regulation, Edition 1 Change 1, '
+                  '23 February 2024, Volume 5 Enclosure 4 Table V5.E4.T5 and footnote f. Read '
+                  'from the PDF at https://www.denix.osd.mil/ddes/denix-files/sites/32/2021/08/'
+                  'DESR-6055.09-Edition1.pdf, accessed 10 August 2026. Reproduced identically as '
+                  'NASA-STD-8719.12A Table 5-29, and its K factors as Table E-1, read from '
+                  'https://standards.nasa.gov/sites/default/files/standards/NASA/A/2/'
+                  'nasa-std-871912a_with_change_2.pdf',
+        'kind':  'specification',
+        'level': 'standard',
+
+        # Hopkinson-Cranz cube root scaling, in the units the standard is written in.
+        'scalingLaw': 'd = K * W ** (1/3), d in feet, W in pounds of TNT equivalent',
+
+        'kFactors': {
+            'lungRupture':               {'k':  1.79, 'psi': 386.9},
+            'lungRuptureThreshold':      {'k':  3.33, 'psi': 107.1},
+            'eardrum99':                 {'k':  3.90, 'psi':  74.4},
+            'barricadedIntermagazine':   {'k':  6.00, 'psi':  27.0},
+            'eardrum50':                 {'k':  8.00, 'psi':  15.0},
+            'barricadedIntraline':       {'k':  9.00, 'psi':  12.0},
+            'unbarricadedIntermagazine': {'k': 11.00, 'psi':   8.0},
+            'unbarricadedIntraline':     {'k': 18.00, 'psi':   3.5},
+            'publicTrafficRoute':        {'k': 24.00, 'psi':   2.3},
+            'publicTrafficRouteLarge':   {'k': 30.00, 'psi':   1.7},
+            'inhabitedBuilding':         {'k': 40.00, 'psi':   1.2},
+            'inhabitedBuildingRelaxed':  {'k': 50.00, 'psi':   0.9},
+        },
+
+        # Range launch column. The static test stand column is lower for two entries, because a
+        # stand can be built to keep the propellants apart in a way a vehicle cannot.
+        'equivalence': {
+            'LO2/RP-1':       {'rangeLaunch': 0.20, 'staticTest': 0.10,
+                               'breakMass': 226795.0, 'excessFraction': 0.10},
+            'IRFNA/UDMH':     {'rangeLaunch': 0.10, 'staticTest': 0.10},
+            'N2O4/UDMH+N2H4': {'rangeLaunch': 0.10, 'staticTest': 0.05},
+            'N2O4/PBAN':      {'rangeLaunch': 0.15, 'staticTest': 0.15},
+            'nitromethane':   {'rangeLaunch': 1.00, 'staticTest': 1.00},
+        },
+
+        'hydrogenRule': {
+            'form':             'max(8 * W ** (2/3), 0.14 * W), W in pounds',
+            'sublinearCoefficient': 8.0,
+            'flatFraction':     0.14,
+            'crossoverPounds':  186588.92,
+            'crossoverKg':      84635.31,
+        },
+
+        'correctionNote': 'The sixty per cent TNT equivalence commonly quoted for LO2/LH2 is a '
+                          'yield figure from the Project PYRO test series and an evaluation of '
+                          'shuttle on-pad operations. It is NOT the siting rule. The standard '
+                          'sites launch vehicles on the larger of 8 W**(2/3) and fourteen per '
+                          'cent, and below 186,589 lb the sublinear term governs, which makes the '
+                          'effective fraction rise as the load falls. Building the library on the '
+                          'sixty per cent figure would have overstated every distance by a factor '
+                          'of about three for a small stage and understated the shape of the rule '
+                          'entirely.',
+
+        'unitNote': 'The standard prints the hydrogen rule as 8 W**(2/3) with W in pounds and, in '
+                    'brackets, 4.13 Q**(2/3) with Q in kilograms. Those are not the same rule. '
+                    'Converting the English form exactly gives 6.147 Q**(2/3), and the two differ '
+                    'by a factor of 1.488 with the published metric form the smaller. An analyst '
+                    'working natively in SI from the bracketed coefficient therefore gets a '
+                    'shorter siting distance than the form the table is built on, which is '
+                    'non-conservative. The discrepancy is present in both DESR 6055.09 Edition 1 '
+                    'Change 1 and NASA-STD-8719.12A. This library computes in the English form '
+                    'and converts, and asserts the discrepancy in a test rather than silently '
+                    'correcting it.'},
 }

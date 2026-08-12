@@ -89,7 +89,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 3. ~~`mechanismsAndSeparation`~~ **done**
 4. ~~`electricalPower`~~ **done**
 5. ~~`avionicsAndGNC`~~ **done**
-6. `groundSystemsAndOperations`
+6. ~~`groundSystemsAndOperations`~~ **done**
 7. `recoveryAndReusability`
 8. `manufacturingAndAssembly`
 9. `rangeSafetyAndFTS`
@@ -111,8 +111,9 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [mechanismsAndSeparation](mechanismsAndSeparation/) | Full | 12 | 5 | **standard**, NASA-STD-5017B read in full |
 | [electricalPower](electricalPower/) | Full | 12 | 4 | **standard**, the AWG definition, exact to four figures |
 | [avionicsAndGNC](avionicsAndGNC/) | Full | 12 | 3 | internal, no external anchor, outstanding |
+| [groundSystemsAndOperations](groundSystemsAndOperations/) | Light | 13 | 4 | **standard**, DESR 6055.09 read in full |
 
-**Four reach hardware level and two reach standard level.** Each carries a
+**Four reach hardware level and three reach standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
 and what remains unchecked.
 
@@ -141,7 +142,7 @@ orders and sums rather than from values. All three are listed as outstanding rat
 
 ## In progress
 
-Nothing. The next domain in the build order is [groundSystemsAndOperations](groundSystemsAndOperations/), which needs a scaffold first.
+Nothing. The next domain in the build order is [recoveryAndReusability](recoveryAndReusability/), which is scaffolded and planned to full depth.
 
 ### A naming rule the scaffold does not follow
 
@@ -191,7 +192,6 @@ README and `objectives.md` only. No `docs/`, no `tests/`, no library, and not ye
 
 | Domain | Planned depth | Why that depth |
 |---|---|---|
-| [groundSystemsAndOperations](groundSystemsAndOperations/) | Light | Mostly procedure and facility design. The computable part is propellant loading, chilldown and countdown timeline arithmetic |
 | [manufacturingAndAssembly](manufacturingAndAssembly/) | Light | The process physics already lives in the ten `aerospaceMaterials` sub-domains. What is left is assembly sequence, tooling and inspection planning |
 | [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | Debris footprint and instantaneous impact point compute. The rest is regulation, and the standards index carries most of the value |
 

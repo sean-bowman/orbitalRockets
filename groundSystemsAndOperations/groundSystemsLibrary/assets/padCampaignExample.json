@@ -1,0 +1,76 @@
+{
+  "case": "smallLaunchVehiclePadCampaign",
+  "description": "A two stage vehicle on a coastal pad: LO2/RP-1 first stage, LO2/LH2 second stage. Sited against DESR 6055.09, tanked against its own boil-off, counted down against a critical path, and flown against six launch commit criteria.",
+
+  "vehicle": {
+    "name": "two stage, 320 t at liftoff",
+    "firstStage": {
+      "combination": "LO2/RP-1",
+      "propellantMass": 270000.0,
+      "note": "oxidiser and fuel together, which is the quantity the standard asks for"
+    },
+    "secondStage": {
+      "combination": "LO2/LH2",
+      "propellantMass": 38000.0,
+      "note": "well below the 84,635 kg crossover, so the sublinear rule governs"
+    }
+  },
+
+  "pad": {
+    "setting": "rangeLaunch",
+    "facilities": [
+      {"name": "launch control centre", "distance": 4500.0, "criterion": "inhabitedBuilding"},
+      {"name": "public highway",        "distance": 3000.0, "criterion": "publicTrafficRoute"},
+      {"name": "propellant farm",       "distance": 700.0,  "criterion": "unbarricadedIntraline"},
+      {"name": "integration hangar",    "distance": 1200.0, "criterion": "unbarricadedIntraline"}
+    ]
+  },
+
+  "loading": {
+    "propellant": "LH2 second stage",
+    "flightLoad": 5400.0,
+    "transferRate": 3.2,
+    "chilldownMass": 1900.0,
+    "boilOffRate": 0.11,
+    "holdDuration": 1800.0,
+    "storageCapacity": 42000.0,
+    "detankRecovery": 0.55,
+    "chilldownNote": "from propulsion/ignitionAndStart/ChillDown, upper bound branch"
+  },
+
+  "countdown": {
+    "windowDuration": 3600.0,
+    "tasks": [
+      {"name": "pad clear and secure",   "duration": 2700.0, "predecessors": []},
+      {"name": "ordnance arm",           "duration": 1200.0, "predecessors": ["pad clear and secure"]},
+      {"name": "RP-1 load",              "duration": 4500.0, "predecessors": ["pad clear and secure"]},
+      {"name": "LO2 load stage 1",       "duration": 5400.0, "predecessors": ["RP-1 load"]},
+      {"name": "LH2 load stage 2",       "duration": 4200.0, "predecessors": ["pad clear and secure"]},
+      {"name": "LO2 load stage 2",       "duration": 2400.0, "predecessors": ["LH2 load stage 2"]},
+      {"name": "avionics power and align","duration": 1800.0, "predecessors": ["pad clear and secure"]},
+      {"name": "terminal count",         "duration": 600.0,
+       "predecessors": ["LO2 load stage 1", "LO2 load stage 2", "ordnance arm", "avionics power and align"]}
+    ],
+    "hold": {"holdAt": 240.0, "backUpTo": 1200.0, "holdDuration": 600.0},
+    "turnaroundDrivers": {
+      "LH2 resupply from off site": 172800.0,
+      "flight battery recharge":     43200.0,
+      "crew duty and rest":          57600.0,
+      "range reset":                 28800.0,
+      "ordnance safing and rearm":   36000.0
+    },
+    "campaignDuration": 1209600.0
+  },
+
+  "availability": {
+    "constraints": {
+      "ground winds":          0.12,
+      "upper level winds":     0.10,
+      "lightning within 10 nm":0.08,
+      "cumulus cloud rule":    0.07,
+      "thick cloud layer rule":0.06,
+      "range asset readiness": 0.05
+    },
+    "correlation": 0.4
+  }
+}
