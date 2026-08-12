@@ -10,7 +10,6 @@
 - [The sentinel trap](#the-sentinel-trap)
 - [The four query modes](#the-four-query-modes)
 - [Phase coding](#phase-coding)
-- [Mixtures](#mixtures)
 - [Design rules of thumb](#design-rules-of-thumb)
 - [Failure modes](#failure-modes)
 - [Standards](#standards)

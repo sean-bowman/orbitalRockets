@@ -30,7 +30,7 @@ Two things that are meant to be used together, in every domain.
 
 ## Domains
 
-Six of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist: what is built, what is not, the build order, and the depth each remaining domain is planned to.
+Eleven of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist: what is built, what is not, the build order, and the depth each remaining domain is planned to.
 
 [validation/](validation/) holds the comparisons against published hardware, and the register of what has not been checked against anything external. A tool that has only been checked against itself has not been checked.
 
@@ -38,17 +38,17 @@ Six of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist:
 |---|---|---|
 | [fluidSystems](fluidSystems/) | **Complete** | Valves, lines, orifices, fittings, seals, leaks, welds, insulation, water hammer, hydrazine, catalyst beds, monopropellant thrusters, pressurization |
 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | **Complete** | Test campaigns from concept through development, qualification and flight acceptance |
-| [propulsion](propulsion/) | Hub complete | Liquid bipropellant engines: combustion devices, turbomachinery, engine cycles, nozzle performance, ignition and transients, hot fire test |
+| [propulsion](propulsion/) | **Complete** | Liquid bipropellant engines: combustion devices, turbomachinery, engine cycles, nozzle performance, ignition and transients, hot fire test |
 | [aerospaceStructures](aerospaceStructures/) | **Complete** | Shell buckling, sandwich panels, bolted and bonded joints, modal analysis, load paths, tanks |
 | [aerospaceMaterials](aerospaceMaterials/) | **Complete** | Alloy selection, allowables, fracture, corrosion, plus ten process sub-domains covering additive, casting, wrought, forming, machining, joining and post-processing |
 | [thermalManagement](thermalManagement/) | **Complete** | Thermal protection systems, thermal control, radiators, heat pipes, aeroheating |
 | [environmentsAndLoads](environmentsAndLoads/) | **Complete** | Random vibration, acoustics, shock, aerodynamic loads, load cases, coupled loads analysis |
-| [vehicleArchitecture](vehicleArchitecture/) | Scaffolded | Staging, sizing, mass fractions, propellant selection, trade studies, mass properties |
-| [mechanismsAndSeparation](mechanismsAndSeparation/) | Scaffolded | Pyrotechnics, separation systems, springs, latches, actuators, deployment |
-| [electricalPower](electricalPower/) | Scaffolded | Batteries, power distribution, harnessing, grounding and bonding, EMI |
+| [vehicleArchitecture](vehicleArchitecture/) | **Complete** | Staging, sizing, mass fractions, propellant selection, trade studies, mass properties |
+| [mechanismsAndSeparation](mechanismsAndSeparation/) | **Complete** | Pyrotechnics, separation systems, springs, latches, actuators, deployment |
+| [electricalPower](electricalPower/) | **Complete** | Batteries, power distribution, harnessing, grounding and bonding, EMI |
 | [recoveryAndReusability](recoveryAndReusability/) | Scaffolded | Entry, descent and landing, refurbishment, life tracking, economics |
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Scaffolded | FMECA, fault trees, reliability allocation, redundancy, quality systems |
-| [avionicsAndGNC](avionicsAndGNC/) | Scaffolded | Flight computers, sensors, guidance, navigation, control, telemetry |
+| [avionicsAndGNC](avionicsAndGNC/) | **Complete** | Flight computers, sensors, guidance, navigation, control, telemetry |
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | Scaffolded | Pads, umbilicals, propellant handling, countdown, launch operations |
 | [manufacturingAndAssembly](manufacturingAndAssembly/) | Scaffolded | Welding, composites, machining, tooling, inspection and NDE, supply chain |
 | [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Scaffolded | Flight termination, trajectory limits, autonomous FTS, debris analysis |

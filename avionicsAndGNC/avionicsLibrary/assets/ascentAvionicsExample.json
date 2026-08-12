@@ -1,0 +1,52 @@
+{
+  "caseName": "The avionics of one ascent: what the navigation knows, what the control can do about it, and what gets recorded",
+  "linkedCase": "smallLaunchVehicleExample",
+  "linkedCaseNote": "The thrust, vehicle length and diameter are the vehicle vehicleArchitecture closed. The flight time is its ascent duration. Restated here so this example runs standalone.",
+
+  "flight": {
+    "duration": 540.0,
+    "durationNote": "Nine minutes to orbit, from the vehicleArchitecture ascent budget.",
+    "maxQTime": 70.0,
+    "maxQTimeNote": "Maximum dynamic pressure, which is where the aerodynamic disturbance peaks."
+  },
+
+  "navigation": {
+    "_comment": "The IMU grade is the decision. The example runs all three and the spread is nearly four orders of magnitude, which is why the grade rather than the specific unit is what matters at concept level.",
+    "grade": "tactical",
+    "aiding": "GPS",
+    "positionRequirement": 500.0,
+    "positionRequirementNote": "Insertion accuracy the guidance needs at the end of the burn. Loose by spacecraft standards and tight by unaided inertial standards, which is the whole point."
+  },
+
+  "control": {
+    "_comment": "A single gimballed engine on the first stage. The static margin is negative because a launch vehicle is aerodynamically unstable, with the centre of pressure ahead of the centre of gravity.",
+    "thrust": 100000.0,
+    "gimbalArm": 6.0,
+    "arrangement": "single gimballed engine",
+    "vehicleLength": 18.0,
+    "vehicleDiameter": 1.8,
+    "referenceArea": 2.545,
+    "staticMargin": -0.06,
+    "bendingFrequency": 6.0,
+    "controlFrequency": 1.0,
+    "conditions": [
+      {"name": "liftoff",        "dynamicPressure": 100.0,   "windAngleOfAttack": 2.0},
+      {"name": "max-Q",          "dynamicPressure": 35000.0, "windAngleOfAttack": 4.0},
+      {"name": "max-Q with gust","dynamicPressure": 35000.0, "windAngleOfAttack": 8.0},
+      {"name": "above the atmosphere", "dynamicPressure": 50.0, "windAngleOfAttack": 0.0}
+    ]
+  },
+
+  "telemetry": {
+    "_comment": "A representative measurement list. The structural accelerometers are twelve channels out of ninety-three and three quarters of the bandwidth, which is the result this stage exists to show.",
+    "linkCapacity": 1000000.0,
+    "recorderCapacity": 4000000000.0,
+    "measurements": [
+      {"name": "structural accelerometers", "count": 12, "sampleRate": 2000.0, "wordLength": 16, "signalFrequency": 150.0},
+      {"name": "pressure transducers",      "count": 24, "sampleRate": 200.0,  "wordLength": 14, "signalFrequency": 15.0},
+      {"name": "navigation state",          "count": 1,  "sampleRate": 100.0,  "wordLength": 512},
+      {"name": "valve positions",           "count": 16, "sampleRate": 50.0,   "wordLength": 8,  "signalFrequency": 4.0},
+      {"name": "temperatures",              "count": 40, "sampleRate": 5.0,    "wordLength": 12, "signalFrequency": 0.4}
+    ]
+  }
+}

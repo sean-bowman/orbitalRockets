@@ -88,7 +88,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 2. ~~`vehicleArchitecture`~~ **done**
 3. ~~`mechanismsAndSeparation`~~ **done**
 4. ~~`electricalPower`~~ **done**
-5. `avionicsAndGNC`
+5. ~~`avionicsAndGNC`~~ **done**
 6. `groundSystemsAndOperations`
 7. `recoveryAndReusability`
 8. `manufacturingAndAssembly`
@@ -110,14 +110,17 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [vehicleArchitecture](vehicleArchitecture/) | Full | 14 | 4 | **hardware**, Falcon 9 Block 5 stage masses |
 | [mechanismsAndSeparation](mechanismsAndSeparation/) | Full | 12 | 5 | **standard**, NASA-STD-5017B read in full |
 | [electricalPower](electricalPower/) | Full | 12 | 4 | **standard**, the AWG definition, exact to four figures |
+| [avionicsAndGNC](avionicsAndGNC/) | Full | 12 | 3 | internal, no external anchor, outstanding |
 
-**Four of the six now reach hardware level and one reaches standard level.** Each carries a
+**Four reach hardware level and two reach standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
 and what remains unchecked.
 
-Two remain internal and both are defensible for now: aerospaceMaterials is seeded from an
-MMPDS-derived table and tested against it, and fluidSystemsTesting is a process domain rather than a
-physics one. Both are still listed as outstanding rather than closed.
+Three remain internal. aerospaceMaterials is seeded from an MMPDS-derived table and tested against
+it, and fluidSystemsTesting is a process domain rather than a physics one. **avionicsAndGNC is the
+weakest-anchored domain in the repository**, with no hardware source and no standard read, and it is
+also the domain whose conclusions depend least on its numbers: the results follow from integration
+orders and sums rather than from values. All three are listed as outstanding rather than closed.
 
 ### aerospaceMaterials sub-domains
 
@@ -138,7 +141,7 @@ physics one. Both are still listed as outstanding rather than closed.
 
 ## In progress
 
-Nothing. The next domain in the build order is [avionicsAndGNC](avionicsAndGNC/), which needs a scaffold first.
+Nothing. The next domain in the build order is [groundSystemsAndOperations](groundSystemsAndOperations/), which needs a scaffold first.
 
 ### A naming rule the scaffold does not follow
 
@@ -188,7 +191,6 @@ README and `objectives.md` only. No `docs/`, no `tests/`, no library, and not ye
 
 | Domain | Planned depth | Why that depth |
 |---|---|---|
-| [avionicsAndGNC](avionicsAndGNC/) | Full | Sensor error budgets, navigation drift, control authority and link budgets are quantitative |
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | Light | Mostly procedure and facility design. The computable part is propellant loading, chilldown and countdown timeline arithmetic |
 | [manufacturingAndAssembly](manufacturingAndAssembly/) | Light | The process physics already lives in the ten `aerospaceMaterials` sub-domains. What is left is assembly sequence, tooling and inspection planning |
 | [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | Debris footprint and instantaneous impact point compute. The rest is regulation, and the standards index carries most of the value |

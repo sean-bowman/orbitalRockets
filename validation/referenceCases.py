@@ -454,6 +454,51 @@ UNVALIDATED = {
         'nextStep': 'Measure a real harness. This is the one gap in the repository that could be '
                     'closed with a set of scales.'},
 
+    'imuGrades': {
+        'domain': 'avionicsAndGNC',
+        'calculation': 'IMU_GRADES and the AIDING_SOURCES bounds',
+        'reason': 'Representative of a sensor class rather than of any part number. Real bias, '
+                  'random walk and scale factor come from a specific unit datasheet and from its '
+                  'calibration, and the aiding bounds depend on the receiver and the environment.',
+        'consequence': 'Every absolute error figure scales with them. The structural results do '
+                       'not: that the gyro bias term grows as the cube of time while the '
+                       'accelerometer bias grows as the square, and therefore that the gyro term '
+                       'overtakes early in a flight, follows from the integration order rather '
+                       'than from any value. The crossover TIME moves with the grade and its '
+                       'existence does not.',
+        'nextStep': 'A datasheet for a specific IMU, which every manufacturer publishes. Same '
+                    'shape of gap as the battery cell datasheet in electricalPower and equally '
+                    'tractable.'},
+
+    'controlDisturbances': {
+        'domain': 'avionicsAndGNC',
+        'calculation': 'THRUST_MISALIGNMENT, CG_OFFSET_FRACTION, TRIM_ALLOWANCE and the '
+                       'TVC_ARRANGEMENTS gimbal ranges',
+        'reason': 'Representative values. Thrust misalignment is an engine and mounting tolerance, '
+                  'the centre of gravity offset is a mass properties outcome, and the gimbal range '
+                  'is a specific actuator installation.',
+        'consequence': 'The trim angle and therefore the pass or fail verdict scale with them. '
+                       'The conclusion drawn does not: that the governing disturbance changes '
+                       'between the atmospheric and vacuum phases holds for any values where the '
+                       'aerodynamic term is present in one and absent in the other, which is '
+                       'always. The trim allowance of a third is explicitly a convention.',
+        'nextStep': 'Engine thrust vector alignment tolerance from the propulsion supplier, and a '
+                    'mass properties statement giving the lateral centre of gravity offset. Both '
+                    'exist on any real programme.'},
+
+    'telemetryOverhead': {
+        'domain': 'avionicsAndGNC',
+        'calculation': 'FRAMING_OVERHEAD and LINK_MARGIN',
+        'reason': 'Representative. Real framing overhead depends on the telemetry standard, the '
+                  'error correction coding and the frame structure, and the link margin depends on '
+                  'the antenna pattern, the range and the ground station.',
+        'consequence': 'The utilisation figure moves with them and the pass or fail on a marginal '
+                       'plan moves with it. The result the domain reports, that a handful of '
+                       'high-rate channels dominate a list of dozens, is a property of the '
+                       'measurement list rather than of the overhead.',
+        'nextStep': 'The telemetry standard the programme uses, which fixes the framing, and a '
+                    'link budget, which fixes the margin. Neither is a research problem.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
