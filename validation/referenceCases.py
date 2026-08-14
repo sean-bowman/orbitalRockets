@@ -660,6 +660,91 @@ UNVALIDATED = {
         'nextStep': 'Process capability data from a shop, which every manufacturer holds and none '
                     'publishes. The tolerance ORDERING is textbook and is not in doubt.'},
 
+    'casualtyAreas': {
+        'domain': 'rangeSafetyAndFTS',
+        'calculation': 'CASUALTY_AREA by fragment class and POPULATION_DENSITY by land use',
+        'reason': 'Representative. A real casualty area comes from a fragment mass, velocity and '
+                  'impact angle through a lethality model, and a real population comes from a '
+                  'gridded census product rather than a land use class.',
+        'consequence': 'Every casualty expectation scales linearly with both, so the margin '
+                       'against the 1e-4 criterion moves with them. The structural results do '
+                       'not: that risk follows population rather than impact probability follows '
+                       'from the product form, and that a casualty area is far larger than a '
+                       'fragment footprint is a definition rather than a value.',
+        'nextStep': 'A gridded population product, which is public, and a debris catalogue with a '
+                    'lethality model, which is programme specific. The first is free and would '
+                    'replace the land use classes entirely.'},
+
+    'impactProbabilities': {
+        'domain': 'rangeSafetyAndFTS',
+        'calculation': 'The regional impact probabilities and the vehicle failure probability in '
+                       'the worked example asset',
+        'reason': 'Representative. A real impact probability comes from propagating a debris '
+                  'catalogue through an atmosphere with a wind field, from every failure time '
+                  'along the trajectory, which is a Monte Carlo rather than a closed form. The '
+                  'failure probability comes from a reliability argument the vehicle does not '
+                  'have yet.',
+        'consequence': 'The whole casualty expectation scales with them, and the failure '
+                       'probability multiplies everything else, which is why the class sweeps it '
+                       'and reports the value at which the criterion stops being met. **The risk '
+                       'analysis inherits the reliability estimate whole**, and that is the '
+                       'weakest number in it.',
+        'nextStep': 'A break-up model and a debris propagation, which is the largest single piece '
+                    'of unbuilt work implied by this repository. EntryTrajectory in '
+                    'recoveryAndReusability computes the descent of one body and the missing part '
+                    'is the catalogue and the dispersion.'},
+
+    'betaFactors': {
+        'domain': 'reliabilityAndMissionAssurance',
+        'calculation': 'BETA_FACTORS by sharing class, and DEFAULT_COVERAGE',
+        'reason': 'Representative. A real beta factor is estimated from operating experience on a '
+                  'specific redundant configuration, and the published estimates for it vary by a '
+                  'factor of several across industries and analysts. The MODEL is standard and its '
+                  'form is not in doubt; the values are.',
+        'consequence': 'Every absolute redundancy figure scales with them, and the verdict on '
+                       'whether a redundant set meets a requirement moves with them. The '
+                       'structural results do not. That the common cause term does not fall as '
+                       'units are added is algebra. That adding a third unit buys almost nothing '
+                       'once common cause dominates follows from it. And the ORDERING of the '
+                       'sharing classes is a mechanism rather than a value: units that share a '
+                       'design share its design errors.',
+        'nextStep': 'Operating experience on a specific configuration, or one of the published '
+                    'beta factor estimation methods applied to a real installation. Neither is a '
+                    'research problem and both need a programme rather than a repository.'},
+
+    'componentFailureRates': {
+        'domain': 'reliabilityAndMissionAssurance',
+        'calculation': 'FAILURE_RATES, and the subsystem reliabilities in the worked example asset',
+        'reason': 'Representative. A component failure rate comes from operating experience or '
+                  'from a parts count prediction, and the prediction handbooks have a long and '
+                  'well documented history of being optimistic. Generating one here would give it '
+                  'more authority than it earns, which is why the domain declines to.',
+        'consequence': 'Every probability the domain reports scales with them. The structural '
+                       'results do not: that series reliability multiplies, that item count is a '
+                       'reliability parameter, that single point failures dominate a fault tree '
+                       'and that the importance ranking differs from the probability ranking are '
+                       'all consequences of the form rather than the values. The ORDERING is also '
+                       'structural, because single-shot devices are non-redundant by construction.',
+        'nextStep': 'Operating experience, which is the only honest source. The domain says so '
+                    'explicitly rather than substituting a handbook prediction, and the basis '
+                    'audit in ReliabilityBudget exists to make the difference visible.'},
+
+    'ordinalScales': {
+        'domain': 'reliabilityAndMissionAssurance',
+        'calculation': 'SEVERITY_CLASSES, DETECTION_CLASSES and OCCURRENCE_BANDS in FMECA',
+        'reason': 'These are conventions rather than measurements, and different programmes use '
+                  'different scales. They cannot be validated because there is nothing to validate '
+                  'them against: an ordinal rank is a definition.',
+        'consequence': 'Every risk priority number and criticality figure depends on them, and a '
+                       'different scale reorders the table. **That is the point the domain makes '
+                       'rather than a weakness it has**: multiplying ordinals produces something '
+                       'that sorts and does not measure, which is why criticality is reported '
+                       'alongside the risk priority number and why the mandatory review filter '
+                       'uses no arithmetic at all.',
+        'nextStep': 'Nothing closes this, because there is nothing to close. The correct response '
+                    'is to read an ordinal product as a sort rather than a measurement, and the '
+                    'class is built to make that difficult to forget.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -1430,4 +1515,68 @@ INSPECTION_CAPABILITY = {
                      'library are representative of a method rather than of a qualified procedure, '
                      'and are registered as unvalidated. The handbook is explicit that geometry, '
                      'material, surface finish and access all move them.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Range safety criteria, read from 14 CFR Part 450 -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The rangeSafetyAndFTS anchor, and the strongest kind available to that domain: the criteria are
+# not a model of anything, they are the numbers a launch is licensed against.
+#
+# Two things are worth carrying out of reading the regulation rather than a summary of it.
+#
+# Collective and individual risk are SEPARATE tests and both apply. A launch can meet the
+# collective criterion by spreading a small risk thinly over a large population and still fail the
+# individual one for the person nearest the trajectory. The individual limit exists to stop exactly
+# that trade.
+#
+# And 450.145's design reliability of 0.999 at 95 per cent confidence cannot be demonstrated by
+# test. The zero-failure binomial says it takes 2,994 successful firings of a single-use ordnance
+# system, so the claim is argued from design rather than demonstrated.
+RANGE_SAFETY_CRITERIA = {
+
+    '14-CFR-450': {
+        'source': '14 CFR Part 450, Launch and Reentry License Requirements. Section 450.101 for '
+                  'the launch safety criteria and 450.145 for the highly reliable flight safety '
+                  'system, read from https://www.law.cornell.edu/cfr/text/14/450.101 and '
+                  'https://www.law.cornell.edu/cfr/text/14/450.145, accessed 10 August 2026',
+        'kind':  'regulation',
+        'level': 'standard',
+
+        'launchCriteria': {
+            'publicCollective':       {'limit': 1.0e-4, 'measure': 'expected casualties'},
+            'neighbouringCollective': {'limit': 2.0e-4, 'measure': 'expected casualties'},
+            'publicIndividual':       {'limit': 1.0e-6, 'measure': 'probability of casualty'},
+            'neighbouringIndividual': {'limit': 1.0e-5, 'measure': 'probability of casualty'},
+            'aircraft':               {'limit': 1.0e-6, 'measure': 'probability of impact'},
+        },
+
+        'flightSafetyReliability': 0.999,
+        'flightSafetyConfidence':  0.95,
+
+        # ln(0.05) / ln(0.999), the zero-failure binomial.
+        'zeroFailureTests': 2994.23,
+
+        'demonstrationNote': 'The 0.999 at 95 per cent confidence in 450.145 cannot be '
+                             'demonstrated by test. With zero failures in n trials the lower '
+                             'confidence bound on reliability is (1 - C) ** (1/n), so the claim '
+                             'needs 2,994 successful firings of a single-use ordnance system. '
+                             'Nobody has done that and nobody will: the articles are consumed by '
+                             'the test and a lot that size would not be the lot that flies. The '
+                             'claim is therefore argued from redundancy, parts history, '
+                             'environmental margin and an end-to-end test of the flight article, '
+                             'rather than demonstrated by a reliability trial. That is not a '
+                             'weakness in the regulation, it is the only available answer.',
+
+        'criteriaNote': 'Collective and individual risk are separate tests and both apply. The '
+                        'neighbouring operations personnel limits are looser than the public ones '
+                        'by exactly a factor of two on the collective side and ten on the '
+                        'individual side, which is the regulation distinguishing people who chose '
+                        'to be there from people who did not.',
+
+        'scopeNote': 'These are limits rather than targets. A launch above any of them does not '
+                     'get a licence, and there is no engineering argument that trades one against '
+                     'another. That is why the classes raise rather than reporting a margin.'},
 }

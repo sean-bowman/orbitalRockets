@@ -17,8 +17,6 @@ The master list of what is built and what is not, kept current as the repository
 - [Complete](#complete)
 - [In progress](#in-progress)
 - [propulsion, complete](#propulsion-complete)
-- [Scaffolded, not started](#scaffolded-not-started)
-- [Bare, not scaffolded](#bare-not-scaffolded)
 - [Repository wide verification](#repository-wide-verification)
 
 ---
@@ -92,8 +90,8 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 6. ~~`groundSystemsAndOperations`~~ **done**
 7. ~~`recoveryAndReusability`~~ **done**
 8. ~~`manufacturingAndAssembly`~~ **done**
-9. `rangeSafetyAndFTS`
-10. `reliabilityAndMissionAssurance`
+9. ~~`rangeSafetyAndFTS`~~ **done**
+10. ~~`reliabilityAndMissionAssurance`~~ **done**
 
 ---
 
@@ -114,8 +112,10 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | Light | 13 | 4 | **standard**, DESR 6055.09 read in full |
 | [recoveryAndReusability](recoveryAndReusability/) | Full | 12 | 5 | **standard**, Allen-Eggers, plus bounded Sutton-Graves |
 | [manufacturingAndAssembly](manufacturingAndAssembly/) | Light | 12 | 3 | **standard**, MIL-HDBK-1823A, model only |
+| [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | 11 | 3 | **standard**, 14 CFR Part 450 read from the regulation |
+| [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Light | 12 | 4 | internal, no external anchor, and deliberately so |
 
-**Four reach hardware level and five reach standard level.** Each carries a
+**Four reach hardware level and six reach standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
 and what remains unchecked.
 
@@ -144,7 +144,9 @@ orders and sums rather than from values. All three are listed as outstanding rat
 
 ## In progress
 
-Nothing. The next domain in the build order is [rangeSafetyAndFTS](rangeSafetyAndFTS/), which is bare and needs a scaffold first.
+**Nothing. Every domain in the repository is built.**
+
+The remaining work is the validation retrofit below, and the debris catalogue and break-up model named in [rangeSafetyAndFTS](rangeSafetyAndFTS/docs/DebrisAndBlast.md), which is the largest single piece of unbuilt work the repository implies.
 
 ### A naming rule the scaffold does not follow
 
@@ -174,26 +176,6 @@ Every unbuilt domain still ships a library helper called `utils.py`, which viola
 **That argument was stretched too far once and it cost a published finding.** It was read as "compute no geometry at all", which left the divergence loss depending on a lookup table of exit angles. The table gave an 80 per cent bell 8 degrees regardless of area ratio; Rao's approximation gives 11.5 at an area ratio of 20. Correcting it doubled the divergence loss and inverted the sub-domain's conclusion about where the largest loss is. `NozzleContour` now computes the angle in closed form at conceptual fidelity, which does not overlap a characteristics solution.
 
 **The general rule this produced, carried forward to every remaining domain:** an argument against duplicating an external tool is not an argument against every calculation in that tool's subject. Check what the neighbouring tool actually computes before declining to compute anything nearby, and never let a lookup table stand in for an equation that exists in closed form.
-
----
-
-## Scaffolded, not started
-
-These have a `utils.py` bootstrap stub, an empty `docs/`, an empty `tests/`, and are listed in `pytest.ini`.
-
-| Domain | Planned depth | Why that depth |
-|---|---|---|
-| [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Light | FMECA and fault trees are process. The computable part is reliability allocation, redundancy arithmetic and confidence from test counts, which is a small library |
-
----
-
-## Bare, not scaffolded
-
-README and `objectives.md` only. No `docs/`, no `tests/`, no library, and not yet in `pytest.ini`. Scaffolding is part of the build.
-
-| Domain | Planned depth | Why that depth |
-|---|---|---|
-| [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | Debris footprint and instantaneous impact point compute. The rest is regulation, and the standards index carries most of the value |
 
 ---
 

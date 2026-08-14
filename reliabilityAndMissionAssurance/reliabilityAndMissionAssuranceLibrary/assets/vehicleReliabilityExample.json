@@ -1,0 +1,85 @@
+{
+  "case": "twoStageVehicleReliability",
+  "description": "One two stage vehicle taken from a FMECA through a fault tree to a reliability budget and a redundancy trade. The failure modes and the tree are built around the findings the fluid systems work keeps producing: single valves, single regulators and single-shot ordnance.",
+
+  "fmeca": {
+    "modes": [
+      {"item": "main propellant valve", "mode": "fails closed on command",
+       "effect": "no engine start, mission lost on the pad",
+       "severity": "catastrophic", "probability": 2.0e-4, "detection": "certain"},
+      {"item": "pressurant regulator", "mode": "fails open",
+       "effect": "tank overpressure and structural failure",
+       "severity": "catastrophic", "probability": 5.0e-4, "detection": "unlikely"},
+      {"item": "stage separation bolt", "mode": "fails to release",
+       "effect": "stage retained, mission lost",
+       "severity": "catastrophic", "probability": 5.0e-4, "detection": "undetectable"},
+      {"item": "engine start sequence", "mode": "hard start",
+       "effect": "chamber damage, thrust loss",
+       "severity": "catastrophic", "probability": 2.0e-3, "detection": "possible"},
+      {"item": "propellant line heater", "mode": "fails off",
+       "effect": "propellant freezes in the line",
+       "severity": "critical", "probability": 2.0e-3, "detection": "likely"},
+      {"item": "avionics unit", "mode": "processor halt",
+       "effect": "loss of control if both units halt",
+       "severity": "critical", "probability": 1.0e-3, "detection": "certain"},
+      {"item": "telemetry transmitter", "mode": "channel dropout",
+       "effect": "lost data, no mission effect",
+       "severity": "negligible", "probability": 1.0e-2, "detection": "certain"},
+      {"item": "fairing separation", "mode": "one half retained",
+       "effect": "payload not deployed",
+       "severity": "catastrophic", "probability": 3.0e-4, "detection": "undetectable"}
+    ],
+    "actioned": ["fails closed on command", "fails open", "fails to release", "hard start",
+                 "one half retained"],
+    "note": "the heater mode is deliberately left unactioned, because that is the finding the class exists to surface"
+  },
+
+  "faultTree": {
+    "topEvent": "missionLoss",
+    "gates": {
+      "missionLoss":       {"type": "or",  "inputs": ["propulsionLoss", "stagingLoss",
+                                                      "controlLoss", "deploymentLoss"]},
+      "propulsionLoss":    {"type": "or",  "inputs": ["engineStartFail", "feedFail"]},
+      "feedFail":          {"type": "or",  "inputs": ["regulatorFail", "mainValveFail"]},
+      "stagingLoss":       {"type": "or",  "inputs": ["initiatorPairFail", "boltFail"]},
+      "initiatorPairFail": {"type": "and", "inputs": ["initiatorA", "initiatorB"]},
+      "controlLoss":       {"type": "and", "inputs": ["avionicsA", "avionicsB"]},
+      "deploymentLoss":    {"type": "or",  "inputs": ["fairingFail"]}
+    },
+    "basicEvents": {
+      "engineStartFail": 2.0e-3,
+      "regulatorFail":   5.0e-4,
+      "mainValveFail":   2.0e-4,
+      "initiatorA":      1.0e-4,
+      "initiatorB":      1.0e-4,
+      "boltFail":        5.0e-4,
+      "avionicsA":       1.0e-3,
+      "avionicsB":       1.0e-3,
+      "fairingFail":     3.0e-4
+    },
+    "acceptedSinglePoints": ["engineStartFail", "regulatorFail", "mainValveFail"],
+    "note": "the separation bolt and the fairing are deliberately left off the accepted list, because an unaccepted single point failure is what the check exists to catch"
+  },
+
+  "budget": {
+    "target": 0.97,
+    "itemReliability": 0.99995,
+    "subsystems": [
+      {"name": "propulsion",    "reliability": 0.9850, "basis": "heritage"},
+      {"name": "fluid systems", "reliability": 0.9940, "basis": "assumed"},
+      {"name": "separation",    "reliability": 0.9960, "basis": "allocated"},
+      {"name": "avionics",      "reliability": 0.9970, "basis": "demonstrated"},
+      {"name": "structures",    "reliability": 0.9995, "basis": "predicted"}
+    ],
+    "note": "the basis column is the point; two subsystems carrying a third of the failure budget have nothing behind them yet"
+  },
+
+  "redundancy": {
+    "elementReliability": 0.99,
+    "units": 2,
+    "sharing": "identicalDifferentLot",
+    "requiredReliability": 0.9995,
+    "coverage": 0.95,
+    "note": "a dual avionics set, identical units from different lots, which is the usual arrangement"
+  }
+}

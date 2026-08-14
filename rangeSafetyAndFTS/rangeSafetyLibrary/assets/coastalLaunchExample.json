@@ -1,0 +1,48 @@
+{
+  "case": "coastalLaunchRangeSafety",
+  "description": "One launch from a coastal site, taken from the instantaneous impact point through the public risk analysis to the flight termination system reliability claim. The trajectory states are representative of a two stage ascent to low orbit and the risk regions are the classic coastal geometry: a remote launch area, one town near the azimuth, and an ocean downrange.",
+
+  "trajectory": {
+    "destructRange": 900000.0,
+    "reactionTime": 4.0,
+    "states": [
+      {"time": 20.0,  "altitude": 3000.0,   "speed": 200.0,  "flightPathAngle": 80.0},
+      {"time": 40.0,  "altitude": 12000.0,  "speed": 500.0,  "flightPathAngle": 65.0},
+      {"time": 60.0,  "altitude": 28000.0,  "speed": 1000.0, "flightPathAngle": 45.0},
+      {"time": 80.0,  "altitude": 48000.0,  "speed": 1700.0, "flightPathAngle": 32.0},
+      {"time": 110.0, "altitude": 78000.0,  "speed": 2600.0, "flightPathAngle": 22.0},
+      {"time": 150.0, "altitude": 105000.0, "speed": 3600.0, "flightPathAngle": 14.0},
+      {"time": 200.0, "altitude": 135000.0, "speed": 5000.0, "flightPathAngle": 7.0},
+      {"time": 250.0, "altitude": 160000.0, "speed": 6300.0, "flightPathAngle": 3.0},
+      {"time": 290.0, "altitude": 175000.0, "speed": 7300.0, "flightPathAngle": 1.0},
+      {"time": 320.0, "altitude": 185000.0, "speed": 7800.0, "flightPathAngle": 0.3}
+    ],
+    "note": "inertial speed and flight path angle above the local horizontal; the last row is at or past insertion"
+  },
+
+  "risk": {
+    "failureProbability": 0.02,
+    "personnelType": "public",
+    "nearestPersonProbability": 3.0e-7,
+    "fragments": {"small": 180, "medium": 60, "large": 12, "intact": 1},
+    "regions": [
+      {"name": "launch area", "landUse": "remoteLand", "impactProbability": 0.15},
+      {"name": "coastal town", "landUse": "suburban", "impactProbability": 0.0008},
+      {"name": "downrange ocean", "landUse": "shippingLane", "impactProbability": 0.82}
+    ],
+    "note": "impact probabilities given a failure, summing to just under one with the remainder falling inside the cleared pad area"
+  },
+
+  "termination": {
+    "elementReliability": 0.995,
+    "configuration": "dualParallel",
+    "seriesElements": {
+      "command receiver": 0.9995,
+      "FTS battery": 0.9998,
+      "safe and arm device": 0.9999
+    },
+    "testsAvailable": 30,
+    "singleReceiverCase": {"command receiver": 0.995},
+    "note": "reliabilities per path and per series element; the single receiver case is the same ordnance behind one receiver"
+  }
+}
