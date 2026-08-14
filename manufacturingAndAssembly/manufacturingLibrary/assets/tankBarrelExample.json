@@ -1,0 +1,56 @@
+{
+  "case": "tankBarrelProduction",
+  "description": "One propellant tank barrel section taken from a tolerance stack through inspection capability to production rate. The part is chosen because it exercises all three: a welded assembly with a stack that has to close, a fracture critical weld that has to be inspected, and a long cycle time that sets the line.",
+
+  "part": {
+    "name": "2219-T87 tank barrel section, welded",
+    "diameter": 3.7,
+    "wallThickness": 0.0042,
+    "note": "the alloy and the fracture data come from aerospaceMaterials; the pressure vessel sizing from aerospaceStructures"
+  },
+
+  "toleranceStack": {
+    "nominalGap": 0.0040,
+    "minimumGap": 0.0002,
+    "maximumGap": 0.0055,
+    "sigmaLevel": 3.0,
+    "contributors": [
+      {"name": "barrel roundness after roll", "tolerance": 0.00080},
+      {"name": "weld shrinkage across the seam", "tolerance": 0.00060},
+      {"name": "dome trim to length", "tolerance": 0.00040},
+      {"name": "fixture location", "tolerance": 0.00025},
+      {"name": "thermal growth in the shop", "tolerance": 0.00018},
+      {"name": "Y-ring machining", "tolerance": 0.00012}
+    ],
+    "improvedContributor": "barrel roundness after roll",
+    "improvedTolerance": 0.00030
+  },
+
+  "inspection": {
+    "method": "penetrant",
+    "responseType": "hitMiss",
+    "demonstrationTargets": 80,
+    "criticalFlawSize": 0.0040,
+    "detectionMargin": 2.0,
+    "thinWallCriticalFlawSize": 0.0013,
+    "criticalFlawNote": "from a damage tolerance calculation at proof pressure; the thin wall case is the same weld at a reduced thickness, which is where the inspection stops establishing anything"
+  },
+
+  "production": {
+    "firstUnitCost": 1.0,
+    "processClass": "welding",
+    "annualDemand": 24.0,
+    "shifts": 1.0,
+    "runLength": 20,
+    "stations": {
+      "plate roll and tack": 45.0,
+      "longitudinal weld": 60.0,
+      "Y-ring machining": 38.0,
+      "circumferential weld and dome mate": 75.0,
+      "proof and inspect": 50.0
+    },
+    "improvedStation": "circumferential weld and dome mate",
+    "improvedCycleTime": 55.0,
+    "note": "cycle times in hours per unit; every cost is a fraction of the first unit so the case carries no currency"
+  }
+}

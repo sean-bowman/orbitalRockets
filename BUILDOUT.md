@@ -91,7 +91,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 5. ~~`avionicsAndGNC`~~ **done**
 6. ~~`groundSystemsAndOperations`~~ **done**
 7. ~~`recoveryAndReusability`~~ **done**
-8. `manufacturingAndAssembly`
+8. ~~`manufacturingAndAssembly`~~ **done**
 9. `rangeSafetyAndFTS`
 10. `reliabilityAndMissionAssurance`
 
@@ -113,8 +113,9 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [avionicsAndGNC](avionicsAndGNC/) | Full | 12 | 3 | internal, no external anchor, outstanding |
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | Light | 13 | 4 | **standard**, DESR 6055.09 read in full |
 | [recoveryAndReusability](recoveryAndReusability/) | Full | 12 | 5 | **standard**, Allen-Eggers, plus bounded Sutton-Graves |
+| [manufacturingAndAssembly](manufacturingAndAssembly/) | Light | 12 | 3 | **standard**, MIL-HDBK-1823A, model only |
 
-**Four reach hardware level and four reach standard level.** Each carries a
+**Four reach hardware level and five reach standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
 and what remains unchecked.
 
@@ -143,7 +144,7 @@ orders and sums rather than from values. All three are listed as outstanding rat
 
 ## In progress
 
-Nothing. The next domain in the build order is [manufacturingAndAssembly](manufacturingAndAssembly/), which is bare and needs a scaffold first.
+Nothing. The next domain in the build order is [rangeSafetyAndFTS](rangeSafetyAndFTS/), which is bare and needs a scaffold first.
 
 ### A naming rule the scaffold does not follow
 
@@ -192,7 +193,6 @@ README and `objectives.md` only. No `docs/`, no `tests/`, no library, and not ye
 
 | Domain | Planned depth | Why that depth |
 |---|---|---|
-| [manufacturingAndAssembly](manufacturingAndAssembly/) | Light | The process physics already lives in the ten `aerospaceMaterials` sub-domains. What is left is assembly sequence, tooling and inspection planning |
 | [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | Debris footprint and instantaneous impact point compute. The rest is regulation, and the standards index carries most of the value |
 
 ---

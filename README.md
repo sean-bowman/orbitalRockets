@@ -30,7 +30,7 @@ Two things that are meant to be used together, in every domain.
 
 ## Domains
 
-Thirteen of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist: what is built, what is not, the build order, and the depth each remaining domain is planned to.
+Fourteen of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master checklist: what is built, what is not, the build order, and the depth each remaining domain is planned to.
 
 [validation/](validation/) holds the comparisons against published hardware, and the register of what has not been checked against anything external. A tool that has only been checked against itself has not been checked.
 
@@ -50,7 +50,7 @@ Thirteen of sixteen are complete. [BUILDOUT.md](BUILDOUT.md) is the master check
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Scaffolded | FMECA, fault trees, reliability allocation, redundancy, quality systems |
 | [avionicsAndGNC](avionicsAndGNC/) | **Complete** | Flight computers, sensors, guidance, navigation, control, telemetry |
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | **Complete** | Pads, umbilicals, propellant handling, countdown, launch operations |
-| [manufacturingAndAssembly](manufacturingAndAssembly/) | Scaffolded | Welding, composites, machining, tooling, inspection and NDE, supply chain |
+| [manufacturingAndAssembly](manufacturingAndAssembly/) | **Complete** | Welding, composites, machining, tooling, inspection and NDE, supply chain |
 | [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Scaffolded | Flight termination, trajectory limits, autonomous FTS, debris analysis |
 
 Propulsion is covered here, as a hub with six sub-domains, and it is deliberately liquid bipropellant. Nozzle contour generation remains in the separate NOVA suite: this repository covers nozzle performance and area ratio selection, which are the decisions, and points at NOVA for the geometry. Reimplementing a method-of-characteristics generator here would create a second implementation with nothing enforcing agreement between them.

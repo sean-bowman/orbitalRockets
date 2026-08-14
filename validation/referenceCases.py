@@ -607,6 +607,59 @@ UNVALIDATED = {
                     'curve from a drop test for the efficiency. The second is far the more '
                     'tractable.'},
 
+    'inspectionCapability': {
+        'domain': 'manufacturingAndAssembly',
+        'calculation': 'The a50 and sigma values in NDE_METHODS',
+        'reason': 'Representative of a method rather than of any qualified procedure. A real a90 '
+                  'or a90/95 comes from a demonstration on the actual geometry, material, surface '
+                  'finish and access, and MIL-HDBK-1823A is emphatic that all four move it. The '
+                  'MODEL is the standard and exact; the numbers put into it are not.',
+        'consequence': 'Every absolute flaw size the domain reports scales with them, and so does '
+                       'the verdict on whether a given inspection clears a given critical flaw. '
+                       'The structural results do not. That the ratio of a90 to a50 is nine to the '
+                       'power sigma follows from the logit of 0.9 being log 9. That an inspection '
+                       'whose reliably detectable size exceeds the critical flaw establishes '
+                       'nothing follows from the definition of both. And that the ranking by a90 '
+                       'is not the ranking by usefulness follows from what each method cannot '
+                       'reach, which is a mechanism rather than a value.',
+        'nextStep': 'A POD demonstration report for the actual procedure, which any programme with '
+                    'a fracture critical part already has, or a published one from the NTIAC '
+                    'collection the handbook cites. This is the most tractable gap in the domain.'},
+
+    'learningRates': {
+        'domain': 'manufacturingAndAssembly',
+        'calculation': 'LEARNING_RATES by process class',
+        'reason': 'Representative by process class rather than measured for any programme. A real '
+                  'learning rate is fitted to that programme cost history, and vehicleArchitecture '
+                  'names both the rate and a cost estimating relationship as gaps it does not '
+                  'fill.',
+        'consequence': 'Every cost figure scales with them, and the flatness of the curve decides '
+                       'whether a programme of ten units is near its asymptote. The structural '
+                       'results do not: that every doubling costs a fixed fraction is Wright law, '
+                       'that the absolute saving per doubling falls follows from it, and that the '
+                       'cumulative average lags the unit cost follows from the average carrying '
+                       'the early units. The ORDERING is also structural, because the more labour '
+                       'a process carries the more there is to learn.',
+        'nextStep': 'A cost history from a real production run, which is the same input a cost '
+                    'estimating relationship needs. Neither exists in this repository and both are '
+                    'named as gaps rather than assumed.'},
+
+    'processTolerances': {
+        'domain': 'manufacturingAndAssembly',
+        'calculation': 'PROCESS_TOLERANCES as a fraction of nominal, and the station cycle times '
+                       'in the worked example asset',
+        'reason': 'Representative achievable tolerance by process for a feature of launch vehicle '
+                  'size, and representative cycle times. Real numbers come from a shop and a '
+                  'machine.',
+        'consequence': 'The absolute stack and the absolute capacity scale with them. Neither '
+                       'result does. That a k sigma statistical stack exceeds the arithmetic worst '
+                       'case above a crossover of sum over root sum of squares is algebra, and it '
+                       'is exactly root n for equal contributors. That capacity is the slowest '
+                       'station rather than the sum follows from the stations running in parallel '
+                       'on different units. Both hold for any values.',
+        'nextStep': 'Process capability data from a shop, which every manufacturer holds and none '
+                    'publishes. The tolerance ORDERING is textbook and is not in doubt.'},
+
     'coolantLimits': {
         'domain': 'propulsion/combustionDevices',
         'calculation': 'The coking and decomposition limits in COOLANT_LIMITS',
@@ -1313,4 +1366,68 @@ ENTRY_ENVIRONMENT = {
                        'than taken from the flight reconstructions. It is enough to fix the units '
                        'convention, which is what it was done for, and not enough to claim the '
                        'correlation itself is reproduced.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Inspection capability, read from MIL-HDBK-1823A -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The manufacturingAndAssembly anchor. The probability of detection model and the demonstration
+# sizes were read from the handbook itself.
+#
+# The distinction that reading it settled is between a90 and a90/95, which are used
+# interchangeably in casual discussion and are different kinds of number. a90 is a property of the
+# inspection. a90/95 is a confidence bound on an ESTIMATE of a90, so it depends on how many
+# specimens the demonstration used, and the handbook notes it has become a de facto design
+# criterion. The size a programme designs to is therefore partly a statement about how many
+# specimens somebody paid for.
+INSPECTION_CAPABILITY = {
+
+    'MIL-HDBK-1823A': {
+        'source': 'MIL-HDBK-1823A, Nondestructive Evaluation System Reliability Assessment, '
+                  '7 April 2009. Section 4.5.2.2 for the demonstration sizes and appendix G for '
+                  'the model. Read from the PDF at https://statistical-engineering.com/'
+                  'wp-content/uploads/2017/10/MIL-HDBK-1823A2009.pdf, accessed 10 August 2026',
+        'kind':  'specification',
+        'level': 'standard',
+
+        # The log-odds link, one of the four generalised linear model links the handbook lists
+        # alongside probit, complementary log-log and log-log.
+        'model':      'log( POD / (1 - POD) ) = ( log(a) - mu ) / sigma',
+        'linkFunctions': ['logit', 'probit', 'cloglog', 'loglog'],
+
+        'a50': 'the flaw size having 50 per cent probability of detection',
+        'a90': 'the flaw size having 90 per cent probability of detection',
+        'a90over95': 'the 95 per cent confidence bound on the estimate of a90',
+
+        # logit(0.9) = log(9), so a90 / a50 = 9 ** sigma exactly.
+        'logitAtNinety': 2.1972245773362196,
+
+        # Section 4.5.2.2.
+        'minimumHitMissTargets': 60,
+        'minimumSignalTargets':  40,
+        'unflawedSiteRatio':     3,
+        'preciseHitMissTargets': 120,
+
+        'confidenceNote': 'a90 is a property of the inspection and a90/95 is a confidence bound on '
+                          'an estimate of it, so a90/95 falls as the demonstration grows for the '
+                          'same technique. The handbook states that a90/95 has become a de facto '
+                          'design criterion and that 120 binary inspection opportunities give a '
+                          'significantly more precise a50 and therefore a smaller a90/95 than the '
+                          '60 target minimum. The flaw size a programme designs to is therefore '
+                          'partly a statement about how many specimens somebody paid for, which is '
+                          'not how a design criterion is usually understood.',
+
+        'targetSizingNote': 'The handbook records a change of practice: target sizes were once '
+                            'spaced uniformly on a log scale and the current recommendation is '
+                            'uniform Cartesian spacing, because a90/95 is the criterion and the '
+                            'ninetieth percentile is therefore the part of the curve worth '
+                            'estimating precisely. It also warns that demonstrations tend to '
+                            'contain too many large targets, because small ones are hard to make.',
+
+        'scopeNote': 'The model is the standard and it is exact. The a50 and sigma values in this '
+                     'library are representative of a method rather than of a qualified procedure, '
+                     'and are registered as unvalidated. The handbook is explicit that geometry, '
+                     'material, surface finish and access all move them.'},
 }
