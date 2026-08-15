@@ -39,11 +39,11 @@ import os
 import numpy as np
 
 try:
-    from ignitionUtils import (CRYOGENS, MEAN_SPECIFIC_HEAT, fluidProps,
+    from ignitionUtils import (CRYOGENS, MEAN_SPECIFIC_HEAT, chillDownEnthalpy, fluidProps,
                                applyInputs, formatReportTable, createErrorContext,
                                InvalidInputError, ConditioningError)
 except ImportError:
-    from .ignitionUtils import (CRYOGENS, MEAN_SPECIFIC_HEAT, fluidProps,
+    from .ignitionUtils import (CRYOGENS, MEAN_SPECIFIC_HEAT, chillDownEnthalpy, fluidProps,
                                 applyInputs, formatReportTable, createErrorContext,
                                 InvalidInputError, ConditioningError)
 
@@ -113,9 +113,10 @@ class ChillDown:
 
         if self.material not in MEAN_SPECIFIC_HEAT:
             raise InvalidInputError(
-                f'No mean specific heat for \'{self.material}\'. Known materials are '
-                f'{sorted(MEAN_SPECIFIC_HEAT)}. These are means over the chill-down range and are '
-                f'deliberately not the room-temperature values in common/materials.py.',
+                f'No cryogenic specific heat for \'{self.material}\'. Known materials are '
+                f'{sorted(MEAN_SPECIFIC_HEAT)}. Most are integrated from the NIST cryogenic curves '
+                f'over the range actually traversed, and none is the room-temperature value in '
+                f'common/materials.py.',
                 context = createErrorContext(component = 'ChillDown'))
 
         if not np.isfinite(self.startTemperature):
@@ -131,11 +132,29 @@ class ChillDown:
     def metalEnthalpy(self) -> float:
 
         '''
+
         Enthalpy the hardware has to give up, in joules.
+
+        Integrated over the range this chill-down actually traverses rather than taken as a
+        constant times a span. The two differ because specific heat falls steeply below about
+        100 K, so the mean depends on where the range ends: the same stainless line averages
+        400 J/(kg K) chilling to liquid oxygen and 331 chilling to liquid hydrogen.
+
         '''
 
-        return (self.metalMass * MEAN_SPECIFIC_HEAT[self.material]
-                * (self.startTemperature - self.targetTemperature))
+        return chillDownEnthalpy(self.material, self.metalMass,
+                                 self.targetTemperature, self.startTemperature)
+
+    def effectiveSpecificHeat(self) -> float:
+
+        '''
+        The enthalpy-averaged specific heat this chill-down actually sees, in J/(kg K). Reported so
+        that a reader can see how far it sits from the table value quoted over the reference range.
+        '''
+
+        span = self.startTemperature - self.targetTemperature
+
+        return self.metalEnthalpy() / (self.metalMass * span)
 
     def cryogenCapacity(self) -> dict:
 

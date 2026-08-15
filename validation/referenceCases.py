@@ -265,15 +265,25 @@ UNVALIDATED = {
 
     'chillDownMeanSpecificHeat': {
         'domain': 'propulsion/ignitionAndStart',
-        'calculation': 'MEAN_SPECIFIC_HEAT, the mean metal specific heat over the chill-down range',
-        'reason': 'Representative means over roughly 90 to 300 K rather than integrated from '
-                  'measured cp curves.',
-        'consequence': 'The chill-down mass scales linearly with them. They are deliberately not '
-                       'the room-temperature values in common/materials.py, which would overstate '
-                       'the stored enthalpy by roughly a third, and a test asserts they stay '
-                       'different so the correction is not undone by someone tidying up.',
-        'nextStep': 'Integrate NIST cryogenic specific heat curves over the range per material. '
-                    'This is tractable and simply has not been done.'},
+        'calculation': 'UNFITTED_SPECIFIC_HEAT, for the two metals with no published curve',
+        'reason': 'Closed for stainless and aluminium and open for two metals. The NIST cryogenic '
+                  'material properties database publishes specific heat curve fits over 4 to 300 K '
+                  'for 304 stainless, 316 stainless and 6061-T6 aluminium, and those are now '
+                  'integrated over the range each chill-down actually traverses rather than '
+                  'tabulated as a mean. The database carries thermal conductivity and linear '
+                  'expansion for Ti-6Al-4V and Inconel 718 and NO specific heat, so those two keep '
+                  'a constant mean over roughly 90 to 300 K.',
+        'consequence': 'Confined to those two metals, and the direction is known. A constant mean '
+                       'quoted over the oxygen range never sees the part of the curve below 90 K '
+                       'where specific heat collapses, so it overstates a hydrogen chill-down. On '
+                       'stainless, where both routes exist, the overstatement is 16 per cent. '
+                       'Aluminium 2219 is mapped onto the 6061-T6 curve rather than left constant, '
+                       'which is a stated approximation: specific heat per kilogram in a dilute '
+                       'substitutional alloy is set by the base lattice, and the heavier copper '
+                       '2219 carries means the substitution should run a few per cent high.',
+        'nextStep': 'A published cryogenic specific heat curve for Ti-6Al-4V and for Inconel 718, '
+                    'from NIST Monograph 177 or an equivalent compilation. Neither is in the open '
+                    'NIST cryogenics database, which is why this entry did not close entirely.'},
 
     'instrumentUncertainty': {
         'domain': 'propulsion/propulsionTesting',

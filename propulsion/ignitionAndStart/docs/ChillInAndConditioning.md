@@ -31,12 +31,18 @@ Conditioning is the process of getting the hardware cold before the engine is as
 The hardware has to give up
 
 ```
-Q = m_metal * cp_mean * (T_start - T_target)
+Q = m_metal * integral of cp(T) dT, from T_target to T_start
 ```
 
 and the cryogen has to absorb it. Both halves have a subtlety.
 
-**The metal's specific heat is not its room-temperature value.** Specific heat falls steeply below about 100 K, and using a room-temperature figure over the whole range overstates the stored enthalpy by roughly a third for stainless and more for aluminium. The library therefore carries a separate `MEAN_SPECIFIC_HEAT` table over the chill-down range, deliberately different from the room-temperature values in [common/materials.py](../../../common/materials.py), and that difference is intentional rather than a drift.
+**The metal's specific heat is not its room-temperature value**, and it is not a constant either. It falls steeply below about 100 K: 304 stainless is 470 J/(kg K) at room temperature and 248 at the liquid oxygen boiling point. A room-temperature figure over the whole range overstates the stored enthalpy by roughly a third.
+
+**A single mean does not fix that, because the mean depends on where the range ends.** The same stainless line has an enthalpy-averaged specific heat of 413 J/(kg K) chilling for liquid methane and 331 chilling for liquid hydrogen, a spread of a quarter. **The material alone does not determine it and the cryogen has to be in the calculation**, which is why the integral above is written as an integral.
+
+The curves are the NIST cryogenic material properties fits, in [common/cryogenicProperties.py](../../../common/cryogenicProperties.py), and the library integrates them over the range each chill-down actually traverses. Any mean it reports is the result of that integral rather than an input to it, so there is no table to drift.
+
+**Two metals have no curve.** The NIST database carries thermal conductivity and linear expansion for Ti-6Al-4V and Inconel 718 and no specific heat, so those keep a constant mean and stay in the unvalidated register. The direction of that approximation is known: a constant quoted over the oxygen range never sees the collapse below 90 K, so it overstates a hydrogen chill-down by about 16 per cent.
 
 **The cryogen's capacity depends on what the vapour does**, and that is where the whole problem lives.
 
@@ -96,10 +102,11 @@ Half the operational simplicity of a kerosene booster is in that sentence, and i
 
 | Quantity | Value |
 |---|---|
-| Metal enthalpy to remove, to LOX temperature | 3.47 MJ |
-| Mean specific heat used, stainless 304 | 390 J/(kg K) |
-| LOX required, lower bound | 8.7 kg |
-| LOX required, upper bound | 16.3 kg |
+| Metal enthalpy to remove, to LOX temperature | 3.56 MJ |
+| Effective specific heat, integrated, to LOX | 400 J/(kg K) |
+| Effective specific heat, same metal, to LH2 | 331 J/(kg K) |
+| LOX required, lower bound | 8.9 kg |
+| LOX required, upper bound | 16.7 kg |
 | Band | 1.9 to one |
 | Same hardware with LH2, band | 8.6 to one |
 
@@ -107,7 +114,8 @@ Half the operational simplicity of a kerosene booster is in that sentence, and i
 
 ## Design rules of thumb
 
-- **Use a mean specific heat over the range, not a room-temperature value.** The error is a third or more, in the unsafe direction.
+- **Integrate the specific heat over the range, do not take a value at a temperature.** A room-temperature value errs by a third in the unsafe direction, and even the midpoint value errs by three per cent in the same direction because the curve is concave here.
+- **A mean specific heat belongs to a range, not to a metal.** Quoting one without the range it was integrated over is how the hydrogen case gets a number 16 per cent too large.
 - **Quote a band, not a number.** The method spans it and stating a single figure hides the design decision.
 - **For hydrogen, design the schedule.** It is worth a factor of nine and nothing else on the system is.
 - **Helium on the hydrogen side.** Nitrogen freezes.
@@ -118,6 +126,8 @@ Half the operational simplicity of a kerosene booster is in that sentence, and i
 ## Failure modes
 
 **Room-temperature specific heat.** Overstates the required cryogen by a third or more.
+
+**A mean specific heat carried across cryogens.** It is a property of the range, not of the metal, and the four cryogens span a quarter on the same line.
 
 **A single-number chill-down estimate.** Hides a factor of nine on hydrogen.
 

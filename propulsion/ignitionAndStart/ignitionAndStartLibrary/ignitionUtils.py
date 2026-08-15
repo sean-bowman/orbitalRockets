@@ -50,6 +50,8 @@ from structures import *
 from solvers import *
 from reporting import *
 from errors import *
+from cryogenicProperties import (CRYOGENIC_SPECIFIC_HEAT_FITS, SPECIFIC_HEAT_SUBSTITUTIONS,
+                                 specificHeat, meanSpecificHeat, enthalpyChange)
 
 # Permissive numeric-input alias: these helpers accept arrays, lists, or scalars interchangeably.
 ArrayLike = np.ndarray | list | float | int
@@ -228,21 +230,54 @@ CRYOGENS = {
     'LN2':  {'species': 'Nitrogen', 'boilingPoint': 77.36},    # [K]
 }
 
-# Mean specific heat of structural metals over a chill-down from room temperature to a cryogen
-# boiling point.
+# The reference range the tabulated means below are quoted over: room temperature down to the
+# liquid oxygen boiling point. It is a reporting convention only. A chill-down integrates over the
+# range it actually traverses, which for hydrogen ends 70 K lower and produces a mean 16 per cent
+# smaller on the same metal.
+REFERENCE_CHILL_RANGE = (90.19, 293.15)     # [K]
+
+# Metals with no NIST cryogenic specific heat fit.
 #
+# The database carries thermal conductivity and linear expansion for both of these and no specific
+# heat, so they keep a constant mean over roughly 90 to 300 K and stay in the unvalidated register.
 # These are NOT the room-temperature values in common/materials.py and they must not be replaced by
-# them. Specific heat falls steeply below about 100 K, and using a room-temperature value over the
-# whole range overstates the metal's stored enthalpy and therefore the chill-down propellant, by
-# roughly a third for stainless and more for aluminium.
-MEAN_SPECIFIC_HEAT = {
-    'stainless 304':  390.0,    # [J/(kg K)] mean over roughly 90 to 300 K
-    'stainless 316':  390.0,    # [J/(kg K)]
-    'inconel 718':    380.0,    # [J/(kg K)]
-    'aluminium 6061': 700.0,    # [J/(kg K)]
-    'aluminium 2219': 690.0,    # [J/(kg K)]
-    'titanium 6-4':   440.0,    # [J/(kg K)]
+# them: specific heat falls steeply below about 100 K, and a room-temperature value over the whole
+# range overstates the metal's stored enthalpy and therefore the chill-down propellant.
+UNFITTED_SPECIFIC_HEAT = {
+    'inconel 718':    380.0,    # [J/(kg K)] mean over roughly 90 to 300 K, no NIST fit
+    'titanium 6-4':   440.0,    # [J/(kg K)] mean over roughly 90 to 300 K, no NIST fit
 }
+
+# Mean specific heat over the reference range, integrated from the NIST curves where one exists.
+#
+# **This table is derived rather than written down**, which is the point of it. Nothing here can
+# drift from the curves, because there is nothing here to edit.
+MEAN_SPECIFIC_HEAT = dict(UNFITTED_SPECIFIC_HEAT)
+
+for _material in sorted(set(CRYOGENIC_SPECIFIC_HEAT_FITS) | set(SPECIFIC_HEAT_SUBSTITUTIONS)):
+    MEAN_SPECIFIC_HEAT[_material] = meanSpecificHeat(_material, *REFERENCE_CHILL_RANGE)
+
+del _material
+
+def chillDownEnthalpy(material: str, mass: float, lowTemperature: float,
+                      highTemperature: float) -> float:
+
+    '''
+
+    Enthalpy a mass of metal gives up over a chill-down, in joules.
+
+    Integrated over the range actually traversed where a NIST curve exists, and taken as a constant
+    mean where one does not. **A single mean cannot cover all four cryogens**: on stainless the
+    enthalpy-averaged specific heat runs from 413 J/(kg K) chilling to liquid methane down to 331
+    chilling to liquid hydrogen, a spread of 25 per cent, so the material alone does not determine
+    it and the cryogen has to be in the calculation.
+
+    '''
+
+    if material in UNFITTED_SPECIFIC_HEAT:
+        return mass * UNFITTED_SPECIFIC_HEAT[material] * (highTemperature - lowTemperature)
+
+    return enthalpyChange(material, mass, lowTemperature, highTemperature)
 
 # ------------------------------------------------------------------------------------------------ #
 # -- Helpers -- #

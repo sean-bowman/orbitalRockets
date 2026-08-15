@@ -66,6 +66,7 @@ Propulsion is covered here, as a hub with six sub-domains, and it is deliberatel
 | [units.py](common/units.py) | Every unit conversion constant, US Standard Atmosphere 1976 |
 | [fluidProperties.py](common/fluidProperties.py) | `fluidProps` and its REFPROP / CoolProp / correlation backends, species molar mass, leak rate and SCFM conversions |
 | [materials.py](common/materials.py) | Alloy properties with a cryogenic strength correction, surface roughness by process |
+| [cryogenicProperties.py](common/cryogenicProperties.py) | NIST cryogenic specific heat curve fits, and the enthalpy integral a chill-down needs |
 | [structures.py](common/structures.py) | Thin wall relations general enough for more than one domain |
 | [solvers.py](common/solvers.py) | `secantSolve` and `solveForUnknown` |
 | [reporting.py](common/reporting.py) | `applyInputs` (the `setInputs` implementation) and `formatReportTable` |

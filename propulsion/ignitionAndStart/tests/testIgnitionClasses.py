@@ -35,6 +35,9 @@ ROOT   = os.path.dirname(os.path.dirname(DOMAIN))
 sys.path.insert(0, os.path.join(DOMAIN, 'ignitionAndStartLibrary'))
 sys.path.insert(0, ROOT)
 
+from ignitionUtils import (CRYOGENIC_SPECIFIC_HEAT_FITS, UNFITTED_SPECIFIC_HEAT,
+                           REFERENCE_CHILL_RANGE, specificHeat, meanSpecificHeat,
+                           enthalpyChange, chillDownEnthalpy)
 from ignitionUtils import (IGNITER_TYPES, IGNITION_DELAY, CRYOGENS, MEAN_SPECIFIC_HEAT,
                            SSME_START_SEQUENCE, SSME_SHUTDOWN_LIMITS, SSME_SEQUENCE_TOLERANCE,
                            accumulatedPropellant, residenceTime, primingTime,
@@ -199,7 +202,7 @@ def testAnUnknownCryogenIsRejectedWithAUsefulReason():
 
 def testAnUnknownMaterialIsRejected():
 
-    with pytest.raises(InvalidInputError, match = 'No mean specific heat'):
+    with pytest.raises(InvalidInputError, match = 'No cryogenic specific heat'):
         buildChill(material = 'unobtainium')
 
 def testATargetBelowTheBoilingPointIsRefused():
@@ -644,3 +647,171 @@ def testReportsRunForEveryClass():
     assert 'IGNITION SYSTEM'    in buildSystem().generateReport()
     assert 'SHUTDOWN TRANSIENT' in buildShutdown().generateReport()
     assert 'CHILL DOWN'         in buildChill().generateReport()
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Cryogenic specific heat, against the NIST curve fits -- #
+# ------------------------------------------------------------------------------------------------ #
+
+def testSpecificHeatReproducesRoomTemperatureHandbookValues():
+
+    '''
+    The NIST cryogenic fits run to 300 K, where the answer is a number everybody knows. 304
+    stainless is about 477 J/(kg K) at room temperature and 6061 aluminium about 896, and the fits
+    state 5 per cent errors against their own data, so agreement inside that band is the check
+    available.
+    '''
+
+    assert specificHeat('stainless 304', 293.15) == pytest.approx(477.0, rel = 0.05)
+    assert specificHeat('aluminium 6061', 293.15) == pytest.approx(896.0, rel = 0.06)
+
+def testTheTwoStainlessSegmentsAgreeAtTheirJoint():
+
+    '''
+    316 is published as two fits meeting at 50 K. Neither set can hide a transcription error in the
+    other, because a wrong coefficient anywhere shows up as a step at the joint. This is the only
+    free check on nine transcribed numbers in the repository and it costs one assertion.
+    '''
+
+    entry = CRYOGENIC_SPECIFIC_HEAT_FITS['stainless 316']
+
+    lower, upper = entry['segments']
+
+    def evaluate(coefficients, temperature):
+        exponent = np.log10(temperature)
+        return 10.0 ** sum(value * exponent ** power
+                           for power, value in enumerate(coefficients))
+
+    below = evaluate(lower['coefficients'], 50.0)
+    above = evaluate(upper['coefficients'], 50.0)
+
+    assert below == pytest.approx(above, rel = 0.005), \
+        f'the two 316 fits give {below:.2f} and {above:.2f} at their shared 50 K bound'
+
+def testSpecificHeatFallsSteeplyBelowOneHundredKelvin():
+
+    '''
+    The reason the whole module exists. If specific heat were flat, a room-temperature value would
+    be fine and the chill-down would be a one-line multiplication.
+    '''
+
+    for material in ('stainless 304', 'stainless 316', 'aluminium 6061'):
+
+        warm = specificHeat(material, 293.15)
+        cold = specificHeat(material, 90.19)
+
+        assert cold < 0.6 * warm, \
+            f'{material} at 90 K is {cold / warm:.2f} of its room temperature value'
+
+def testExtrapolationIsRefusedRatherThanClamped():
+
+    '''
+    A polynomial in log10(T) leaves the physical values quickly outside its range, and a clamped
+    specific heat produces a plausible chill-down mass rather than an error.
+    '''
+
+    with pytest.raises(InvalidInputError):
+        specificHeat('stainless 304', 350.0)
+
+    with pytest.raises(InvalidInputError):
+        specificHeat('stainless 304', 2.0)
+
+def testAMaterialWithNoNistCurveIsNamedRatherThanSubstituted():
+
+    '''
+    Ti-6Al-4V and Inconel 718 have thermal conductivity and linear expansion in the NIST database
+    and no specific heat. Guessing one from a neighbouring alloy would be worse than saying so.
+    '''
+
+    for material in ('titanium 6-4', 'inconel 718'):
+
+        assert material in UNFITTED_SPECIFIC_HEAT
+
+        with pytest.raises(InvalidInputError):
+            specificHeat(material, 150.0)
+
+def testTheMeanIsTheIntegralAndNotTheMidpointValue():
+
+    '''
+    A mean specific heat has to reproduce the enthalpy when multiplied by the span, which the value
+    at the midpoint does not. The curve is concave over this range, flattening as it approaches the
+    Dulong-Petit plateau, so the midpoint value sits three per cent ABOVE the true mean and using
+    it would overstate the chill-down.
+    '''
+
+    low, high = 90.19, 293.15
+
+    mean     = meanSpecificHeat('stainless 304', low, high)
+    midpoint = specificHeat('stainless 304', 0.5 * (low + high))
+
+    assert enthalpyChange('stainless 304', 1.0, low, high) == pytest.approx(mean * (high - low),
+                                                                           rel = 1.0e-9)
+    assert midpoint > mean
+    assert midpoint / mean == pytest.approx(1.031, rel = 0.01)
+
+def testTheMeanTableIsDerivedFromTheCurves():
+
+    '''
+    MEAN_SPECIFIC_HEAT is computed at import over the reference range rather than written down, so
+    there is nothing in it that can drift from the curves. This asserts that it was, which is what
+    stops somebody replacing the derivation with the numbers it produced.
+    '''
+
+    for material in ('stainless 304', 'stainless 316', 'aluminium 6061', 'aluminium 2219'):
+
+        assert MEAN_SPECIFIC_HEAT[material] == pytest.approx(
+            meanSpecificHeat(material, *REFERENCE_CHILL_RANGE), rel = 1.0e-9)
+
+def testNoMeanIsTheRoomTemperatureValue():
+
+    '''
+    The correction this table exists to make is that specific heat is not its room-temperature
+    value over a chill-down. A tidy-up that replaced these with common/materials.py values would
+    overstate every chill-down in the repository, so the difference is asserted rather than
+    commented.
+    '''
+
+    for material in ('stainless 304', 'aluminium 6061'):
+        assert MEAN_SPECIFIC_HEAT[material] < 0.9 * specificHeat(material, 293.15)
+
+def testASingleMeanCannotCoverAllFourCryogens():
+
+    '''
+    The result that argues for integrating rather than tabulating. The same stainless line chilled
+    for methane and for hydrogen has enthalpy-averaged specific heats a quarter apart, so the
+    material alone does not determine the mean and the cryogen has to be in the calculation.
+    '''
+
+    means = {}
+
+    for cryogen in CRYOGENS:
+
+        component = ChillDown()
+        component.setInputs({'cryogen': cryogen, 'material': 'stainless 304', 'metalMass': 50.0})
+
+        means[cryogen] = component.effectiveSpecificHeat()
+
+    assert max(means.values()) / min(means.values()) > 1.2, \
+        f'the spread across cryogens is only {max(means.values()) / min(means.values()):.2f}'
+
+    assert means['LCH4'] > means['LOX'] > means['LN2'] > means['LH2'], \
+        'the mean has to fall as the range extends further down'
+
+def testHydrogenChillDownWasOverstatedByAConstantMean():
+
+    '''
+    The direction of the error the old constant made. A mean quoted over the oxygen range applied
+    to a hydrogen chill-down overstates the stored enthalpy, because it never sees the part of the
+    curve below 90 K where specific heat collapses.
+    '''
+
+    component = ChillDown()
+    component.setInputs({'cryogen': 'LH2', 'material': 'stainless 304', 'metalMass': 50.0})
+
+    integrated = component.effectiveSpecificHeat()
+
+    assert integrated < MEAN_SPECIFIC_HEAT['stainless 304']
+
+    overstatement = MEAN_SPECIFIC_HEAT['stainless 304'] / integrated - 1.0
+
+    assert 0.10 < overstatement < 0.25, \
+        f'the constant mean overstates the hydrogen case by {overstatement:.1%}'

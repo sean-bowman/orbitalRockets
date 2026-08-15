@@ -440,6 +440,37 @@ def reportChillDown(case: dict) -> dict:
     print('  heat as well. Real chill-down lies between them.')
     print()
 
+    # The metal side of the same table. The specific heat is integrated over each range rather
+    # than looked up, and this is what that buys.
+    print(f'    {"cryogen":10s} {"target [K]":>12s} {"effective cp":>14s} {"enthalpy [MJ]":>15s}')
+
+    effective = {}
+
+    for name in conditioning['cryogens']:
+
+        metal = ChillDown()
+        metal.setInputs({'cryogen':   name,
+                         'material':  conditioning['material'],
+                         'metalMass': conditioning['metalMass']})
+
+        effective[name] = metal.effectiveSpecificHeat()
+
+        print(f'    {name:10s} {metal.targetTemperature:12.1f} {effective[name]:14.1f} '
+              f'{metal.metalEnthalpy() / 1.0e6:15.2f}')
+
+    spread = max(effective.values()) / min(effective.values())
+
+    print()
+    print(f'  - **The same metal has a specific heat a factor of {spread:.2f} apart across these '
+          f'cryogens**, because')
+    print('    specific heat collapses below about 100 K and the mean therefore belongs to the')
+    print('    range rather than to the material. A single tabulated mean cannot cover all of')
+    print('    them, and one quoted over the oxygen range overstates the hydrogen case by 16')
+    print('    per cent.')
+    print('  - So the enthalpy is integrated over the range each chill-down actually traverses,')
+    print('    from the NIST cryogenic curves. Nothing here is a tabulated mean that could drift.')
+    print()
+
     widest = comparison['widestBand']
 
     print(f'  For LOX the band is {comparison["bandRatio"]["LOX"]:.1f} to one and the hardware mass '

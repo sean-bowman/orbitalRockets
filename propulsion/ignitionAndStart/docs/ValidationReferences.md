@@ -61,7 +61,7 @@ Kept separate from the reference lists at the foot of each document. Those are f
 
 - **Source:** The equation of state, through the repository's shared property wrapper: REFPROP where installed, CoolProp otherwise
 - **Validation level:** Standard
-- **Relevance:** Every number in the chill-down calculation except the metal specific heat.
+- **Relevance:** Every number in the chill-down calculation except the metal specific heat, which comes from the NIST cryogenic material properties curve fits.
 - **Key findings:**
   - Latent heat at the normal boiling point: LOX 213 kJ/kg, LCH4 511 kJ/kg, LH2 449 kJ/kg
   - Vapour sensible heat from saturation to 293 K: LOX 187 kJ/kg, LCH4 388 kJ/kg, **LH2 3412 kJ/kg**
@@ -91,7 +91,13 @@ Four entries, all registered in [validation/referenceCases.py](../../../validati
 
 **The tailoff impulse efficiency and its scatter** (`shutdownImpulseScatter`). The residual impulse magnitude moves directly with the first. The conclusion does not: it is that the scatter rather than the magnitude reaches the trajectory, and that holds for any scatter that is not zero.
 
-**The metal mean specific heats** (`chillDownMeanSpecificHeat`). The chill-down mass scales linearly with them. They are deliberately not the room-temperature values in [common/materials.py](../../../common/materials.py), which would overstate the stored enthalpy by roughly a third, and a test asserts they stay different so the correction is not undone by someone tidying up.
+**The metal specific heats** (`chillDownMeanSpecificHeat`), closed for three metals and open for two.
+
+**Closed:** 304 stainless, 316 stainless and 6061-T6 aluminium now come from the NIST cryogenic material properties curve fits, integrated over the range each chill-down actually traverses rather than tabulated as a mean. The fits reproduce the room-temperature handbook values inside their stated error, and 316 is published as two segments meeting at 50 K which agree there to 0.2 per cent: **that joint is a free check on nine transcribed coefficients and it costs one assertion.**
+
+**Open:** the database carries thermal conductivity and linear expansion for Ti-6Al-4V and Inconel 718 and no specific heat, so those two keep a constant mean over roughly 90 to 300 K. The direction of that approximation is known rather than guessed, because stainless has both routes: a constant quoted over the oxygen range overstates a hydrogen chill-down by 16 per cent, since it never sees the part of the curve below 90 K where specific heat collapses.
+
+**Aluminium 2219 is mapped onto the 6061-T6 curve**, which is a stated approximation and not a measurement. Specific heat per kilogram in a dilute substitutional alloy is set by the base lattice, and the heavier copper 2219 carries means the substitution should run a few per cent high.
 
 ---
 
