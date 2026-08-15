@@ -1679,3 +1679,108 @@ TOLERANCE_FACTORS = {
                      'not validate is the assumption of normality, the pooling of lots, or any '
                      'knockdown applied afterwards.'},
 }
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Smooth pipe friction, from the Princeton Superpipe -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The fluidSystems line pressure drop anchor, and it is not the one that was planned.
+#
+# The retrofit list called for Crane TP-410 worked examples. TP-410 is not openly available and the
+# search for a reproducible worked example from it failed, so the anchor is the thing TP-410's
+# friction chart is itself an approximation to: measured smooth pipe friction from the Princeton
+# Superpipe, over 31,000 to 35,500,000 in Reynolds number.
+#
+# That is a better reference than the one it replaces. A TP-410 example would check that this
+# library implements Colebrook the way Crane does. The Superpipe fit checks whether Colebrook is
+# right, and the answer is that it is close and consistently low.
+#
+# **Every method in this library under-predicts measured smooth pipe friction, and the shortfall
+# grows with Reynolds number.** A low friction factor is a low pressure drop, so a line sized on it
+# has less margin than its number says, by up to three per cent at the top of the range. That is
+# small against the other uncertainties in a feed system and it is in the wrong direction, which is
+# worth knowing rather than assuming.
+#
+# The Reynolds numbers a launch vehicle feed line runs at sit near the middle of this range, so the
+# figure that matters is the one to two per cent in the 1e5 to 1e7 decade rather than the worst case
+# at the top.
+
+FRICTION_FACTOR = {
+
+    'Princeton Superpipe': {
+        'source': 'McKeon, Zagarola and Smits, A new friction factor relationship for fully '
+                  'developed pipe flow, Journal of Fluid Mechanics 538, 429-443, 2005. Relation '
+                  'and error bounds read from the reproduction in Yang and Joseph, Virginia '
+                  'Polytechnic / University of Minnesota, https://dept.aem.umn.edu/~./faculty/'
+                  'joseph/PL-correlations/docs-ln/S1-JFM-Submission-f-Re-Smooth-Pipe.pdf, '
+                  'accessed 13 August 2026',
+        'kind':  'measured',
+        'level': 'hardware',
+
+        # 1/sqrt(lambda) = 1.930 log10( Re sqrt(lambda) ) - 0.537
+        'logSlope':     1.930,
+        'logIntercept': 0.537,
+
+        'reynoldsRange':     (3.13e4, 3.55e7),   # [-] the range the fit covers
+        'fitError':          1.25,               # [per cent] over the whole range
+        'fitErrorHighRange': 0.5,                # [per cent] over 3.0e5 to 1.36e7
+
+        # The classical smooth pipe law the Colebrook equation reduces to at zero roughness, for
+        # comparison. The Superpipe work is what moved 2.0 and 0.8 to 1.930 and 0.537.
+        #
+        # The intercept is usually quoted as 0.8 and the Colebrook equation does not produce 0.8:
+        # setting roughness to zero leaves 2 log10( Re sqrt(lambda) / 2.51 ), so the intercept is
+        # 2 log10(2.51) = 0.799347. The rounding is in the textbook rather than in the equation and
+        # it is worth 0.08 per cent on the intercept, which is nothing next to the 1.930 against
+        # 2.0 on the slope.
+        'prandtlSlope':     2.0,
+        'prandtlIntercept': 0.799347,
+        'prandtlInterceptQuoted': 0.8,
+
+        # Deviation of each method in this library from the fit, over the fit's own range.
+        'colebrookWorst': -2.91,     # [per cent] at Re = 3.55e7
+        'churchillWorst': -2.11,     # [per cent] at Re = 2.96e6
+        'haalandWorst':   -2.31,     # [per cent] at Re = 2.48e6
+
+        'directionNote': 'All three methods are low across the whole range and none crosses over. '
+                         'A low friction factor is a low pressure drop, so a line sized on one has '
+                         'less margin than its number says. The deviation is under one per cent '
+                         'below Re = 1e5 and grows monotonically above it.',
+
+        'scopeNote': 'This is a smooth pipe fit and it validates the friction factor only. The '
+                     'roughness branch is not anchored by it, and neither are the fitting loss '
+                     'coefficients, which are a table rather than a model and remain the largest '
+                     'unanchored part of a line pressure drop.'},
+
+    'Hagen-Poiseuille': {
+        'source': 'Closed form for fully developed laminar flow in a circular pipe, '
+                  'dP = 128 mu Q L / (pi D**4)',
+        'kind':  'derived',
+        'level': 'standard',
+
+        'formula': 'dP = 128 mu Q L / (pi D**4)',
+
+        'note': 'The only place in this domain where a pressure drop has an exact answer, which '
+                'makes it the check on the whole chain rather than on one term. Velocity from mass '
+                'flow, Reynolds number, the 64/Re friction factor and the Darcy-Weisbach '
+                'assembly all have to be right together to reproduce it, and no tolerance is '
+                'needed: the library matches to one part in a million, and the residual is the '
+                'density being re-evaluated along the marched line rather than an error.'},
+
+    'Blasius': {
+        'source': 'Blasius 1913, the classical smooth pipe correlation, lambda = 0.3164 Re**-0.25',
+        'kind':  'derived',
+        'level': 'standard',
+
+        'formula':       'lambda = 0.3164 * Re ** -0.25',
+        'reynoldsRange': (1.0e4, 9.0e4),         # [-] the interval McKeon et al. quote it over
+        'colebrookWorst': -2.76,                 # [per cent] at Re = 1.68e4
+
+        'note': 'Carried as the low Reynolds bracket, where the Superpipe fit is below its own '
+                'range. McKeon et al. state their 2005 form agrees with Blasius to two per cent '
+                'over 1e4 to 9e4; this library sits 2.8 per cent below Blasius at worst over the '
+                'same interval, and below it almost everywhere, which is the same direction as the '
+                'Superpipe comparison at the other end of the range. Blasius is itself a '
+                'correlation rather than a measurement, so this brackets rather than validates.'},
+}

@@ -4,8 +4,8 @@
 
 The master list of what is built and what is not, kept current as the repository is populated.
 
-**Last updated:** 14 August 2026, at commit `73d387b`.
-**Repository totals:** 455 markdown documents, 1567 passing tests, **16 domains complete of 16**. Ten areas validated at hardware level and nine at standard level.
+**Last updated:** 14 August 2026, at commit `54e1264`.
+**Repository totals:** 423 tracked markdown documents, 1596 passing tests, **16 domains complete of 16**.
 
 ---
 
@@ -99,9 +99,9 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 
 | Domain | Depth | Docs | Classes | Stage 5 validation |
 |---|---|---|---|---|
-| [fluidSystems](fluidSystems/) | Full | 25 | 17 | **hardware**, IAPWS-95 water density |
+| [fluidSystems](fluidSystems/) | Full | 25 | 17 | **hardware**, IAPWS-95 water density and Princeton Superpipe friction |
 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | Full | 17 | 8 | internal, outstanding |
-| [aerospaceMaterials](aerospaceMaterials/) | Full | 18 | 8 | internal, against MMPDS through `common/materials.py`, outstanding |
+| [aerospaceMaterials](aerospaceMaterials/) | Full | 18 | 8 | **standard**, the NIST/SEMATECH one-sided tolerance limit worked example |
 | [aerospaceStructures](aerospaceStructures/) | Full | 16 | 9 | standard, SP-8007 knockdown |
 | [environmentsAndLoads](environmentsAndLoads/) | Full | 14 | 6 | **hardware**, GEVS 14.1 Grms |
 | [thermalManagement](thermalManagement/) | Full | 13 | 6 | **hardware**, Stefan-Boltzmann and solar constant |
@@ -115,7 +115,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | 11 | 3 | **standard**, 14 CFR Part 450 read from the regulation |
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Light | 12 | 4 | internal, no external anchor, and deliberately so |
 
-**Four reach hardware level and six reach standard level.** Each carries a
+**Five reach hardware level and eight reach standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
 and what remains unchecked.
 
@@ -189,7 +189,7 @@ right.
 |---|---|---|---|
 | [aerospaceStructures](aerospaceStructures/) | yes | Standard | The SP-8007 curve itself is unvalidated. Reproducing it proves the implementation and nothing about the correlation |
 | [thermalManagement](thermalManagement/) | yes | Hardware | Only the radiation path. Conduction and the contact conductance table remain unchecked |
-| [fluidSystems](fluidSystems/) | yes | Hardware | Properties only. Line pressure drop against Crane TP-410 worked examples is still outstanding |
+| [fluidSystems](fluidSystems/) | yes | Hardware | Properties and smooth pipe friction. The roughness branch and the fitting loss coefficients are still unanchored, and the loss coefficients are the larger of the two |
 | [environmentsAndLoads](environmentsAndLoads/) | yes | Hardware | Random vibration only. Acoustics and shock remain unchecked |
 | [aerospaceMaterials](aerospaceMaterials/) | yes | Standard | Statistics only. The NIST worked example anchors the k-factor to five figures and says nothing about normality, lot pooling or any knockdown applied afterwards |
 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | no | Internal | Process domain, lowest priority |

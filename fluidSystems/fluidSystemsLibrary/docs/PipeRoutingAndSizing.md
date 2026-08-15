@@ -7,6 +7,7 @@
 - [Overview](#overview)
 - [Governing physics](#governing-physics)
   - [Darcy-Weisbach and the friction factor](#darcy-weisbach-and-the-friction-factor)
+  - [How far the correlations are from the pipe](#how-far-the-correlations-are-from-the-pipe)
   - [Surface roughness](#surface-roughness)
   - [Minor losses](#minor-losses)
   - [Compressible flow in lines](#compressible-flow-in-lines)
@@ -99,6 +100,32 @@ B = ( 37530 / Re )^16
 Churchill is the default in [`utils.frictionFactor`](../utils.py) because it does not branch. Any solver that might march a line through the transition region will produce a discontinuous derivative with a branched correlation, and discontinuous derivatives break secant and Newton solvers.
 
 **The transition region is not a correlation problem, it is a physics problem.** Between `Re = 2300` and `Re = 4000` the friction factor is not a well-defined function of Reynolds number: it depends on inlet disturbance, vibration, and history. Any smooth curve through it is an interpolation, not a prediction. Size hardware so the operating point is not in that band, and if it must be, carry the uncertainty explicitly rather than pretending the correlation is accurate.
+
+### How far the correlations are from the pipe
+
+The table above says how far each correlation sits from Colebrook. That is the wrong question on its own, because Colebrook is not the pipe either.
+
+The Princeton Superpipe measured smooth pipe friction over `31,000 < Re < 35,500,000` and fitted
+
+```
+1/sqrt(f) = 1.930 * log10( Re * sqrt(f) ) - 0.537
+```
+
+against the `2.0` and `0.799347` that the Colebrook equation reduces to at zero roughness. **Those two constants are the whole difference**, and they were fitted an order of magnitude lower in Reynolds number than the Superpipe reached.
+
+| Re | Superpipe | Colebrook | Churchill | Haaland |
+|---|---|---|---|---|
+| 3.1e4 | 0.02322 | +0.1 % | -0.3 % | -0.6 % |
+| 1e5 | 0.01811 | -0.6 % | -1.3 % | -1.4 % |
+| 1e6 | 0.01186 | -1.8 % | -2.1 % | -2.2 % |
+| 1e7 | 0.00832 | -2.6 % | -2.1 % | -2.2 % |
+| 3.6e7 | 0.00700 | -2.9 % | -1.9 % | -2.1 % |
+
+**Every method is low, none crosses over, and the shortfall grows with Reynolds number.** A low friction factor is a low pressure drop, so a line sized on one carries less margin than its number says. Three per cent is small against the other uncertainties in a feed system, and it is in the unhelpful direction, which is worth knowing rather than assuming.
+
+**Churchill being closer than Colebrook at the top of the range is a coincidence** and not a reason to prefer it. It is an approximation to Colebrook that happens to err the other way, so its error and Colebrook's partly cancel there. Nothing in its derivation knows about the Superpipe.
+
+**The roughness branch has no equivalent anchor.** Everything above is smooth pipe, and once `eps/D` matters the reference is Nikuradse's sand-grain experiments, which is a different surface from a drawn tube or a printed channel. That is registered rather than assumed away.
 
 ### Surface roughness
 
