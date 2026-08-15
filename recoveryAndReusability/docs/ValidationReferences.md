@@ -87,9 +87,9 @@ Fixed here by reproducing published entry cases rather than by trusting the stat
 
 **The bottom-up budget over-predicts by 25 per cent at low orbit and by more at transfer orbit.**
 
-**That is reported rather than tuned away, and the direction of the error is informative**: a single pair of exchange ratios cannot cover both missions, because they are properties of the mission as well as of the vehicle.
+**That is reported rather than tuned away, and the direction of the error is informative**: a single pair of exchange ratios belongs to one stack flown to one staging velocity, and the transfer orbit mission is not that one.
 
-**Tuning the ratios until the budget reproduced the published penalty and then reporting the agreement would be calibration, not validation.** The class inverts instead: given the published penalty, it reports the exchange ratios the vehicle must actually have. On the low orbit case that is 0.240 kg of payload per kilogram of dry mass against the 0.300 assumed, an honest 80 per cent agreement.
+**Tuning the ratios until the budget reproduced the published penalty and then reporting the agreement would be calibration, not validation.** The class inverts instead, and with both exchange ratios now computed by [vehicleArchitecture](../../vehicleArchitecture/) the inversion has one unknown rather than two. It says the stage holds back 6.2 per cent of its propellant load against the 9 assumed, and that reserve buys 1,937 m/s on the landed mass, which is an entry burn and a landing burn without boost-back. **The delta-V check is the part that matters**: an inverted number that could not be turned back into a descent profile would be an artefact.
 
 ---
 
@@ -125,7 +125,9 @@ Fixed here by reproducing published entry cases rather than by trusting the stat
 
 Three entries in [validation/referenceCases.py](../../validation/referenceCases.py) under `UNVALIDATED`, each naming what survives it.
 
-**Exchange ratios** (`exchangeRatios`). Payload lost per kilogram of dry mass and of reserve are properties of the vehicle, and [vehicleArchitecture](../../vehicleArchitecture/) owns them. The absolute penalty scales with them. **The structural results do not**: that the reserve costs more payload than the hardware follows from the reserve being an order of magnitude the larger mass, and that the penalty fraction rises with mission difficulty follows from the penalty mass being fixed. **`StagedVehicle.payloadSensitivity` closes this gap entirely and needs no new source.**
+**Exchange ratios** (`exchangeRatios`), largely closed and worth reading for what closing it found. Both ratios are now computed by `StagedVehicle.exchangeRatios` from the published Falcon 9 stage masses rather than assumed, and the ratio between them is not an estimate at all: it is `1 - 1/R` exactly, asserted against the measured value on four vehicles. **What remains is that the absolute values need the two specific impulses, which the register states are not published in the same source as the masses.** Swinging both by five per cent moves each ratio by under three per cent and the ratio between them not at all.
+
+**Wiring the two domains together reversed the ordering this domain had assumed.** The reserve costs more per kilogram than the dry mass, not less, and the class guard that enforced the old ordering would have refused the correct pair. The reason written down beside the old assumption was that a reserve is carried for less of the burn than a landing leg, which does not survive being examined: a recovery reserve is spent after separation and is aboard for the whole ascent. **A plausible reason next to a wrong number is harder to catch than a bare number**, and this one sat there through a full domain build.
 
 **Life damage rates** (`lifeDamageRates`). Representative of the items that usually set a refurbishment interval rather than measured for any article. Every flight count scales with them. **The structural results do not**: that one item limits and extending it buys the gap to the next is the same arithmetic as a turnaround driver, and that the limiting item is not the one that looks worst is a statement about appearance and damage rate being unrelated.
 

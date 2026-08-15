@@ -654,3 +654,86 @@ def testReportsRunForEveryClass():
     assert 'MASS BUDGET'    in buildBudget().generateReport()
     assert 'ASCENT BUDGET'  in buildAscent().generateReport()
     assert 'SIZING LOOP'    in buildLoop().generateReport()
+
+def testExchangeRatioMatchesItsClosedForm():
+
+    '''
+    The ratio of the two exchange ratios is 1 - 1/R on the first stage mass ratio, from
+    differentiating c ln(I/F) with respect to dry mass and to burned propellant separately. The
+    closed form is asserted against the numerically measured ratio on four different vehicles,
+    because a closed form that has not been checked against the thing it describes is a claim
+    about algebra.
+    '''
+
+    cases = [([282.0, 348.0], [411000.0, 107500.0], [0.0513, 0.0359], 22800.0),
+             ([297.0, 340.0], [ 35000.0,   9000.0], [0.0566, 0.0722],  1400.0),
+             ([452.0, 452.0], [100000.0,  20000.0], [0.0826, 0.0991], 11000.0),
+             ([260.0, 300.0], [500000.0,  90000.0], [0.0741, 0.0722],  7500.0)]
+
+    for impulses, propellants, coefficients, payload in cases:
+
+        vehicle = StagedVehicle()
+        vehicle.setInputs({'stages': [{'specificImpulse': impulse,
+                                       'structuralCoefficient': coefficient,
+                                       'propellantMass': propellant}
+                                      for impulse, coefficient, propellant
+                                      in zip(impulses, coefficients, propellants)],
+                           'payloadMass': payload})
+
+        ratios = vehicle.exchangeRatios()
+
+        assert ratios['measuredRatio'] == pytest.approx(ratios['closedFormRatio'], rel = 1.0e-4), \
+            f'measured {ratios["measuredRatio"]:.5f} against closed form ' \
+            f'{ratios["closedFormRatio"]:.5f}'
+
+def testReservePropellantAlwaysCostsMoreThanDryMass():
+
+    '''
+    1 - 1/R is below one for any stage that burns any propellant at all, so the ordering does not
+    depend on the vehicle. This is the result that reverses the assumption recoveryAndReusability
+    was carrying, and it is asserted rather than argued because it is arithmetic.
+    '''
+
+    for structural in (0.03, 0.05, 0.08, 0.12):
+
+        vehicle = StagedVehicle()
+        vehicle.setInputs({'stages': [{'specificImpulse': 290.0,
+                                       'structuralCoefficient': structural,
+                                       'propellantMass': 300000.0},
+                                      {'specificImpulse': 345.0,
+                                       'structuralCoefficient': 0.04,
+                                       'propellantMass': 70000.0}],
+                           'payloadMass': 12000.0})
+
+        ratios = vehicle.exchangeRatios()
+
+        assert ratios['reserveCostsMore']
+        assert 0.0 < ratios['closedFormRatio'] < 1.0
+        assert ratios['dryMassExchangeRatio'] < ratios['reserveExchangeRatio']
+
+def testExchangeRatioNeedsAMissionToMeasureAgainst():
+
+    '''
+    The ratio is measured by holding the mission fixed and letting the payload move, so a vehicle
+    with neither a target delta-V nor a propellant load has nothing to hold fixed.
+    '''
+
+    vehicle = StagedVehicle()
+    vehicle.setInputs({'stages': [{'specificImpulse': 290.0, 'structuralCoefficient': 0.05},
+                                  {'specificImpulse': 345.0, 'structuralCoefficient': 0.04}],
+                       'payloadMass': 12000.0})
+
+    with pytest.raises(InvalidInputError):
+        vehicle.exchangeRatios()
+
+def testExchangeRatioRefusesAZeroPerturbation():
+
+    vehicle = StagedVehicle()
+    vehicle.setInputs({'stages': [{'specificImpulse': 290.0, 'structuralCoefficient': 0.05,
+                                   'propellantMass': 300000.0},
+                                  {'specificImpulse': 345.0, 'structuralCoefficient': 0.04,
+                                   'propellantMass': 70000.0}],
+                       'payloadMass': 12000.0})
+
+    with pytest.raises(InvalidInputError):
+        vehicle.exchangeRatios(step = 0.0)

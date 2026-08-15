@@ -60,6 +60,14 @@ from LandingLoads import LandingLoads
 from LifeTracking import LifeTracking
 from ReuseEconomics import ReuseEconomics
 
+sys.path.insert(0, os.path.join(ROOT, 'vehicleArchitecture', 'vehicleArchitectureLibrary'))
+
+from StagedVehicle import StagedVehicle
+
+sys.path.insert(0, ROOT)
+
+from validation.referenceCases import LAUNCH_VEHICLES
+
 ASSET = os.path.join(HERE, 'recoveryAndReusabilityLibrary', 'assets', 'boosterReuseExample.json')
 
 def banner(title: str) -> None:
@@ -92,17 +100,51 @@ def buildEntry(case: dict, key: str = 'entry') -> EntryTrajectory:
 
     return trajectory
 
-def buildBudget(case: dict, mode: str = None) -> RecoveryBudget:
+def buildExchangeRatios() -> dict:
+
+    '''
+    The two exchange ratios, computed from the vehicle rather than assumed.
+
+    This is the whole reason the domain boundary is where it is. Payload lost per kilogram is a
+    rocket equation result on a specific stack, so it is StagedVehicle that produces it and this
+    domain that consumes it. Both stages come from the validation register, so a change to the
+    published Falcon 9 masses reaches the recovery penalty without anybody reconciling two sets of
+    numbers.
+    '''
+
+    reference = LAUNCH_VEHICLES['Falcon 9 Block 5']
+
+    vehicle = StagedVehicle()
+    vehicle.setInputs({
+        'stages': [{'specificImpulse':       282.0,
+                    'structuralCoefficient': reference['stageOneDryMass']
+                                             / reference['stageOneGrossMass'],
+                    'propellantMass':        reference['stageOneGrossMass']
+                                             - reference['stageOneDryMass']},
+                   {'specificImpulse':       348.0,
+                    'structuralCoefficient': reference['stageTwoDryMass']
+                                             / reference['stageTwoGrossMass'],
+                    'propellantMass':        reference['stageTwoGrossMass']
+                                             - reference['stageTwoDryMass']}],
+        'payloadMass': reference['payloadToLeoExpended']})
+
+    return vehicle.exchangeRatios()
+
+def buildBudget(case: dict, mode: str = None, ratios: dict = None) -> RecoveryBudget:
 
     vehicle = case['vehicle']
     recovery = case['recovery']
+
+    ratios = ratios if ratios else buildExchangeRatios()
 
     budget = RecoveryBudget()
     budget.setInputs({'stageDryMass':    vehicle['stageDryMass'],
                       'stagePropellant': vehicle['stagePropellant'],
                       'baselinePayload': vehicle['baselinePayload'],
                       'mode':            mode if mode else recovery['mode'],
-                      'hardwareItems':   recovery['hardwareItems']})
+                      'hardwareItems':   recovery['hardwareItems'],
+                      'dryMassExchangeRatio': ratios['dryMassExchangeRatio'],
+                      'reserveExchangeRatio': ratios['reserveExchangeRatio']})
 
     return budget
 
@@ -254,8 +296,31 @@ def reportEntry(case: dict) -> dict:
 
 def reportBudget(case: dict) -> dict:
 
-    budget = buildBudget(case)
+    ratios = buildExchangeRatios()
+
+    budget = buildBudget(case, ratios = ratios)
     vehicle = case['vehicle']
+
+    print()
+    print('  The two exchange ratios, from vehicleArchitecture rather than assumed here.')
+    print()
+    print(f'    payload lost per kg of stage dry mass  {ratios["dryMassExchangeRatio"]:8.4f}')
+    print(f'    payload lost per kg of reserve         {ratios["reserveExchangeRatio"]:8.4f}')
+    print(f'    first stage mass ratio                 {ratios["firstStageMassRatio"]:8.4f}')
+    print(f'    measured ratio of the two              {ratios["measuredRatio"]:8.4f}')
+    print(f'    closed form 1 - 1/R                    {ratios["closedFormRatio"]:8.4f}')
+    print()
+    print(f'  - **The reserve is the more expensive of the two, by a factor of '
+          f'{1.0 / ratios["measuredRatio"]:.2f}**, and this domain had')
+    print('    that the other way round until the two libraries were wired together.')
+    print('  - The reason is not the intuitive one. Both are aboard for the whole ascent burn: a')
+    print('    recovery reserve is spent after separation, not during the climb. What separates')
+    print('    them is that added dry mass raises the first stage initial mass and its burnout mass')
+    print('    together, while reserved propellant is already aboard and raises the burnout mass')
+    print('    alone.')
+    print('  - **So the ratio of the two costs is 1 - 1/R exactly**, which is below one on every')
+    print('    vehicle that flies. The ordering is not a property of this stage and there is no')
+    print('    vehicle for which it reverses.')
 
     hardware = budget.calculateHardwareMass()
     reserve = budget.calculateReserve()
@@ -268,7 +333,7 @@ def reportBudget(case: dict) -> dict:
                                              vehicle['publishedGtoExpended']])
 
     publishedPenalty = vehicle['baselinePayload'] - vehicle['publishedReusablePayload']
-    implied = budget.impliedExchangeRatios(publishedPenalty)
+    implied = budget.impliedReserveFraction(publishedPenalty)
 
     print()
     print('    item                              mass [kg]   share')
@@ -294,9 +359,9 @@ def reportBudget(case: dict) -> dict:
           f'hardware does**, even though the hardware is the part that gets designed, weighed and '
           f'argued about.')
     print(f'  - The reserve is {reserve["reserveMass"] / hardware["totalMass"]:.0f} times the '
-          f'hardware by mass, and it costs less per kilogram because it is burned rather than '
-          f'carried. **The mass ranking and the payload ranking happen to agree here and they do '
-          f'not have to.**')
+          f'hardware by mass **and it also costs more per kilogram**, so the two effects compound '
+          f'rather than partly cancel. The mass ranking and the payload ranking agree here and '
+          f'they do not have to.')
     print()
 
     print('    mode                       hardware [kg]   reserve [kg]   penalty   payload [kg]')
@@ -336,9 +401,9 @@ def reportBudget(case: dict) -> dict:
     print()
     print('  - **The magnitude is wrong at the transfer orbit end and the direction of the error')
     print('    is informative.** The model over-predicts at low orbit and over-predicts far more')
-    print('    at transfer orbit, which says a single pair of exchange ratios cannot cover both.')
-    print('    They are properties of the mission as well as of the vehicle, which is exactly why')
-    print('    vehicleArchitecture owns them and this domain takes them as an input.')
+    print('    at transfer orbit. The exchange ratios are no longer the suspect: they are computed')
+    print('    from the stack and the transfer orbit stack is a different one, flown to a different')
+    print('    staging velocity with a different reserve.')
     print()
 
     print(f'  The published Falcon 9 penalty is {publishedPenalty:,.0f} kg, '
@@ -347,13 +412,36 @@ def reportBudget(case: dict) -> dict:
     print(f'  from this budget, {penalty["penaltyFraction"] * 100.0:.1f}%. The budget over-predicts '
           f'by {penalty["payloadPenalty"] / publishedPenalty - 1.0:.0%}.')
     print()
-    print(f'  Inverting the published figure rather than tuning to it: the vehicle implies '
-          f'{implied["impliedDryMassRatio"]:.3f} kg of')
-    print(f'  payload per kilogram of stage dry mass against the {implied["assumedDryMassRatio"]:.3f} '
-          f'assumed here, an agreement of {implied["dryMassAgreement"]:.0%}.')
+    print('  With both exchange ratios fixed by the vehicle, the budget has one free quantity left')
+    print('  and it is the one this domain owns. Inverting the published penalty rather than tuning')
+    print('  to it:')
+    print()
+    print(f'    counted hardware share of the penalty  {implied["hardwareShare"] * 100.0:8.1f}%')
+    print(f'    implied reserve                        {implied["impliedReserveMass"]:8,.0f} kg')
+    print(f'    implied fraction of the load           {implied["impliedFraction"] * 100.0:8.2f}%')
+    print(f'    assumed fraction for this mode         {implied["assumedFraction"] * 100.0:8.2f}%')
+    print()
+    print(f'  - **The stage holds back about {implied["impliedFraction"] * 100.0:.0f} per cent of '
+          f'its propellant load, not the '
+          f'{implied["assumedFraction"] * 100.0:.0f} assumed.** The counted')
+    print(f'    hardware is only {implied["hardwareShare"] * 100.0:.0f} per cent of the bill, so '
+          f'the reserve is what a recovery budget is')
+    print('    mostly a statement about, and it is the part nobody weighs.')
+    print()
+    print(f'  - **That inverted number survives being turned back into what it describes.** Through '
+          f'the rocket')
+    print(f'    equation on a landed mass of {implied["landedMass"]:,.0f} kg it buys '
+          f'{implied["impliedDeltaV"]:,.0f} m/s, which is an entry burn and a')
+    print(f'    landing burn without boost-back. The '
+          f'{implied["assumedFraction"] * 100.0:.0f} per cent assumption needs '
+          f'{implied["assumedDeltaV"]:,.0f} m/s, which')
+    print('    is more descent than that profile flies.')
+    print()
     print('  **Tuning the exchange ratios until the budget reproduced the published penalty and')
-    print('  then reporting the agreement would be calibration, not validation.** Inverting it')
-    print('  says what the mass chain must be doing and leaves the reader to judge it.')
+    print('  then reporting the agreement would be calibration, not validation.** Computing them')
+    print('  from the vehicle and inverting the one quantity left says what the stage must be')
+    print('  doing, and the delta-V check is what says whether the answer is a descent profile or')
+    print('  an artefact of the arithmetic.')
 
     return {'hardware':     hardware,
             'reserve':      reserve,

@@ -37,7 +37,9 @@ from recoveryUtils import (RECOVERY_MODES, LIFE_LIMITED_ITEMS, INSPECTION_LEVELS
 from validation.referenceCases import LAUNCH_VEHICLES, UNVALIDATED
 
 from EntryTrajectory import EntryTrajectory
-from RecoveryBudget import RecoveryBudget
+from RecoveryBudget import (RecoveryBudget, DRY_MASS_EXCHANGE_RATIO,
+                            RESERVE_EXCHANGE_RATIO, DEFAULT_FIRST_STAGE_MASS_RATIO,
+                            RecoveryError)
 from LandingLoads import LandingLoads
 from LifeTracking import LifeTracking
 from ReuseEconomics import ReuseEconomics
@@ -162,9 +164,10 @@ def testARecoveryBudgetThatConsumesThePayloadIsRefused(budget):
 def testExchangeRatiosTheWrongWayRoundAreRefused():
 
     '''
-    Dry mass costs more payload per kilogram than reserve propellant, because it is carried through
-    the whole burn. A pair the other way round is a sign convention error rather than an unusual
-    vehicle.
+    Reserve propellant costs more payload per kilogram than dry mass, because dry mass raises the
+    first stage initial and burnout masses together while a reserve raises the burnout mass alone.
+    Their ratio is 1 - 1/R, which is below one on every vehicle, so a pair the other way round is a
+    sign convention error rather than an unusual vehicle.
     '''
 
     component = RecoveryBudget()
@@ -172,7 +175,7 @@ def testExchangeRatiosTheWrongWayRoundAreRefused():
     with pytest.raises(InvalidInputError):
         component.setInputs({'stageDryMass': 20000.0, 'stagePropellant': 400000.0,
                              'baselinePayload': 20000.0,
-                             'dryMassExchangeRatio': 0.05, 'reserveExchangeRatio': 0.10})
+                             'dryMassExchangeRatio': 0.20, 'reserveExchangeRatio': 0.10})
 
 def testALoadFactorAboveTheStructuralLimitIsRefused(landing):
 
@@ -667,3 +670,100 @@ def testTheDomainRegistersWhatItCannotValidate():
     for name in registered:
         entry = UNVALIDATED[name]
         assert entry['reason'] and entry['consequence'] and entry['nextStep']
+
+def testExchangeRatioDefaultsAgreeWithVehicleArchitecture():
+
+    '''
+    The two exchange ratios are vehicle properties, computed by StagedVehicle.exchangeRatios and
+    carried here as defaults. Two numbers written down in two libraries drift, so this asserts they
+    have not: the defaults are reproduced from the Falcon 9 Block 5 stage masses in the validation
+    register, through the other domain's own method.
+    '''
+
+    sys.path.insert(0, os.path.join(ROOT, 'vehicleArchitecture', 'vehicleArchitectureLibrary'))
+
+    from StagedVehicle import StagedVehicle
+
+    reference = LAUNCH_VEHICLES['Falcon 9 Block 5']
+
+    stageOnePropellant = reference['stageOneGrossMass'] - reference['stageOneDryMass']
+    stageTwoPropellant = reference['stageTwoGrossMass'] - reference['stageTwoDryMass']
+
+    vehicle = StagedVehicle()
+    vehicle.setInputs({
+        'stages': [{'specificImpulse': 282.0,
+                    'structuralCoefficient': reference['stageOneDryMass']
+                                             / reference['stageOneGrossMass'],
+                    'propellantMass': stageOnePropellant},
+                   {'specificImpulse': 348.0,
+                    'structuralCoefficient': reference['stageTwoDryMass']
+                                             / reference['stageTwoGrossMass'],
+                    'propellantMass': stageTwoPropellant}],
+        'payloadMass': reference['payloadToLeoExpended']})
+
+    ratios = vehicle.exchangeRatios()
+
+    assert ratios['dryMassExchangeRatio'] == pytest.approx(DRY_MASS_EXCHANGE_RATIO, rel = 0.01)
+    assert ratios['reserveExchangeRatio'] == pytest.approx(RESERVE_EXCHANGE_RATIO, rel = 0.01)
+    assert ratios['firstStageMassRatio'] == pytest.approx(DEFAULT_FIRST_STAGE_MASS_RATIO,
+                                                          rel = 0.01)
+
+def testTheDefaultRatiosSatisfyTheClosedForm():
+
+    '''
+    dry / reserve = 1 - 1/R, checked on the constants themselves rather than only where they came
+    from. Editing one of the three without the others now fails here.
+    '''
+
+    assert DRY_MASS_EXCHANGE_RATIO / RESERVE_EXCHANGE_RATIO == pytest.approx(
+        1.0 - 1.0 / DEFAULT_FIRST_STAGE_MASS_RATIO, rel = 0.005)
+
+def testImpliedReserveFractionInvertsThePublishedPenalty(budget):
+
+    '''
+    With both exchange ratios fixed by the vehicle, the budget has one free quantity left and it is
+    the one this domain owns. Inverting the published Falcon 9 penalty says the stage holds back
+    about six per cent of its propellant load rather than the nine assumed, and the counted
+    hardware is a small part of the bill.
+    '''
+
+    reference = LAUNCH_VEHICLES['Falcon 9 Block 5']
+
+    published = reference['payloadToLeoExpended'] - reference['payloadToLeoReusable']
+
+    implied = budget.impliedReserveFraction(published)
+
+    assert implied['reserveDominates']
+    assert 0.05 < implied['impliedFraction'] < 0.08
+    assert implied['impliedFraction'] < implied['assumedFraction']
+
+def testTheImpliedReserveBuysACredibleDescentDeltaV(budget):
+
+    '''
+    An inverted number is only worth having if it survives being turned back into the thing it
+    describes. The implied reserve is run through the rocket equation on the landed mass, and a
+    downrange landing without boost-back needs an entry burn and a landing burn: order two thousand
+    metres per second, not five hundred and not five thousand.
+    '''
+
+    reference = LAUNCH_VEHICLES['Falcon 9 Block 5']
+
+    published = reference['payloadToLeoExpended'] - reference['payloadToLeoReusable']
+
+    implied = budget.impliedReserveFraction(published)
+
+    assert 1500.0 < implied['impliedDeltaV'] < 2500.0, \
+        f'{implied["impliedDeltaV"]:.0f} m/s is not a descent profile'
+
+    assert implied['assumedDeltaV'] > implied['impliedDeltaV']
+
+def testAPenaltyBelowTheCountedHardwareCostIsRefused(budget):
+
+    '''
+    The hardware is counted, so its share of the penalty is known. A published penalty smaller than
+    that cannot be explained by any reserve, and returning a negative reserve would be worse than
+    refusing.
+    '''
+
+    with pytest.raises(RecoveryError):
+        budget.impliedReserveFraction(10.0)

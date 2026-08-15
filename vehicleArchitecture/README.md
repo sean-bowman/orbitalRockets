@@ -64,7 +64,7 @@ feed pressure drop -> tank pressure -> wall thickness -> tank mass
 
 | Class | Computes | Status |
 |---|---|---|
-| `StagedVehicle` | Rocket equation across stages, staging optimisation, payload sensitivity | **written** |
+| `StagedVehicle` | Rocket equation across stages, staging optimisation, payload sensitivity, the two payload exchange ratios | **written** |
 | `MassBudget` | Subsystem rollup with growth allowance and margin kept apart, CG and inertia | **written** |
 | `AscentTrajectory` | Delta-V budget, ascent losses, thrust-to-weight dependence | **written** |
 | `SizingLoop` | Iterates tank, mass and performance to a closed vehicle, and traces the mass chain | **written** |

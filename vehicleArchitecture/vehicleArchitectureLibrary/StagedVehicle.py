@@ -542,6 +542,158 @@ class StagedVehicle:
 
     # -------------------------------------------------------------------------------------------- #
 
+    def exchangeRatios(self, step: float = 10.0) -> dict:
+
+        '''
+
+        Payload lost per kilogram of first stage dry mass, and per kilogram of first stage
+        propellant that the ascent burn does not use.
+
+        These are the two numbers a recovery budget needs, and they are properties of the vehicle
+        rather than of the recovery system: a landing leg and a landing burn cost payload through
+        the same rocket equation that everything else on the stage does.
+
+        The two perturbations are different in one respect and that is the whole result. Added dry
+        mass raises the first stage initial mass and its burnout mass together. Reserved propellant
+        is already aboard, so it raises the burnout mass alone. Differentiating the stage
+        contribution `c ln(I / F)` gives `c (1/I - 1/F)` for the first and `-c / F` for the second,
+        so their ratio is
+
+            dry / reserve = 1 - F / I = 1 - 1 / R
+
+        with `R` the first stage mass ratio. **That is below one on every vehicle that flies**,
+        which means a kilogram of reserve propellant always costs more payload than a kilogram of
+        dry mass. The offsetting rise in initial mass is what dry mass gets and reserve does not.
+
+        The closed form is exact and it is reported alongside the numerical result rather than
+        instead of it, because a closed form that has not been checked against the thing it claims
+        to describe is a claim about algebra.
+
+        '''
+
+        if step <= 0.0:
+            raise InvalidInputError(
+                f'A perturbation of {step} kg cannot produce a gradient.',
+                context = createErrorContext(component = 'StagedVehicle'))
+
+        # A vehicle whose propellant loads are given is taken as built, because a recovery budget
+        # is written against a stage that exists. Only a vehicle without them is re-optimised, and
+        # the exchange ratio then belongs to the optimal split rather than to any real article.
+        asBuilt = all('propellantMass' in stage for stage in self.stages)
+
+        sized  = self.calculatePerformance() if asBuilt else self.sizeToDeltaV()
+        target = self.targetDeltaV if np.isfinite(self.targetDeltaV) else sized['totalDeltaV']
+
+        if not np.isfinite(target):
+            raise InvalidInputError(
+                'A target delta-V is needed to compute an exchange ratio, because the ratio is '
+                'measured by holding the mission fixed and letting the payload move.',
+                context = createErrorContext(component = 'StagedVehicle'))
+
+        exhausts    = self.exhaustVelocities()
+        drys        = [entry['dryMass'] for entry in sized['stages']]
+        propellants = [entry['propellantMass'] for entry in sized['stages']]
+
+        def payloadFor(dryMasses: list, loads: list, burned: list) -> float:
+
+            '''
+            Payload achieving the target, with the loaded propellant and the burned propellant
+            carried separately so that a reserve can be held aboard without being spent.
+            '''
+
+            def achieved(payload: float) -> float:
+
+                total = 0.0
+
+                for index in range(len(dryMasses)):
+
+                    above = (sum(dryMasses[index + 1:]) + sum(loads[index + 1:]) + payload)
+
+                    initial = dryMasses[index] + loads[index] + above
+                    final   = initial - burned[index]
+
+                    total += exhausts[index] * np.log(initial / final)
+
+                return total
+
+            low, high = 0.0, max(sized.get('payloadMass', self.payloadMass), 1.0) * 10.0
+
+            # delta-V falls as payload rises, so bisect downward
+            if achieved(low) < target:
+                return 0.0
+
+            for _ in range(LAGRANGE_ITERATIONS):
+
+                middle = 0.5 * (low + high)
+
+                if achieved(middle) > target:
+                    low = middle
+                else:
+                    high = middle
+
+                if high - low < 1.0e-9 * max(1.0, high):
+                    break
+
+            return 0.5 * (low + high)
+
+        baseline = payloadFor(drys, propellants, propellants)
+
+        if baseline <= 0.0:
+            raise ClosureError(
+                'This vehicle delivers no payload on the target mission, so there is no payload '
+                'for recovery hardware to be traded against.',
+                context = createErrorContext(component = 'StagedVehicle'))
+
+        # Added hardware on the first stage: liftoff mass and burnout mass both rise.
+        heavier = payloadFor([drys[0] + step] + drys[1:], propellants, propellants)
+
+        # Propellant already loaded that the ascent burn does not use: burnout mass alone rises.
+        reserved = payloadFor(drys, propellants,
+                              [propellants[0] - step] + propellants[1:])
+
+        dryRatio     = (baseline - heavier)  / step
+        reserveRatio = (baseline - reserved) / step
+
+        initial = sum(drys) + sum(propellants) + baseline
+        final   = initial - propellants[0]
+
+        firstStageMassRatio = initial / final
+        closedForm          = 1.0 - final / initial
+
+        measured = dryRatio / reserveRatio if reserveRatio > 0.0 else np.nan
+
+        findings = []
+
+        findings.append(
+            f'A kilogram of first stage dry mass costs {dryRatio:.3f} kg of payload and a kilogram '
+            f'of reserve propellant costs {reserveRatio:.3f} kg, on a first stage mass ratio of '
+            f'{firstStageMassRatio:.2f}.')
+
+        findings.append(
+            f'**The reserve is the more expensive of the two, by a factor of '
+            f'{1.0 / measured:.2f}.** Dry mass raises the initial and the burnout mass together '
+            f'and the reserve raises the burnout mass alone, so the ratio is 1 - 1/R = '
+            f'{closedForm:.4f} and the measured value is {measured:.4f}.')
+
+        findings.append(
+            'The ordering does not depend on the vehicle. 1 - 1/R is below one for any stage that '
+            'burns any propellant at all, so reserve propellant costs more payload per kilogram '
+            'than dry mass on every vehicle, and it costs relatively more the smaller the mass '
+            'ratio of the stage carrying it.')
+
+        self.findings = findings
+
+        return {'baselinePayload':      baseline,
+                'dryMassExchangeRatio': dryRatio,
+                'reserveExchangeRatio': reserveRatio,
+                'firstStageMassRatio':  firstStageMassRatio,
+                'measuredRatio':        measured,
+                'closedFormRatio':      closedForm,
+                'reserveCostsMore':     bool(reserveRatio > dryRatio),
+                'findings':             findings}
+
+    # -------------------------------------------------------------------------------------------- #
+
     def _fixedVehicleSensitivity(self, perturbation: float) -> dict:
 
         '''

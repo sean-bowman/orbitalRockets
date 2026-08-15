@@ -191,7 +191,7 @@ right.
 | [thermalManagement](thermalManagement/) | yes | Hardware | Only the radiation path. Conduction and the contact conductance table remain unchecked |
 | [fluidSystems](fluidSystems/) | yes | Hardware | Properties only. Line pressure drop against Crane TP-410 worked examples is still outstanding |
 | [environmentsAndLoads](environmentsAndLoads/) | yes | Hardware | Random vibration only. Acoustics and shock remain unchecked |
-| [aerospaceMaterials](aerospaceMaterials/) | no | Internal | Needs a real allowables comparison with published k-factors |
+| [aerospaceMaterials](aerospaceMaterials/) | yes | Standard | Statistics only. The NIST worked example anchors the k-factor to five figures and says nothing about normality, lot pooling or any knockdown applied afterwards |
 | [fluidSystems/fluidSystemsTesting](fluidSystems/fluidSystemsTesting/) | no | Internal | Process domain, lowest priority |
 
 **The most consequential unvalidated number in the repository is the SP-8007 shell buckling

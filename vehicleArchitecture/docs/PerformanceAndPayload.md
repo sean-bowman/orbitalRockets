@@ -9,6 +9,7 @@
 - [The ethos this domain corrected](#the-ethos-this-domain-corrected)
 - [The upper stage matters more](#the-upper-stage-matters-more)
 - [What the elasticities are on the reference vehicle](#what-the-elasticities-are-on-the-reference-vehicle)
+- [The two exchange ratios](#the-two-exchange-ratios)
 - [Margin allocation](#margin-allocation)
 - [Worked numbers](#worked-numbers)
 - [Design rules of thumb](#design-rules-of-thumb)
@@ -86,6 +87,34 @@ Fractional change in payload per fractional change in the input, on a rubber veh
 The signs are all as they should be, and that is not a trivial statement: an inverted bisection in the staging optimiser once made every one of them come out backwards, and nothing except a sign check noticed.
 
 ---
+
+## The two exchange ratios
+
+An elasticity is dimensionless and a recovery budget needs kilograms, so `exchangeRatios()` reports the other form of the same question: **payload lost per kilogram of first stage dry mass, and per kilogram of first stage propellant the ascent burn does not use.**
+
+These are the two numbers [recoveryAndReusability](../../recoveryAndReusability/) builds a recovery penalty from, and they belong here rather than there because a landing leg and a landing burn cost payload through the same rocket equation as everything else on the stage.
+
+**The two perturbations differ in one respect and that is the whole result.** Added dry mass raises the first stage initial mass and its burnout mass together. Reserved propellant is already aboard, so it raises the burnout mass alone. Differentiating the stage contribution:
+
+```
+d(dV)/d(dry)      = c (1/I - 1/F)
+d(dV)/d(reserve)  = -c / F
+
+dry / reserve     = 1 - F/I = 1 - 1/R
+```
+
+**`1 - 1/R` is below one for any stage that burns any propellant**, so a kilogram of reserve propellant always costs more payload than a kilogram of dry mass, on every vehicle, and relatively more the smaller the mass ratio of the stage carrying it. The offsetting rise in initial mass is what dry mass gets and reserve does not.
+
+| Vehicle | First stage `R` | Dry | Reserve | `1 - 1/R` | Measured |
+|---|---|---|---|---|---|
+| Falcon 9 class | 3.63 | 0.1115 | 0.1540 | 0.7242 | 0.7242 |
+| Small kerolox | 3.65 | 0.1106 | 0.1524 | 0.7261 | 0.7261 |
+| Hydrolox | 3.37 | 0.2674 | 0.3803 | 0.7032 | 0.7032 |
+| Heavy, poor structure | 4.46 | 0.0727 | 0.0937 | 0.7758 | 0.7758 |
+
+**The closed form is reported alongside the numerical result rather than instead of it.** A closed form that has not been checked against the thing it claims to describe is a claim about algebra, and this one is asserted against the measured ratio on all four vehicles.
+
+**A vehicle whose propellant loads are given is taken as built.** A recovery budget is written against a stage that exists, so only a vehicle without them is re-optimised, and the exchange ratio then belongs to the optimal split rather than to any real article.
 
 ## Margin allocation
 

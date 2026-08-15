@@ -552,24 +552,26 @@ UNVALIDATED = {
     'exchangeRatios': {
         'domain': 'recoveryAndReusability',
         'calculation': 'DRY_MASS_EXCHANGE_RATIO and RESERVE_EXCHANGE_RATIO in RecoveryBudget',
-        'reason': 'Payload lost per kilogram of stage dry mass and per kilogram of reserve '
-                  'propellant are properties of the VEHICLE rather than of the recovery system, '
-                  'and the domain that owns them is vehicleArchitecture. They are representative '
-                  'defaults here and are exposed as inputs.',
-        'consequence': 'The absolute payload penalty scales with them, and the modelled Falcon 9 '
-                       'penalty comes out at 23.5 per cent against a published 18.9. The '
-                       'structural results do not scale: that the reserve costs more payload than '
-                       'the hardware follows from the reserve being an order of magnitude the '
-                       'larger mass, and that the penalty FRACTION rises with mission difficulty '
-                       'follows from the penalty MASS being fixed. The class inverts the '
-                       'published penalty rather than tuning to it, which is a different and '
-                       'honest claim: tuning the ratios and then reporting the agreement would be '
-                       'calibration.',
-        'nextStep': 'StagedVehicle.payloadSensitivity in vehicleArchitecture already computes the '
-                    'payload elasticity of a specific vehicle. Wiring that output into this input '
-                    'closes the gap entirely and needs no new source. It also has to be done per '
-                    'mission: the model over-predicts at low orbit and over-predicts far more at '
-                    'transfer orbit, which says one pair of ratios cannot cover both.'},
+        'reason': 'Largely closed, and what is left is narrow enough to state exactly. Both ratios '
+                  'are now computed by StagedVehicle.exchangeRatios from the published Falcon 9 '
+                  'Block 5 stage masses rather than assumed, and the RATIO between them is not an '
+                  'estimate at all: differentiating the stage contribution gives dry / reserve = '
+                  '1 - 1/R on the first stage mass ratio, exactly, and a test asserts the measured '
+                  'value against the closed form on four vehicles. What remains unvalidated is '
+                  'that the ABSOLUTE values need the two specific impulses, which that register '
+                  'entry states are not published in the same source as the masses.',
+        'consequence': 'Small and bounded. Swinging both specific impulses by five per cent moves '
+                       'each ratio by under three per cent and moves the ratio between them not at '
+                       'all, because the first stage mass ratio is fixed by the published masses '
+                       'and the published payload. Nothing structural depends on either.',
+        'nextStep': 'A sourced specific impulse for the Merlin 1D and the Merlin vacuum, from the '
+                    'same document as the stage masses, would close the remainder. Note that '
+                    'wiring the two domains together REVERSED the ordering this entry previously '
+                    'assumed: the reserve costs more per kilogram than the dry mass, not less, '
+                    'and the class guard that enforced the old ordering would have rejected the '
+                    'correct pair. The assumed reasoning, that a reserve is carried for less of '
+                    'the burn, does not survive being written down, because a recovery reserve is '
+                    'spent after separation.'},
 
     'lifeDamageRates': {
         'domain': 'recoveryAndReusability',
@@ -1579,4 +1581,91 @@ RANGE_SAFETY_CRITERIA = {
         'scopeNote': 'These are limits rather than targets. A launch above any of them does not '
                      'get a licence, and there is no engineering argument that trades one against '
                      'another. That is why the classes raise rather than reporting a margin.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- One-sided tolerance limit factors, read from the NIST/SEMATECH e-Handbook -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The aerospaceMaterials anchor, and the one that domain went longest without.
+#
+# An A-basis or B-basis allowable is `mean - k * s`, and everything the domain says about material
+# strength rests on k. Three routes to k are implemented and a test asserted they agreed with each
+# other, which is the exact failure this file exists to prevent: three implementations of one
+# formula agreeing establishes that the formula was typed the same way three times.
+#
+# The handbook supplies a fully worked one-sided example with every intermediate printed, so the
+# comparison reaches the noncentral t quantile itself rather than stopping at the answer. That
+# matters because the answer is a ratio and a compensating pair of errors in delta and in the
+# quantile would survive a comparison against k alone.
+#
+# Two things fall out of reproducing it that were not visible from inside.
+#
+# The Natrella approximation is NON-CONSERVATIVE against the exact route, everywhere, and by the
+# most at the smallest sample the library will accept. A low k is a high allowable, so the
+# approximation reports material as stronger than the statistics support. It is small, and it is
+# in the wrong direction, and the library therefore defaults to the exact route.
+#
+# The published MMPDS closed form goes the other way below about twenty specimens and then crosses
+# over. The crossover is a fitted curve doing what fitted curves do and the residual above it is
+# under a tenth of a per cent, which is well inside anything a real allowable is known to.
+
+TOLERANCE_FACTORS = {
+
+    'NIST-SEMATECH-1.3.5.2': {
+        'source': 'NIST/SEMATECH e-Handbook of Statistical Methods, section 7.2.6.3, Tolerance '
+                  'intervals for a normal distribution, one-sided case. Read from '
+                  'https://www.itl.nist.gov/div898/handbook/prc/section2/prc263.htm, accessed '
+                  '13 August 2026. The approximation is attributed there to Natrella, 1963',
+        'kind':  'published-specification',
+        'level': 'standard',
+
+        # The worked example: 43 silicon wafers, 90 per cent coverage, 99 per cent confidence.
+        'sampleSize':  43,
+        'coverage':    0.90,
+        'confidence':  0.99,
+
+        # Quantiles the handbook uses, to the four figures it prints them to.
+        'coverageQuantile':   1.2816,      # [-], z_p at p = 0.90
+        'confidenceQuantile': 2.3263,      # [-], z_a at 99 per cent
+
+        # Natrella: k1 = ( z_p + sqrt( z_p**2 - a b ) ) / a
+        #           a  = 1 - z_a**2 / ( 2 ( N - 1 ) )
+        #           b  = z_p**2 - z_a**2 / N
+        'natrellaA':      0.9356,
+        'natrellaB':      1.5165,
+        'natrellaFactor': 1.8752,
+
+        # Noncentral t: k1 = t( alpha, N - 1, delta ) / sqrt(N),  delta = z_p sqrt(N)
+        'noncentrality':      8.4037,
+        'noncentralTQuantile': 12.28834,
+        'exactFactor':         1.8740,
+
+        'intermediateNote': 'The handbook prints a, b, delta and the noncentral t quantile as well '
+                            'as the answer, which is why this entry asserts all four. k is a ratio '
+                            'of two computed quantities and a compensating error in the '
+                            'noncentrality parameter and in the quantile would reproduce k while '
+                            'getting both halves wrong.',
+
+        'directionNote': 'The Natrella approximation returns a smaller k than the exact route at '
+                         'every sample size, and a smaller k is a larger allowable. The deviation '
+                         'reaches 1.4 per cent on B-basis and 1.0 per cent on A-basis at n = 10, '
+                         'which is the smallest sample this library will accept, and falls below '
+                         '0.1 per cent by n = 100. It is an approximation erring in the '
+                         'unconservative direction, so the exact route is the default and the '
+                         'approximation exists to be compared against rather than used.',
+
+        'mmpdsNote': 'The MMPDS closed form is conservative below about twenty specimens, by up to '
+                     '0.9 per cent on A-basis at n = 10, and crosses over to non-conservative '
+                     'above it by less than 0.07 per cent at worst. Both are far inside the '
+                     'uncertainty of any real allowable and neither is a transcription error, '
+                     'which is what the comparison was run to rule out.',
+
+        'scopeNote': 'The handbook example is 43 silicon wafers and the library computes material '
+                     'allowables. The quantity is identical: a one-sided tolerance limit on a '
+                     'normal population is the same statistic whatever was measured, which is why '
+                     'a semiconductor worked example validates a metallurgical one. What it does '
+                     'not validate is the assumption of normality, the pooling of lots, or any '
+                     'knockdown applied afterwards.'},
 }

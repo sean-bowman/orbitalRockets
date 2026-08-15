@@ -9,10 +9,15 @@ Two things are given up to recover a stage. **Propellant that could have acceler
 spent on boost-back, entry and landing burns. And **dry mass that the stage carries the whole way
 up**: legs, fins, avionics, and the structure to react landing loads.
 
-The dry mass is the more expensive of the two per kilogram, because a kilogram of landing leg is
-carried through the entire first stage burn while a kilogram of reserve propellant is only carried
-until it is used. They are not interchangeable and a budget that adds them without weighting is
-missing that.
+**The reserve is the more expensive of the two per kilogram**, and it is worth being careful about
+why, because the intuitive answer is the wrong one. Both are aboard for the whole ascent burn: a
+recovery reserve is spent after separation, not during the climb. What separates them is that added
+dry mass raises the first stage initial mass and its burnout mass together, while reserved
+propellant is already aboard and raises the burnout mass alone. Differentiating `c ln(I/F)` gives
+`c(1/I - 1/F)` against `-c/F`, so the ratio of the two costs is `1 - 1/R` on the first stage mass
+ratio `R`, and that is below one on every vehicle that flies.
+
+They are not interchangeable and a budget that adds them without weighting is missing that.
 
 **The penalty as a fraction of payload rises as the mission gets harder.** The recovery reserve is
 roughly fixed and the payload is not, so on a demanding mission the same reserve eats a larger share
@@ -53,16 +58,25 @@ except ImportError:
 # reserve propellant.
 #
 # **These are properties of the vehicle rather than of the recovery system**, and the domain that
-# owns them is vehicleArchitecture, whose StagedVehicle.payloadSensitivity computes the payload
-# elasticity of a given vehicle directly. They are inputs here with representative defaults, in the
-# same way that chill-down mass is an input to groundSystemsAndOperations rather than a calculation
-# in it.
+# owns them is vehicleArchitecture, whose StagedVehicle.exchangeRatios computes both directly from
+# the rocket equation on a given vehicle. They remain inputs here so that a budget can be written
+# for any stage, and the defaults below are that method's output for the Falcon 9 Block 5 class
+# stage the worked case uses, at a first stage mass ratio of 3.63.
 #
-# Dry mass costs more per kilogram than reserve propellant, because it is carried through the whole
-# first stage burn while the reserve is burned at the end of it. That ordering is structural. The
-# VALUES are representative and registered as unvalidated.
-DRY_MASS_EXCHANGE_RATIO = 0.30        # [kg payload per kg stage dry mass]
-RESERVE_EXCHANGE_RATIO = 0.12         # [kg payload per kg reserve propellant]
+# The RATIO between them is not vehicle specific and is not an assumption. Added dry mass raises
+# the first stage initial and burnout masses together and reserved propellant raises the burnout
+# mass alone, so dry / reserve = 1 - 1/R exactly, which is 0.724 on this stage.
+DRY_MASS_EXCHANGE_RATIO = 0.1115      # [kg payload per kg stage dry mass]
+RESERVE_EXCHANGE_RATIO = 0.1540       # [kg payload per kg reserve propellant]
+
+# The first stage mass ratio the defaults above were computed at, carried so that the closed form
+# can be checked rather than trusted.
+DEFAULT_FIRST_STAGE_MASS_RATIO = 3.625      # [-]
+
+# Sea level specific impulse of the engine that does the entry and landing burns, used only to turn
+# a reserve mass back into the delta-V it buys. A descent burn runs at low altitude and at a deeply
+# throttled mixture, so this is the sea level figure rather than the vacuum one.
+LANDING_SPECIFIC_IMPULSE = 282.0            # [s]
 
 # ------------------------------------------------------------------------------------------------ #
 # -- RecoveryBudget -- #
@@ -86,6 +100,7 @@ class RecoveryBudget:
         self.reserveFraction  = np.nan
         self.dryMassExchangeRatio = np.nan
         self.reserveExchangeRatio = np.nan
+        self.landingSpecificImpulse = np.nan
 
         self.findings = []
 
@@ -112,7 +127,8 @@ class RecoveryBudget:
                           'hardwareItems':   dict,
                           'reserveFraction': (int, float),
                           'dryMassExchangeRatio': (int, float),
-                          'reserveExchangeRatio': (int, float)}
+                          'reserveExchangeRatio': (int, float),
+                          'landingSpecificImpulse': (int, float)}
 
         applyInputs(self, inputs, requiredParams, optionalParams)
 
@@ -124,6 +140,9 @@ class RecoveryBudget:
 
         if not np.isfinite(self.reserveExchangeRatio):
             self.reserveExchangeRatio = RESERVE_EXCHANGE_RATIO
+
+        if not np.isfinite(self.landingSpecificImpulse):
+            self.landingSpecificImpulse = LANDING_SPECIFIC_IMPULSE
 
         if self.hardwareItems is None or isinstance(self.hardwareItems, float):
             self.hardwareItems = {}
@@ -370,6 +389,67 @@ class RecoveryBudget:
 
     # -------------------------------------------------------------------------------------------- #
 
+    def impliedReserveFraction(self, publishedPenalty: float) -> dict:
+
+        '''
+
+        Invert a published payload penalty to the reserve the stage must actually be holding back.
+
+        This is the inversion worth running once the exchange ratios are computed rather than
+        assumed. With both ratios fixed by the vehicle, the budget has one free quantity left, and
+        it is the one this domain owns: how much propellant a recovery mode keeps.
+
+        The hardware is counted, so its share of the penalty is known and comes off the top. What
+        is left has to be paid for by the reserve.
+
+        '''
+
+        if publishedPenalty <= 0.0:
+            raise RecoveryError('A published penalty must be a positive mass of payload given up.')
+
+        hardware = self.calculateHardwareMass()
+
+        fromHardware = hardware['totalMass'] * self.dryMassExchangeRatio
+
+        if fromHardware >= publishedPenalty:
+            raise RecoveryError(
+                f'The counted recovery hardware alone costs {fromHardware:,.0f} kg of payload, '
+                f'which already exceeds the published penalty of {publishedPenalty:,.0f} kg. '
+                f'Either the hardware list is too heavy, the exchange ratio is too large, or the '
+                f'published penalty is not measured against this baseline.',
+                context = {'hardwareMass': hardware['totalMass'],
+                           'dryMassExchangeRatio': self.dryMassExchangeRatio})
+
+        impliedReserveMass = (publishedPenalty - fromHardware) / self.reserveExchangeRatio
+
+        impliedFraction = impliedReserveMass / self.stagePropellant
+
+        assumed = self.calculateReserve()
+
+        # What that reserve buys, by the rocket equation on the stage it has to decelerate. This is
+        # the check that says whether an inverted number is a descent profile or an artefact: a
+        # reserve is only credible if the delta-V it produces is the delta-V the mode needs.
+        landedMass = self.stageDryMass + hardware['totalMass']
+
+        impliedDeltaV = (self.landingSpecificImpulse * GRAVITY
+                         * np.log((landedMass + impliedReserveMass) / landedMass))
+
+        assumedDeltaV = (self.landingSpecificImpulse * GRAVITY
+                         * np.log((landedMass + assumed['reserveMass']) / landedMass))
+
+        return {'publishedPenalty':     publishedPenalty,
+                'hardwareShare':        fromHardware / publishedPenalty,
+                'impliedReserveMass':   impliedReserveMass,
+                'impliedFraction':      impliedFraction,
+                'assumedFraction':      assumed['reserveFraction'],
+                'agreement':            impliedFraction / assumed['reserveFraction'],
+                'landedMass':           landedMass,
+                'impliedDeltaV':        impliedDeltaV,
+                'assumedDeltaV':        assumedDeltaV,
+                'reserveDominates':     bool(fromHardware / publishedPenalty < 0.5)}
+
+    # -------------------------------------------------------------------------------------------- #
+
     def generateReport(self, outputDir: str = None) -> str:
 
         """
@@ -434,11 +514,13 @@ class RecoveryBudget:
             if ratio <= 0.0:
                 raise InvalidInputError(f'{name} must be positive.')
 
-        if self.dryMassExchangeRatio <= self.reserveExchangeRatio:
+        if self.reserveExchangeRatio <= self.dryMassExchangeRatio:
             raise InvalidInputError(
-                'Dry mass costs more payload per kilogram than reserve propellant, because it is '
-                'carried through the whole burn and the reserve is burned at the end of it. A '
-                'ratio pair the other way round is a sign convention error.')
+                'Reserve propellant costs more payload per kilogram than dry mass, because dry '
+                'mass raises the first stage initial and burnout masses together while a reserve '
+                'raises the burnout mass alone. Their ratio is 1 - 1/R on the first stage mass '
+                'ratio and is below one for any stage that burns any propellant, so a pair the '
+                'other way round is a sign convention error.')
 
         if np.isfinite(self.reserveFraction) and not 0.0 <= self.reserveFraction < 1.0:
             raise InvalidInputError('Reserve fraction is a fraction of the propellant load below '

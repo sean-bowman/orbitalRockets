@@ -140,7 +140,7 @@ The route a part is made by sets its allowable, so the process depth lives here 
 python -m pytest tests/ -v
 ```
 
-Three tiers, matching the repository convention. Tier 1 covers database structural integrity and the guards that stop the classes doing harm. Tier 2 validates against MMPDS k-factor tables, the PREN and CPT correlations, the 7075 through-hardening limit and the ASTM F1940 bake trigger. Tier 3 covers self-consistency, including a cross-check of three independent k-factor implementations against each other.
+Three tiers, matching the repository convention. Tier 1 covers database structural integrity and the guards that stop the classes doing harm. Tier 2 validates against the NIST/SEMATECH one-sided tolerance limit worked example, the MMPDS k-factor tables, the PREN and CPT correlations, the 7075 through-hardening limit and the ASTM F1940 bake trigger. Tier 3 covers self-consistency, including a cross-check of three independent k-factor implementations against each other.
 
 **Cross-domain drift tests** assert that this database agrees with `common/materials.py` on the nine shared alloys, that the as-welded aluminium condition matches `Weld.HAZ_KNOCKDOWN`, and that every numeric property resolves to a declared source.
 

@@ -68,7 +68,7 @@ Reuse changes the economics of launch and it changes the engineering everywhere.
 
 **`EntryTrajectory` was added beyond the plan.** The scaffold listed four classes and none of them computed an entry, which left the domain taking a heat flux from [thermalManagement](../thermalManagement/) that nothing produced. It is the domain's strongest result and its only exact one.
 
-**Six things were deliberately not built.** Aeroheating into a structure ([thermalManagement](../thermalManagement/) and [environmentsAndLoads](../environmentsAndLoads/)); fatigue and crack growth ([aerospaceMaterials](../aerospaceMaterials/), which owns Paris law); the payload exchange ratios ([vehicleArchitecture](../vehicleArchitecture/), whose mass chain defines them); parachute sizing; guidance to the landing point, which [avionicsAndGNC](../avionicsAndGNC/) declined for reasons that apply here too; and the sea state behind a droneship deck slope.
+**Six things were deliberately not built.** Aeroheating into a structure ([thermalManagement](../thermalManagement/) and [environmentsAndLoads](../environmentsAndLoads/)); fatigue and crack growth ([aerospaceMaterials](../aerospaceMaterials/), which owns Paris law); the payload exchange ratios ([vehicleArchitecture](../vehicleArchitecture/), whose mass chain defines them and whose `StagedVehicle.exchangeRatios` the worked example calls); parachute sizing; guidance to the landing point, which [avionicsAndGNC](../avionicsAndGNC/) declined for reasons that apply here too; and the sea state behind a droneship deck slope.
 
 All classes follow the repository interface: `setInputs()`, `calculate*()` or `size*()`, `generateReport()`. Shared helpers come from [../common/](../common/) through this domain's `recoveryUtils.py`.
 
@@ -84,8 +84,10 @@ All classes follow the repository interface: `setInputs()`, `calculate*()` or `s
 | Peak heat flux over the same range | 4.0x |
 | Booster against orbital entry, flux | 18 against 390 W/cm2 |
 | Peak altitude separation | 7.9 km, always |
-| Reserve against hardware, in payload | 4.8x |
-| Recovery penalty, low orbit | 23.5 % modelled, 18.9 % published |
+| Reserve against hardware, in payload | 16.5x |
+| Exchange ratio, measured against `1 - 1/R` | 0.7242 against 0.7242 |
+| Reserve implied by the published penalty | 6.2 % of the load, 1,937 m/s |
+| Recovery penalty, low orbit | 26.5 % modelled, 18.9 % published |
 | Touchdown load factor | 1.82 g on 450 mm |
 | What limits the article | engine turbopump, 5 flights left |
 | Benefit of reuse by the third flight | 68 % |
@@ -106,7 +108,7 @@ python recoveryAndReusability/codeInterface.py
 
 **Sutton and Graves, NASA TR R-376 (1971)** supplies the heating correlation, and **its published units are wrong by four orders of magnitude in several sources.** They state the expression returns W/cm2 with SI inputs; it returns W/m2. Fixed by reproducing published entry cases rather than by trusting the statement: Stardust computes to 1,027 W/cm2 against ~1,200 published, Apollo to 196 against ~200 to 250. Both are absurd by 1e4 read the other way.
 
-**And the Falcon 9 payload penalty is used by inversion rather than by calibration.** The bottom-up budget over-predicts by 25 per cent; tuning the exchange ratios until it matched and then reporting the agreement would be calibration. The class inverts instead and reports what the vehicle implies: 0.240 kg of payload per kilogram of dry mass against 0.300 assumed, an honest 80 per cent.
+**And the Falcon 9 payload penalty is used by inversion rather than by calibration.** The bottom-up budget over-predicts by 41 per cent; tuning the exchange ratios until it matched and then reporting the agreement would be calibration. The class inverts instead, and because both exchange ratios are now computed by [vehicleArchitecture](../vehicleArchitecture/) the inversion has one unknown left: **the stage holds back 6.2 per cent of its propellant load against the 9 assumed, and that reserve buys 1,937 m/s on the landed mass**, which is an entry burn and a landing burn without boost-back.
 
 **Reusable launch has less governing standard behind it than any other subject in this repository**, which is a fact about the subject. See [StandardsIndex](docs/StandardsIndex.md).
 
@@ -116,7 +118,7 @@ python recoveryAndReusability/codeInterface.py
 
 | Domain | Interaction |
 |---|---|
-| [vehicleArchitecture](../vehicleArchitecture/) | Owns the payload exchange ratios and publishes the recovery penalty this domain builds from parts |
+| [vehicleArchitecture](../vehicleArchitecture/) | `StagedVehicle.exchangeRatios` computes the two payload exchange ratios this domain's budget is built on, from the same published stage masses |
 | [thermalManagement](../thermalManagement/) | Sizes the protection that survives the entry flux computed here, repeatedly |
 | [environmentsAndLoads](../environmentsAndLoads/) | Owns the aeroheating environment and the transport load case |
 | [aerospaceMaterials](../aerospaceMaterials/) | Owns Paris law and the damage tolerance that life tracking counts against |

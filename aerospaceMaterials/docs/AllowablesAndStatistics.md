@@ -8,6 +8,7 @@
 - [The three bases](#the-three-bases)
 - [The tolerance limit](#the-tolerance-limit)
 - [The k-factor](#the-k-factor)
+- [Validation against a published example](#validation-against-a-published-example)
 - [What the sample size costs](#what-the-sample-size-costs)
 - [Batches, and why pooling overstates the allowable](#batches-and-why-pooling-overstates-the-allowable)
 - [The non-parametric alternative](#the-non-parametric-alternative)
@@ -92,9 +93,46 @@ The three constants that everything rests on:
 | `z_p` for B-basis | 1.2815516 | One-sided 90 % exceedance |
 | `z_gamma` | 1.6448536 | 95 % confidence |
 
-**The three routes agree to within 2 percent at n = 10 and better than 1 percent above n = 20.** A test asserts this across the range, and it is worth more than any single implementation because it catches a coding error that one implementation alone cannot see.
+**The three routes agree to within 2 percent at n = 10 and better than 1 percent above n = 20**, which is a cross-check and not a validation. Three routes agreeing establishes that one formula was typed the same way three times. It catches a transcription error and it cannot catch a shared misunderstanding of what the formula is.
 
 **The leading constants in the MMPDS fits are the limiting normal quantiles**, which is why the fits converge correctly: with infinite data there is no confidence penalty left and `k` becomes `z_p`.
+
+---
+
+## Validation against a published example
+
+The NIST/SEMATECH e-Handbook works a one-sided tolerance limit end to end and prints every intermediate, which makes it the anchor this method needs: **43 silicon wafers, 90 percent coverage, 99 percent confidence.**
+
+| Quantity | Published | Computed here |
+|---|---|---|
+| `a` | 0.9356 | 0.9356 |
+| `b` | 1.5165 | 1.5165 |
+| `delta` | 8.4037 | 8.4037 |
+| Non-central t quantile | 12.28834 | 12.28834 |
+| `k` from Natrella | 1.8752 | 1.8752 |
+| `k` from non-central t | 1.8740 | 1.8740 |
+
+**Every value reproduces to the precision the handbook prints it to**, and the intermediates matter as much as the answer. `k` is a ratio of two computed quantities, so a noncentrality parameter too large by some factor and a quantile too small by the same one would return the published `k` while getting both halves wrong.
+
+**A semiconductor example validates a metallurgical calculation** because a one-sided tolerance limit on a normal population is the same statistic whatever was measured. What it does not validate is the assumption of normality, the pooling of lots, or any knockdown applied afterwards. Those are the parts of this domain with no external anchor and they are the parts most likely to be wrong.
+
+**The confidence level in the example is 99 percent and the library defaults to 95**, which is the point of using it: neither routine can reproduce this by having been written around the case it is tested on.
+
+### The approximations both err, and only one errs safely
+
+Now that the exact route is anchored, the other two can be measured against it rather than compared with it.
+
+| n | Natrella, A | Natrella, B | MMPDS, A | MMPDS, B |
+|---|---|---|---|---|
+| 10 | -1.03 % | -1.43 % | +0.89 % | +0.44 % |
+| 20 | -0.63 % | -0.83 % | +0.03 % | -0.01 % |
+| 30 | -0.44 % | -0.57 % | -0.06 % | -0.05 % |
+| 100 | -0.14 % | -0.18 % | +0.03 % | +0.04 % |
+| 300 | -0.05 % | -0.06 % | +0.05 % | +0.06 % |
+
+**Natrella is low everywhere, and a low `k` is a high allowable.** The approximation reports material as stronger than the statistics support, it is worst at the smallest sample the library will accept, and 1.4 percent of a standard deviation is not nothing when the sample is ten specimens and the basis is the thing standing between a wall thickness and a burst. **That is why the exact route is the default and the closed form exists to be compared against rather than used.**
+
+**The MMPDS fit is conservative below about twenty specimens and crosses over above it**, by less than 0.07 percent at worst. That is a fitted curve behaving like a fitted curve, it is far inside the uncertainty of any real allowable, and the reason to check it at all was to rule out a mistyped coefficient rather than to grade the fit.
 
 ---
 
@@ -273,8 +311,9 @@ Module functions: `toleranceFactorExact`, `toleranceFactorNatrella`, `toleranceF
 
 ## References
 
-1. MMPDS-18, Chapter 9, *Guidelines for the Presentation of Data*.
-2. Natrella, M. G., *Experimental Statistics*, NBS Handbook 91, 1963.
-3. Owen, D. B., "Factors for One-Sided Tolerance Limits", Sandia SCR-607, 1963.
-4. Meeker, W. Q., Hahn, G. J. and Escobar, L. A., *Statistical Intervals*, 2nd ed., Wiley, 2017.
-5. CMH-17-1G, *Composite Materials Handbook*, Volume 1, Chapter 8.
+1. NIST/SEMATECH, *e-Handbook of Statistical Methods*, section 7.2.6.3, tolerance intervals for a normal distribution, one-sided case. The worked example reproduced above.
+2. MMPDS-18, Chapter 9, *Guidelines for the Presentation of Data*.
+3. Natrella, M. G., *Experimental Statistics*, NBS Handbook 91, 1963.
+4. Owen, D. B., "Factors for One-Sided Tolerance Limits", Sandia SCR-607, 1963.
+5. Meeker, W. Q., Hahn, G. J. and Escobar, L. A., *Statistical Intervals*, 2nd ed., Wiley, 2017.
+6. CMH-17-1G, *Composite Materials Handbook*, Volume 1, Chapter 8.

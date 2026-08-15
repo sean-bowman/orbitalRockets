@@ -29,12 +29,15 @@ import sys
 import numpy as np
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                'aerospaceMaterialsLibrary'))
+DOMAIN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT   = os.path.dirname(DOMAIN)
+
+sys.path.insert(0, os.path.join(DOMAIN, 'aerospaceMaterialsLibrary'))
+sys.path.insert(0, ROOT)
 
 from Allowables import (Allowables, toleranceFactorExact, toleranceFactorNatrella,
                         toleranceFactorMmpds, STANDARD_KNOCKDOWNS, SCIPY_AVAILABLE,
-                        MINIMUM_SAMPLE_SIZE)
+                        MINIMUM_SAMPLE_SIZE, Z_QUANTILE_B)
 from MaterialSelector import MaterialSelector, ASHBY_INDICES, ENVIRONMENT_SEVERITY
 from DamageTolerance import DamageTolerance, GEOMETRY_FACTORS, NDE_FLAW_SIZES
 from CorrosionAssessment import (CorrosionAssessment, GALVANIC_POTENTIAL_LIMIT,
@@ -44,6 +47,8 @@ from ProcessComparison import ProcessComparison, PROCESS_ROUTES
 from MaterialDatabase import queryMaterial
 from materialData import MATERIAL_DATABASE
 from utils import InvalidInputError, CompatibilityError
+
+from validation.referenceCases import TOLERANCE_FACTORS
 
 # ---------------------------------------------------------------------------------------------- #
 # -- Fixtures -- #
@@ -211,6 +216,97 @@ def testToleranceFactorsAgainstPublishedTables():
         'k_A at n = 10 is 3.981'
     assert toleranceFactorExact(30, 'B') == pytest.approx(1.777, rel = 0.005)
     assert toleranceFactorExact(30, 'A') == pytest.approx(3.064, rel = 0.005)
+
+@pytest.mark.skipif(not SCIPY_AVAILABLE, reason = 'exact k-factor needs scipy')
+def testNistWorkedExampleReproducedExactly():
+
+    '''
+    The published anchor for this domain, and the one it went longest without.
+
+    NIST/SEMATECH works a one-sided tolerance limit end to end for 43 wafers at 90 per cent
+    coverage and 99 per cent confidence, printing every intermediate. Both library routes land on
+    the published k to four decimal places.
+
+    Ninety-nine per cent confidence is deliberately not the library default of ninety-five, so
+    neither function can reproduce this by happening to have been written around it.
+    '''
+
+    reference = TOLERANCE_FACTORS['NIST-SEMATECH-1.3.5.2']
+
+    sampleSize = reference['sampleSize']
+    confidence = reference['confidence']
+
+    # Coverage of 0.90 is what the B-basis quantile means, so B-basis is the right argument here
+    # and the fact that this example is about wafers rather than metal changes nothing.
+    exact    = toleranceFactorExact(sampleSize, 'B', confidence)
+    natrella = toleranceFactorNatrella(sampleSize, 'B', confidence)
+
+    assert exact == pytest.approx(reference['exactFactor'], abs = 5.0e-5), \
+        f"noncentral t route gives {exact:.4f} against the published " \
+        f"{reference['exactFactor']:.4f}"
+    assert natrella == pytest.approx(reference['natrellaFactor'], abs = 5.0e-5), \
+        f"Natrella route gives {natrella:.4f} against the published " \
+        f"{reference['natrellaFactor']:.4f}"
+
+@pytest.mark.skipif(not SCIPY_AVAILABLE, reason = 'exact k-factor needs scipy')
+def testNistIntermediatesReproducedNotJustTheAnswer():
+
+    '''
+    k is a ratio, so reproducing it does not prove that either half of the ratio is right. A
+    noncentrality parameter too large by some factor and a quantile too small by the same one
+    return the published k while getting both wrong.
+
+    The handbook prints a, b, the noncentrality and the noncentral t quantile, so all four are
+    asserted rather than the answer alone.
+    '''
+
+    from scipy import stats
+
+    reference  = TOLERANCE_FACTORS['NIST-SEMATECH-1.3.5.2']
+    sampleSize = reference['sampleSize']
+
+    coverageQuantile   = Z_QUANTILE_B
+    confidenceQuantile = stats.norm.ppf(reference['confidence'])
+
+    # The handbook prints its quantiles to four figures, which is the precision available here.
+    assert coverageQuantile == pytest.approx(reference['coverageQuantile'], abs = 5.0e-5)
+    assert confidenceQuantile == pytest.approx(reference['confidenceQuantile'], abs = 5.0e-5)
+
+    a = 1.0 - confidenceQuantile ** 2 / (2.0 * (sampleSize - 1))
+    b = coverageQuantile ** 2 - confidenceQuantile ** 2 / sampleSize
+
+    assert a == pytest.approx(reference['natrellaA'], abs = 5.0e-5)
+    assert b == pytest.approx(reference['natrellaB'], abs = 5.0e-5)
+
+    noncentrality = coverageQuantile * np.sqrt(sampleSize)
+    quantile      = stats.nct.ppf(reference['confidence'], sampleSize - 1, noncentrality)
+
+    assert noncentrality == pytest.approx(reference['noncentrality'], abs = 5.0e-5)
+    assert quantile == pytest.approx(reference['noncentralTQuantile'], abs = 5.0e-6)
+
+@pytest.mark.skipif(not SCIPY_AVAILABLE, reason = 'exact k-factor needs scipy')
+def testNatrellaErrsInTheUnconservativeDirection():
+
+    '''
+    The direction of an approximation's error matters more than its size. Natrella returns a
+    smaller k than the exact route at every sample size, and a smaller k is a larger allowable, so
+    the approximation reports material as stronger than the statistics support.
+
+    It is worst at n = 10, which is the smallest sample the library will accept, and that is the
+    reason the exact route is the default rather than the fast one.
+    '''
+
+    for basis in ('A', 'B'):
+        for sampleSize in (10, 20, 30, 50, 100, 300):
+            assert toleranceFactorNatrella(sampleSize, basis) < toleranceFactorExact(sampleSize,
+                                                                                     basis), \
+                f'Natrella is expected below exact for {basis}-basis at n = {sampleSize}'
+
+    for basis, bound in (('A', 0.011), ('B', 0.015)):
+        exact = toleranceFactorExact(MINIMUM_SAMPLE_SIZE, basis)
+        error = abs(toleranceFactorNatrella(MINIMUM_SAMPLE_SIZE, basis) - exact) / exact
+        assert error < bound, \
+            f'Natrella is {error * 100:.2f} % low for {basis}-basis at the minimum sample size'
 
 def testToleranceFactorApproachesTheNormalQuantile():
 
@@ -499,8 +595,10 @@ def testThreeToleranceFactorRoutesAgree():
     closed form, and the published MMPDS curve fits. They agree to within 2 percent at n = 10 and
     better than 1 percent above n = 20.
 
-    This cross-check is worth more than any single implementation, because it catches a coding
-    error that a lone implementation cannot see.
+    This is a cross-check and not a validation. Three routes agreeing establishes that one formula
+    was typed the same way three times, which catches a transcription error and nothing else. What
+    makes it useful is that the exact route is separately anchored to the NIST worked example, so
+    agreement with it now carries that anchor across to the other two.
     '''
 
     for basis in ('A', 'B'):
