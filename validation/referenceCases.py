@@ -447,9 +447,15 @@ UNVALIDATED = {
                        'that the nameplate is close to twice the energy delivered once depth of '
                        'discharge and cold multiply, and that neither factor is a margin, holds '
                        'for any plausible values.',
-        'nextStep': 'A cell datasheet for the actual part, which turns every one of these into a '
-                    'measured curve. This is the most tractable gap in the domain because the '
-                    'data is published by every cell manufacturer.'},
+        'nextStep': 'Partly closed. BATTERY_CELLS carries the Panasonic NCR18650BF datasheet, '
+                    'which brackets the chemistry table rather than replacing it: the library '
+                    'carries 200 W h/kg for lithium ion against 248 measured, so the class figure '
+                    'is conservative by 19 per cent, which is the direction a figure covering '
+                    'older and higher rate chemistries should err in. What the datasheet does NOT '
+                    'supply is the capacity against temperature curve, which is published as a '
+                    'chart rather than a table, so TEMPERATURE_CAPACITY_FACTOR is still '
+                    'representative. It also revealed a limit the library does not carry at all: '
+                    'the cell cannot be charged below +10 C while it discharges to -20 C.'},
 
     'harnessRoutingAllowance': {
         'domain': 'electricalPower',
@@ -476,9 +482,15 @@ UNVALIDATED = {
                        'overtakes early in a flight, follows from the integration order rather '
                        'than from any value. The crossover TIME moves with the grade and its '
                        'existence does not.',
-        'nextStep': 'A datasheet for a specific IMU, which every manufacturer publishes. Same '
-                    'shape of gap as the battery cell datasheet in electricalPower and equally '
-                    'tractable.'},
+        'nextStep': 'A datasheet for a specific IMU, which every manufacturer publishes and none '
+                    'of them serves to a script. This was attempted for the Analog Devices '
+                    'ADIS16507 on 14 August 2026 through the manufacturer, two distributors and '
+                    'two mirrors, and every route returned a block page or timed out. Secondary '
+                    'summaries quoting an in-run bias stability near 2.3 deg/hr and an angular '
+                    'random walk near 0.13 deg/sqrt(hr) were found and are NOT recorded as a '
+                    'reference, because this repository has been wrong three times by trusting a '
+                    'summary of a document it had not read. The gap stays open until the datasheet '
+                    'itself is read.'},
 
     'controlDisturbances': {
         'domain': 'avionicsAndGNC',
@@ -1783,4 +1795,75 @@ FRICTION_FACTOR = {
                 'same interval, and below it almost everywhere, which is the same direction as the '
                 'Superpipe comparison at the other end of the range. Blasius is itself a '
                 'correlation rather than a measurement, so this brackets rather than validates.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- A specific lithium ion cell, from the manufacturer's datasheet -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The electricalPower anchor. The battery tables in that domain are representative of a CHEMISTRY
+# rather than of a part number, which is the right shape for a sizing library and is also a claim
+# that nothing checked. This entry is one real cell, so the claim can be checked: a class figure is
+# only useful if a real part sits near it and on the conservative side of it.
+#
+# Two things fall out of the datasheet that are worth more than the numbers.
+#
+# The two published energy densities both reproduce EXACTLY from the rated capacity and the bare
+# cell dimensions, and neither reproduces from the typical capacity. So a specific energy on a cell
+# datasheet is built from the rated figure at 20 C, not from the typical figure at 25 C, and taking
+# a nameplate energy density and multiplying it by a typical capacity double counts five per cent.
+#
+# The cell discharges to -20 C and cannot be CHARGED below +10 C. That asymmetry is thirty degrees
+# wide, it is not a derating curve but a hard limit, and the library carries only the discharge
+# side of it. A vehicle cold-soaked on the pad can run its battery and cannot top it up, which is
+# an operational constraint rather than a sizing one and is the kind of thing a chemistry-level
+# table cannot express.
+
+BATTERY_CELLS = {
+
+    'Panasonic NCR18650BF': {
+        'source': 'Panasonic NCR18650BF cell specifications, read from the manufacturer datasheet '
+                  'at https://api.pim.na.industrial.panasonic.com/file_stream/main/fileversion/'
+                  '3446, accessed 14 August 2026',
+        'kind':  'specification',
+        'level': 'hardware',
+
+        'ratedCapacity':      3.200,     # [A h] at 20 C
+        'minimumCapacity':    3.250,     # [A h] at 25 C
+        'typicalCapacity':    3.350,     # [A h] at 25 C
+        'nominalVoltage':     3.6,       # [V]
+        'chargeVoltage':      4.20,      # [V], constant current then constant voltage
+        'maximumMass':        0.0465,    # [kg] bare cell, without tube
+
+        'gravimetricEnergyDensity': 248.0,   # [W h/kg]
+        'volumetricEnergyDensity':  677.0,   # [W h/l]
+
+        'height':   0.06510,     # [m] maximum, bare cell
+        'diameter': 0.01824,     # [m] maximum, bare cell
+
+        'chargeTemperatureRange':    (10.0, 45.0),     # [C]
+        'dischargeTemperatureRange': (-20.0, 60.0),    # [C]
+        'storageTemperatureRange':   (-20.0, 50.0),    # [C]
+
+        'densityBasisNote': 'Both published densities reproduce from the RATED capacity of 3.200 '
+                            'A h and not from the typical 3.350. Rated times nominal voltage is '
+                            '11.52 W h, which over 46.5 g is 247.7 W h/kg and over the bare cell '
+                            'volume of 17.01 mL is 677.2 W h/l. Neither is a coincidence and both '
+                            'are asserted, because the difference between the two capacities is '
+                            'five per cent and a nameplate energy density multiplied by a typical '
+                            'capacity counts it twice.',
+
+        'chargeLimitNote': 'The cell discharges to -20 C and cannot be charged below +10 C. That '
+                           'is a hard limit rather than a derating curve, the two ranges differ by '
+                           'thirty degrees, and the chemistry tables in electricalPower carry only '
+                           'the discharge side. The consequence is operational: a vehicle cold '
+                           'soaked on the pad can run its battery and cannot top it up.',
+
+        'scopeNote': 'One cell of one chemistry from one manufacturer. It cannot validate a class '
+                     'table and it can say whether the class table is conservative against a '
+                     'current part, which is the only question a representative figure has to '
+                     'answer. The 200 W h/kg the library carries for lithium ion sits 19 per cent '
+                     'below this cell, and a class figure has to cover older and higher rate '
+                     'chemistries as well, so conservative is the direction it should err in.'},
 }

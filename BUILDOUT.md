@@ -107,7 +107,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [thermalManagement](thermalManagement/) | Full | 13 | 6 | **hardware**, Stefan-Boltzmann and solar constant |
 | [vehicleArchitecture](vehicleArchitecture/) | Full | 14 | 4 | **hardware**, Falcon 9 Block 5 stage masses |
 | [mechanismsAndSeparation](mechanismsAndSeparation/) | Full | 12 | 5 | **standard**, NASA-STD-5017B read in full |
-| [electricalPower](electricalPower/) | Full | 12 | 4 | **standard**, the AWG definition, exact to four figures |
+| [electricalPower](electricalPower/) | Full | 12 | 4 | **hardware**, a Panasonic cell datasheet, plus the AWG definition exact to four figures |
 | [avionicsAndGNC](avionicsAndGNC/) | Full | 12 | 3 | internal, no external anchor, outstanding |
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | Light | 13 | 4 | **standard**, DESR 6055.09 read in full |
 | [recoveryAndReusability](recoveryAndReusability/) | Full | 12 | 5 | **standard**, Allen-Eggers, plus bounded Sutton-Graves |
@@ -115,7 +115,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | 11 | 3 | **standard**, 14 CFR Part 450 read from the regulation |
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Light | 12 | 4 | internal, no external anchor, and deliberately so |
 
-**Five reach hardware level and eight reach standard level.** Each carries a
+**Six reach hardware level and seven reach standard level.** Each carries a
 `docs/ValidationReferences.md` bibliography recording what it was checked against, at what level,
 and what remains unchecked.
 

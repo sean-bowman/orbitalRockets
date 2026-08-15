@@ -44,7 +44,8 @@ from Battery import Battery, PACK_FRACTION
 from HarnessSizing import HarnessSizing, ROUTING_ALLOWANCE
 from SolenoidDrive import SolenoidDrive
 
-from validation.referenceCases import WIRE_GAUGE, UNVALIDATED
+from validation.referenceCases import (WIRE_GAUGE, UNVALIDATED, BATTERY_CELLS,
+                                       REFERENCE_KINDS, VALIDATION_LEVELS)
 
 PHASES = [{'name': 'pad hold', 'duration': 7200.0},
           {'name': 'ascent',   'duration': 540.0},
@@ -547,3 +548,100 @@ def testReportsRunForEveryClass():
     assert 'BATTERY'         in buildBattery().generateReport()
     assert 'HARNESS'         in buildHarness().generateReport()
     assert 'SOLENOID DRIVE'  in buildSolenoid().generateReport()
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- A real cell, against the chemistry table -- #
+# ------------------------------------------------------------------------------------------------ #
+
+def testTheCellEnergyDensitiesReproduceFromTheRatedCapacity():
+
+    '''
+    Both published energy densities reproduce exactly from the rated capacity and the bare cell
+    dimensions, and neither reproduces from the typical capacity.
+
+    That is worth an assertion because it says which capacity a datasheet energy density is built
+    from. The rated and typical figures differ by five per cent, and a nameplate density multiplied
+    by a typical capacity counts that five per cent twice.
+    '''
+
+    cell = BATTERY_CELLS['Panasonic NCR18650BF']
+
+    ratedEnergy = cell['ratedCapacity'] * cell['nominalVoltage']
+
+    volume = np.pi * (cell['diameter'] / 2.0) ** 2 * cell['height'] * 1000.0     # [l]
+
+    assert ratedEnergy / cell['maximumMass'] == pytest.approx(
+        cell['gravimetricEnergyDensity'], rel = 0.002)
+
+    assert ratedEnergy / volume == pytest.approx(cell['volumetricEnergyDensity'], rel = 0.002)
+
+    typicalEnergy = cell['typicalCapacity'] * cell['nominalVoltage']
+
+    assert typicalEnergy / cell['maximumMass'] > 1.04 * cell['gravimetricEnergyDensity'], \
+        'the typical capacity is not what the published density is built from'
+
+def testTheChemistryTableIsConservativeAgainstARealCell():
+
+    '''
+    The chemistry tables are representative of a class rather than of a part, which is the right
+    shape for a sizing library and is also a claim nothing checked. One real cell cannot validate a
+    class figure and it can say whether the class figure errs the right way, which is the only
+    question a representative number has to answer.
+    '''
+
+    cell = BATTERY_CELLS['Panasonic NCR18650BF']
+
+    classFigure = BATTERY_CHEMISTRIES['lithium ion']['specificEnergy']
+
+    assert classFigure < cell['gravimetricEnergyDensity'], \
+        'a class figure covering older and higher rate chemistries has to sit below a current cell'
+
+    shortfall = 1.0 - classFigure / cell['gravimetricEnergyDensity']
+
+    assert 0.10 < shortfall < 0.30, \
+        f'the class figure is {shortfall:.0%} below the cell, which is outside the useful band'
+
+def testTheDischargeTemperatureLimitMatchesTheCell():
+
+    '''
+    The one place the chemistry table and the datasheet state the same quantity, so it is the one
+    place they can be checked against each other directly.
+    '''
+
+    cell = BATTERY_CELLS['Panasonic NCR18650BF']
+
+    assert BATTERY_CHEMISTRIES['lithium ion']['lowTemperatureLimit'] == \
+        cell['dischargeTemperatureRange'][0]
+
+def testTheChargeLimitIsTighterThanAnythingTheLibraryCarries():
+
+    '''
+    The gap the datasheet exposed. A lithium ion cell discharges thirty degrees colder than it can
+    be charged, and that is a hard limit rather than a derating curve, so no capacity factor
+    expresses it.
+
+    The consequence is operational rather than a sizing one: a vehicle cold soaked on the pad can
+    run its battery and cannot top it up. This asserts the asymmetry so that it is recorded rather
+    than remembered.
+    '''
+
+    cell = BATTERY_CELLS['Panasonic NCR18650BF']
+
+    chargeFloor    = cell['chargeTemperatureRange'][0]
+    dischargeFloor = cell['dischargeTemperatureRange'][0]
+
+    assert chargeFloor > dischargeFloor
+    assert chargeFloor - dischargeFloor == pytest.approx(30.0)
+
+    # The library derates capacity down to -40 C and says nothing about charging at any of them.
+    assert min(TEMPERATURE_CAPACITY_FACTOR) < chargeFloor
+
+def testTheCellReferenceCarriesItsProvenanceAndLevel():
+
+    for name, entry in BATTERY_CELLS.items():
+
+        assert entry['source'], name
+        assert entry['kind'] in REFERENCE_KINDS, name
+        assert entry['level'] in VALIDATION_LEVELS, name
+        assert entry['scopeNote'], name
