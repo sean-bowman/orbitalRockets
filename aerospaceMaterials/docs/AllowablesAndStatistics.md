@@ -114,7 +114,25 @@ The NIST/SEMATECH e-Handbook works a one-sided tolerance limit end to end and pr
 
 **Every value reproduces to the precision the handbook prints it to**, and the intermediates matter as much as the answer. `k` is a ratio of two computed quantities, so a noncentrality parameter too large by some factor and a quantile too small by the same one would return the published `k` while getting both halves wrong.
 
-**A semiconductor example validates a metallurgical calculation** because a one-sided tolerance limit on a normal population is the same statistic whatever was measured. What it does not validate is the assumption of normality, the pooling of lots, or any knockdown applied afterwards. Those are the parts of this domain with no external anchor and they are the parts most likely to be wrong.
+**A semiconductor example validates a metallurgical calculation** because a one-sided tolerance limit on a normal population is the same statistic whatever was measured. What it does not validate is the assumption of normality, the pooling of lots, or any knockdown applied afterwards.
+
+**The first two are now bounded rather than only named.** `compareBasisRoutes()` runs the same sample through three routes and reports what each assumption is worth.
+
+| Route | Assumes | On the six-lot reference sample |
+|---|---|---|
+| Normal theory, pooled | Normality, and that lots can be pooled | 912.6 MPa |
+| Order statistic | Nothing about the distribution | 903.6 MPa |
+| ANOVA | Normality, lots separated | 896.5 MPa |
+
+**Normality is worth 1.0 per cent and pooling is worth 1.8 per cent**, both in the unconservative direction.
+
+**Neither is an error measurement, and the difference matters.** The distribution-free route is a different estimator with its own conservatism: it pays for assuming nothing by needing 29 specimens before its lowest observation is a B-basis bound at all, and 299 for A-basis. Below that the method reports that the normality assumption is doing all the work and that nothing can say how much that is worth, which is the honest output rather than a comparison that cannot be made.
+
+**Pooling is unconservative by construction whenever between-lot variation is real**, because total variance is the sum of the within-lot and between-lot components and a pooled estimate counts lot scatter as specimen scatter. On the reference sample the between-lot deviation is 15.8 MPa against a within-lot 13.0, so the split is not a rounding effect.
+
+**A single-lot sample cannot check pooling at all**, and the method says so rather than returning a comforting zero. A sample from one lot supports a basis value for that lot and says nothing about the next one.
+
+**The knockdown chain remains bounded by nothing.** It is applied after all of this and no route here sees it.
 
 **The confidence level in the example is 99 percent and the library defaults to 95**, which is the point of using it: neither routine can reproduce this by having been written around the case it is tested on.
 

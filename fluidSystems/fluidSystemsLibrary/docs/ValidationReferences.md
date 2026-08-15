@@ -61,6 +61,23 @@ changing with it. The methodology is in [validation/README.md](../../../validati
   - The library matches to one part in a million, and the residual is the density being re-evaluated along the marched line rather than an error
   - The exponents are asserted as well as the value: fourth power in diameter, first power in length and in flow. A chain that got one case right by luck does not also get the exponents right
 
+
+## Nikuradse, rough pipe friction
+
+- **Source:** J. Nikuradse, *Laws of Flow in Rough Pipes*, NACA TM 1292, November 1950, translating *Stroemungsgesetze in rauhen Rohren*, VDI-Forschungsheft 361, 1933
+- **Accessed:** 15 August 2026
+- **Validation level:** Hardware. The roughness is a measured sand grain diameter rather than a value inferred from a pressure drop
+- **Relevance:** The branch of the friction factor that switches on once relative roughness matters, which is the branch an additive-manufactured channel lives in.
+- **Key findings:**
+  - `1/sqrt(lambda) = 1.74 + 2 log10(r/k)` in the fully rough regime, over `r/k` from 15 to 507
+  - The library reproduces it at all six of his pipes to better than **0.08 %**
+  - **Colebrook's 3.7 is Nikuradse's 1.74 re-expressed.** The fully rough limit of Colebrook is `2 log10(r/k) + 2 log10(7.4)`, and `2 log10(7.4) = 1.7385`
+  - Once fully rough, the friction factor stops moving with Reynolds number at all, which is asserted across three decades
+
+**So this check establishes that the roughness term is implemented as the measurement intended**, and not that the measurement was right. Reproducing a constant that was derived from the reference is a weaker claim than it looks, and it is worth having anyway: it is exactly the transcription and convention error a roughness term is prone to, with `r` against `d` and `k` against `eps` all differing by factors of two.
+
+**What it does not cover.** The transition region, where uniform sand grain and commercial pipe genuinely behave differently and the library follows Colebrook. And the substitution of an equivalent sand-grain roughness for a measured grain diameter, which is the open step in every rough pipe calculation here.
+
 ## Blasius, the low Reynolds bracket
 
 - **Source:** Blasius 1913, `lambda = 0.3164 Re^-0.25`

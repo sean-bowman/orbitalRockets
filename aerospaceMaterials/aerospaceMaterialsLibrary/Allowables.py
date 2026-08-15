@@ -638,6 +638,110 @@ class Allowables:
         return {'rank': rank, 'value': float(sorted_[rank - 1]),
                 'requiredSampleSize': 29 if self.basis == 'B' else 299}
 
+    def compareBasisRoutes(self) -> dict:
+
+        '''
+
+        What the two assumptions behind a basis value are worth, in per cent of the number.
+
+        A normal-theory basis rests on two things the tolerance factor cannot see. It assumes the
+        population is normal, and where the sample spans lots it assumes they can be pooled. Both
+        are usually reasonable and neither is checked by the arithmetic, so this runs the routes
+        that drop each assumption and reports the difference.
+
+        **The normality cost** is the pooled normal-theory value against the order statistic value,
+        which assumes no distribution at all. **The pooling cost** is the pooled value against the
+        ANOVA value, which separates within-lot from between-lot variance.
+
+        **Neither difference is an error.** The distribution-free route is a different estimator
+        with its own conservatism: it pays for assuming nothing by needing 29 specimens before it
+        can use its lowest observation for B-basis and 299 for A-basis, so on a small sample it is
+        low for reasons that have nothing to do with normality. What the comparison bounds is how
+        much the assumption is worth, which is the quantity a reader actually needs and the one a
+        single basis value hides.
+
+        '''
+
+        self._validateInputs()
+
+        normal = self.calculateBasisValue()[self.basis]['value']
+
+        findings = []
+
+        # -- Normality --------------------------------------------------------------------------- #
+
+        distributionFree = self.calculateNonparametricBasis()
+
+        normalityCost = np.nan
+
+        if distributionFree['value'] is not None:
+            normalityCost = normal / distributionFree['value'] - 1.0
+
+        fit = self.fitDistribution()
+
+        normalRejected = bool(fit.get('normal', {}).get('rejected', False))
+
+        # -- Pooling ----------------------------------------------------------------------------- #
+
+        poolingCost = np.nan
+        anova       = None
+
+        if self.batchIdentifiers is not None and len(np.unique(self.batchIdentifiers)) > 1:
+
+            anova = self.calculateAnovaBasis()
+
+            if anova['anovaBasisValue'] > 0.0:
+                poolingCost = anova['pooledBasisValue'] / anova['anovaBasisValue'] - 1.0
+
+        # -- Findings ---------------------------------------------------------------------------- #
+
+        if np.isfinite(normalityCost):
+            findings.append(
+                f'Assuming normality is worth {normalityCost:+.1%} of the basis value against an '
+                f'order statistic bound that assumes nothing. The order statistic route is not the '
+                f'truth, it is a different estimator that pays for its generality, so this bounds '
+                f'the assumption rather than measuring an error.')
+        else:
+            findings.append(
+                f'The sample of {len(self.sampleData)} is too small for a distribution-free bound '
+                f'at {self.basis}-basis, which needs '
+                f'{distributionFree["requiredSampleSize"]}. **The normality assumption is doing '
+                f'all of the work and nothing here can say how much that is worth.**')
+
+        if normalRejected:
+            findings.append(
+                '**Anderson-Darling rejects normality on this sample at five per cent.** On '
+                'metallic strength data that usually means the sample mixes product forms, heats '
+                'or test temperatures rather than that the metal is non-normal, and the fix is to '
+                'split the sample rather than to change the distribution.')
+
+        if np.isfinite(poolingCost):
+            findings.append(
+                f'Pooling the lots is worth {poolingCost:+.1%} against the ANOVA route, on '
+                f'{len(np.unique(self.batchIdentifiers))} lots with a between-lot deviation of '
+                f'{anova["betweenLotDeviation"] / 1.0e6:.1f} MPa against a within-lot '
+                f'{anova["withinLotDeviation"] / 1.0e6:.1f} MPa. **Pooling is unconservative '
+                f'whenever between-lot variation is real**, because it counts lot scatter as if it '
+                f'were specimen scatter.')
+        else:
+            findings.append(
+                '**No lot identifiers, so the pooling assumption cannot be checked at all.** A '
+                'sample from one lot supports a basis value for that lot and says nothing about '
+                'the next one.')
+
+        self.findings = findings
+
+        return {'basis':             self.basis,
+                'normalTheoryValue': normal,
+                'distributionFreeValue': distributionFree['value'],
+                'anovaValue':        anova['anovaBasisValue'] if anova else None,
+                'normalityCost':     normalityCost,
+                'poolingCost':       poolingCost,
+                'normalityRejected': normalRejected,
+                'lotCount':          (len(np.unique(self.batchIdentifiers))
+                                      if self.batchIdentifiers is not None else 0),
+                'findings':          findings}
+
     def applyKnockdowns(self) -> dict:
 
         '''

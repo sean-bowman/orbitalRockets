@@ -1105,3 +1105,131 @@ def testEveryClassGeneratesAReport():
                           'minimumWallThickness': 0.003, 'characteristicSize': 0.20,
                           'requiredTolerance': 0.30e-3})
     assert 'PROCESS ROUTE COMPARISON' in comparison.generateReport()
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- What the assumptions behind a basis value are worth -- #
+# ------------------------------------------------------------------------------------------------ #
+
+def testPoolingLotsIsUnconservativeWhenBetweenLotVariationIsReal(multiBatchSample):
+
+    '''
+    A basis value rests on two things the tolerance factor cannot see, and this is the second of
+    them. Pooling every specimen as one population counts lot scatter as if it were specimen
+    scatter, which understates the spread and raises the number.
+
+    The direction is structural: total variance is the sum of the two components, so a pooled
+    estimate that ignores the split can only be optimistic.
+    '''
+
+    values, identifiers = multiBatchSample
+
+    allowables = Allowables()
+    allowables.setInputs({'sampleData': values, 'batchIdentifiers': identifiers, 'basis': 'B'})
+
+    comparison = allowables.compareBasisRoutes()
+
+    assert comparison['lotCount'] == 6
+    assert comparison['poolingCost'] > 0.0, 'pooling has to be the higher of the two'
+    assert 0.0 < comparison['poolingCost'] < 0.10
+
+    assert comparison['anovaValue'] < comparison['normalTheoryValue']
+
+def testTheNormalityAssumptionIsBoundedRatherThanNamed(multiBatchSample):
+
+    '''
+    The first assumption. The order statistic route uses no distribution at all, so the difference
+    between it and the normal-theory value bounds what normality is worth on this sample.
+
+    **It is not an error measurement.** The distribution-free route pays for its generality: it
+    needs 29 specimens before it can use its lowest observation for B-basis, so on a small sample
+    it is low for reasons unconnected to normality.
+    '''
+
+    values, identifiers = multiBatchSample
+
+    allowables = Allowables()
+    allowables.setInputs({'sampleData': values, 'batchIdentifiers': identifiers, 'basis': 'B'})
+
+    comparison = allowables.compareBasisRoutes()
+
+    assert comparison['distributionFreeValue'] is not None
+    assert np.isfinite(comparison['normalityCost'])
+    assert abs(comparison['normalityCost']) < 0.10
+
+    # The wording has to carry the caveat, because the number alone invites the wrong reading.
+    assert any('bounds the assumption' in finding for finding in comparison['findings'])
+
+def testASampleTooSmallForADistributionFreeBoundSaysSo():
+
+    '''
+    B-basis needs 29 specimens before the lowest observation is a 95 per cent bound at all, and
+    A-basis needs 299. Below that the normality assumption is doing all the work, and the honest
+    output is to say so rather than to report a comparison that cannot be made.
+    '''
+
+    generator = np.random.default_rng(3)
+
+    allowables = Allowables()
+    allowables.setInputs({'sampleData': generator.normal(950.0e6, 30.0e6, 15), 'basis': 'B'})
+
+    comparison = allowables.compareBasisRoutes()
+
+    assert comparison['distributionFreeValue'] is None
+    assert not np.isfinite(comparison['normalityCost'])
+
+    assert any('doing all of the work' in finding for finding in comparison['findings'])
+
+def testASingleLotSampleCannotCheckPoolingAtAll():
+
+    '''
+    The quieter of the two gaps. A sample from one lot supports a basis value for that lot and says
+    nothing about the next one, and no arithmetic on it can reveal that.
+    '''
+
+    generator = np.random.default_rng(5)
+
+    allowables = Allowables()
+    allowables.setInputs({'sampleData': generator.normal(950.0e6, 30.0e6, 40), 'basis': 'B'})
+
+    comparison = allowables.compareBasisRoutes()
+
+    assert comparison['lotCount'] == 0
+    assert not np.isfinite(comparison['poolingCost'])
+
+    assert any('cannot be checked at all' in finding for finding in comparison['findings'])
+
+def testASkewedSampleIsFlaggedRatherThanFitted():
+
+    '''
+    Anderson-Darling is already run; this asserts the comparison surfaces it. A rejected normal fit
+    on metallic strength data usually means the sample mixes product forms, heats or temperatures,
+    and the fix is to split the sample rather than to change the distribution.
+    '''
+
+    generator = np.random.default_rng(9)
+
+    # Two populations 120 MPa apart, which is what mixing two tempers looks like.
+    mixed = np.concatenate([generator.normal(950.0e6, 20.0e6, 30),
+                            generator.normal(830.0e6, 20.0e6, 30)])
+
+    allowables = Allowables()
+    allowables.setInputs({'sampleData': mixed, 'basis': 'B'})
+
+    comparison = allowables.compareBasisRoutes()
+
+    assert comparison['normalityRejected']
+    assert any('mixes product forms' in finding for finding in comparison['findings'])
+
+def testTheRegisterRecordsThisAsACrossCheckAndNotAValidation():
+
+    '''
+    The distinction this repository exists to keep. Two routes disagreeing by one per cent
+    establishes what an assumption is worth and not that either is right, and the register has to
+    say so where somebody reading the number will see it.
+    '''
+
+    note = TOLERANCE_FACTORS['NIST-SEMATECH-1.3.5.2']['assumptionNote']
+
+    assert 'internal cross-check and not a validation' in note
+    assert 'knockdown chain remains unbounded' in note

@@ -125,7 +125,17 @@ against the `2.0` and `0.799347` that the Colebrook equation reduces to at zero 
 
 **Churchill being closer than Colebrook at the top of the range is a coincidence** and not a reason to prefer it. It is an approximation to Colebrook that happens to err the other way, so its error and Colebrook's partly cancel there. Nothing in its derivation knows about the Superpipe.
 
-**The roughness branch has no equivalent anchor.** Everything above is smooth pipe, and once `eps/D` matters the reference is Nikuradse's sand-grain experiments, which is a different surface from a drawn tube or a printed channel. That is registered rather than assumed away.
+**The roughness branch has its own anchor, and it comes out almost exact.** Nikuradse glued sifted sand of a measured grain size inside six pipes spanning `r/k` from 15 to 507, and established that once the roughness elements protrude through the viscous sublayer the resistance stops depending on Reynolds number entirely:
+
+```
+1/sqrt(lambda) = 1.74 + 2 log10(r/k)
+```
+
+The library reproduces that at all six of his relative radii to better than 0.08 %. **The reason it is that close is that it is the same constant twice**: taking Colebrook to the fully rough limit leaves `2 log10(r/k) + 2 log10(7.4)`, and `2 log10(7.4) = 1.7385` against the 1.74 Nikuradse fitted. So the check establishes that the library implements the roughness term as the measurement intended, and not that the measurement was right.
+
+**What it does not cover is the transition**, and that is not a limitation of the data. Nikuradse used uniform sand grain, whose resistance dips below the fully rough value before rising back to it; his own tabulation of `1/sqrt(lambda) - 2 log10(r/k)` approaches 1.74 from above, starting near 1.95. Commercial pipe has a distribution of roughness heights, shows no dip, and is what Colebrook fitted. **The two genuinely disagree there and the library follows Colebrook**, which is right for drawn tube and wrong for a surface that really is uniform grains.
+
+**And the substitution underneath all of it is still unvalidated.** Nikuradse's `k` is a measured grain diameter. Every roughness in [common/materials.py](../../../common/materials.py) is an *equivalent* sand-grain roughness inferred from pressure drop on a real surface, which is a different quantity defined so it can be used in the same formula. That is the open step in any rough pipe calculation here, and reproducing Nikuradse does not close it.
 
 ### Surface roughness
 

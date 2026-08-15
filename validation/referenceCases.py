@@ -1759,7 +1759,20 @@ TOLERANCE_FACTORS = {
                      'normal population is the same statistic whatever was measured, which is why '
                      'a semiconductor worked example validates a metallurgical one. What it does '
                      'not validate is the assumption of normality, the pooling of lots, or any '
-                     'knockdown applied afterwards.'},
+                     'knockdown applied afterwards.',
+
+        'assumptionNote': 'The first two of those are now bounded rather than merely named. '
+                          'Allowables.compareBasisRoutes runs the same sample through the '
+                          'normal-theory route, an order statistic route that assumes no '
+                          'distribution, and an ANOVA route that separates within-lot from '
+                          'between-lot variance, and reports what each assumption is worth. On the '
+                          'six-lot reference sample normality is worth 1.0 per cent of the basis '
+                          'value and pooling is worth 1.8 per cent, both in the unconservative '
+                          'direction. **That is an internal cross-check and not a validation**: '
+                          'the distribution-free route is a different estimator with its own '
+                          'conservatism, so the comparison bounds how much the assumption is worth '
+                          'rather than measuring an error in it. The knockdown chain remains '
+                          'unbounded by anything.'},
 }
 
 
@@ -1936,4 +1949,76 @@ BATTERY_CELLS = {
                      'answer. The 200 W h/kg the library carries for lithium ion sits 19 per cent '
                      'below this cell, and a class figure has to cover older and higher rate '
                      'chemistries as well, so conservative is the direction it should err in.'},
+}
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Rough pipe friction, from Nikuradse's sand-grain experiments -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# The other half of the fluidSystems friction anchor. The Princeton Superpipe covers smooth pipe;
+# this covers the branch that switches on once relative roughness matters, which is the branch an
+# additive-manufactured channel lives in.
+#
+# Nikuradse glued sifted sand of a known grain size to the inside of six pipes, which is why this is
+# the reference: the roughness is not an equivalent value inferred from a pressure drop, it is a
+# measured grain diameter. He established that in the fully rough regime the resistance stops
+# depending on Reynolds number entirely and becomes a function of r/k alone.
+#
+# **The check comes out almost exact, and the reason is that it is the same constant twice.** The
+# Colebrook equation's 3.7 is Nikuradse's 1.74 re-expressed: taking Colebrook to the fully rough
+# limit leaves 2 log10(r/k) + 2 log10(7.4), and 2 log10(7.4) is 1.7385 against the 1.74 Nikuradse
+# fitted. Reproducing it therefore validates that the library implements the roughness term as the
+# measurement intended rather than establishing anything new about the measurement.
+#
+# **What this does NOT cover is the transition region**, and that is not a limitation of the data.
+# Nikuradse used uniform sand grain, where the resistance dips below the fully rough value before
+# rising back to it. Commercial pipe has a distribution of roughness heights and shows no dip, and
+# Colebrook fitted commercial pipe. **The two genuinely disagree in the transition and the library
+# follows Colebrook**, which is the right choice for drawn tube and the wrong one for a surface that
+# really is uniform grains.
+
+ROUGH_PIPE = {
+
+    'Nikuradse sand-grain': {
+        'source': 'J. Nikuradse, Laws of Flow in Rough Pipes, NACA TM 1292, November 1950, a '
+                  'translation of Stroemungsgesetze in rauhen Rohren, VDI-Forschungsheft 361, '
+                  '1933. The fully rough resistance law, stated in the text on page 21 of the '
+                  'translation. Read from https://ntrs.nasa.gov/api/citations/19930093938/'
+                  'downloads/19930093938.pdf, accessed 15 August 2026',
+        'kind':  'measured',
+        'level': 'hardware',
+
+        # 1 / sqrt(lambda) = 1.74 + 2 log10(r / k)
+        'lawConstant': 1.74,
+        'lawSlope':    2.0,
+
+        # The six pipes, from the table headings. The document prints log(r/k) alongside each and
+        # they agree with the ratios, which is a free check that these were read correctly.
+        'relativeRadii': [15.0, 30.6, 60.0, 126.0, 252.0, 507.0],
+
+        # Colebrook's rough asymptote constant, for comparison with lawConstant.
+        'colebrookConstant': 1.73846,      # [-], 2 log10(7.4)
+
+        'equivalenceNote': 'Colebrook taken to the fully rough limit is '
+                           '1/sqrt(lambda) = -2 log10(k / (3.7 d)), which for d = 2r is '
+                           '2 log10(r/k) + 2 log10(7.4). The 3.7 and the 1.74 are the same '
+                           'constant expressed two ways and they agree to 0.09 per cent, so this '
+                           'check establishes that the library implements the roughness term '
+                           'correctly rather than that Nikuradse was right.',
+
+        'scopeNote': 'The fully rough branch only. Nikuradse used uniform sand grain, whose '
+                     'resistance dips below the fully rough value in the transition before rising '
+                     'back to it; commercial pipe has a distribution of roughness heights, shows '
+                     'no dip, and is what Colebrook fitted. The library follows Colebrook, which '
+                     'is right for drawn tube and wrong for a surface that really is uniform '
+                     'grains. Nikuradse\'s own tabulation of 1/sqrt(lambda) - 2 log10(r/k) '
+                     'approaches 1.74 from ABOVE, starting near 1.95, which is that transition.',
+
+        'roughnessNote': 'k here is a measured sand grain diameter. Every roughness in '
+                         'common/materials.py is an equivalent sand-grain roughness inferred from '
+                         'pressure drop measurements on real surfaces, which is a different '
+                         'quantity that happens to be defined so it can be used in the same '
+                         'formula. That substitution is the unvalidated step in any rough pipe '
+                         'calculation this repository does, and it is not closed by this entry.'},
 }

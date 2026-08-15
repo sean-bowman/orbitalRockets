@@ -34,14 +34,14 @@ DOMAIN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT   = os.path.dirname(DOMAIN)
 
 # fluidSystems predates the unique-helper-module rule and its helper is still named utils.py,
-# which is exactly the collision BUILDOUT.md warns about. Importing the property accessor from
+# which is exactly the collision that rule exists to prevent. Importing the property accessor from
 # common directly sidesteps it entirely and is the more honest dependency anyway: the thing being
 # validated is the property backend call, which lives in common.
 sys.path.insert(0, os.path.join(ROOT, 'common'))
 sys.path.insert(0, ROOT)
 
 from validation.referenceCases import VALIDATION_LEVELS, REFERENCE_KINDS
-from validation.referenceCases import FLUID_RELATIONS, FRICTION_FACTOR
+from validation.referenceCases import FLUID_RELATIONS, FRICTION_FACTOR, ROUGH_PIPE
 
 from fluidProperties import fluidProps
 
@@ -308,3 +308,107 @@ def testThePressureDropScalesAsTheClosedFormSays():
     assert dropFor(0.002, 2.0, 0.2) == pytest.approx(4.0 * base, rel = 0.01)
     assert dropFor(0.004, 4.0, 0.2) == pytest.approx(2.0 * base, rel = 0.01)
     assert dropFor(0.004, 2.0, 0.4) == pytest.approx(2.0 * base, rel = 0.01)
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- The roughness branch, against Nikuradse -- #
+# ------------------------------------------------------------------------------------------------ #
+
+def testTheFullyRoughLimitReproducesNikuradsesLaw():
+
+    '''
+    Nikuradse glued sifted sand of a measured grain size inside six pipes and established that in
+    the fully rough regime the resistance stops depending on Reynolds number at all:
+
+        1 / sqrt(lambda) = 1.74 + 2 log10(r / k)
+
+    The library has to reproduce that at every one of his six relative radii, which span a factor
+    of 34.
+    '''
+
+    reference = ROUGH_PIPE['Nikuradse sand-grain']
+
+    assert reference['level'] == 'hardware'
+
+    for relativeRadius in reference['relativeRadii']:
+
+        measured = 1.0 / (reference['lawConstant']
+                          + reference['lawSlope'] * np.log10(relativeRadius)) ** 2
+
+        # k / d, where Nikuradse's r is a radius and the library takes roughness over diameter.
+        computed = frictionFactor(1.0e9, 1.0 / (2.0 * relativeRadius), 'colebrook')
+
+        assert computed == pytest.approx(measured, rel = 0.002), \
+            f'r/k = {relativeRadius}: {computed:.5f} against a measured {measured:.5f}'
+
+def testColebrooksThreePointSevenIsNikuradsesConstant():
+
+    '''
+    The reason the check above comes out almost exact, and it is worth asserting rather than
+    noticing. Taking Colebrook to the fully rough limit leaves
+
+        1 / sqrt(lambda) = 2 log10(r/k) + 2 log10(7.4)
+
+    so the 3.7 in the Colebrook equation and the 1.74 Nikuradse fitted are the same constant
+    written two ways. Reproducing his law therefore establishes that the library implements the
+    roughness term as intended, and not that the measurement was right.
+    '''
+
+    reference = ROUGH_PIPE['Nikuradse sand-grain']
+
+    assert 2.0 * np.log10(7.4) == pytest.approx(reference['colebrookConstant'], abs = 5.0e-5)
+
+    assert reference['colebrookConstant'] == pytest.approx(reference['lawConstant'], rel = 0.001)
+
+def testFullyRoughFrictionStopsDependingOnReynoldsNumber():
+
+    '''
+    The physical content of Nikuradse's result, and the thing that separates the rough branch from
+    the smooth one. Once the roughness elements protrude through the viscous sublayer the pressure
+    drag on them sets the resistance and viscosity drops out.
+    '''
+
+    for relativeRoughness in (0.001, 0.005, 0.02):
+
+        factors = [frictionFactor(reynolds, relativeRoughness, 'colebrook')
+                   for reynolds in (1.0e7, 1.0e8, 1.0e9, 1.0e10)]
+
+        assert max(factors) / min(factors) < 1.02, \
+            f'friction still moving with Reynolds number at eps/D = {relativeRoughness}'
+
+def testRoughnessRaisesFrictionAndSmoothPipeIsTheFloor():
+
+    '''
+    Monotonicity, which holds whatever the constants are. A rougher pipe cannot have less
+    resistance, and no roughness can take it below the smooth pipe value at the same Reynolds
+    number.
+    '''
+
+    reynolds = 1.0e6
+
+    smooth = frictionFactor(reynolds, 0.0, 'colebrook')
+
+    previous = smooth
+
+    for relativeRoughness in (1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2, 5.0e-2):
+
+        rough = frictionFactor(reynolds, relativeRoughness, 'colebrook')
+
+        assert rough > previous
+        assert rough > smooth
+
+        previous = rough
+
+def testTheSandGrainSubstitutionIsRecordedRatherThanAssumed():
+
+    '''
+    The unvalidated step in any rough pipe calculation, and it is not closed by reproducing
+    Nikuradse. His k is a measured grain diameter; every roughness in common/materials.py is an
+    equivalent sand-grain roughness inferred from pressure drop on a real surface. The two are
+    different quantities defined so they can be used in the same formula.
+    '''
+
+    reference = ROUGH_PIPE['Nikuradse sand-grain']
+
+    assert 'equivalent sand-grain' in reference['roughnessNote']
+    assert reference['scopeNote']
