@@ -76,9 +76,15 @@ This is not a reference so much as a consequence, and it is the most useful thin
 
 Two entries in [validation/referenceCases.py](../../validation/referenceCases.py) under `UNVALIDATED`, and each names what survives it.
 
-**Casualty areas and population densities** (`casualtyAreas`). A real casualty area comes from a fragment mass, velocity and impact angle through a lethality model, and a real population comes from a gridded census rather than a land use class. Every casualty expectation scales linearly with both. **The structural results do not**: that risk follows population rather than impact probability follows from the product form, and that a casualty area exceeds a fragment footprint is a definition. **A gridded population product is public and would close half of this.**
+**Casualty areas and population densities** (`casualtyAreas`). A real casualty area comes from a fragment mass, velocity and impact angle through a lethality model, and a real population comes from a gridded census rather than a land use class. Every casualty expectation scales linearly with both. **The structural results do not**: that risk follows population rather than impact probability follows from the product form, and that a casualty area exceeds a fragment footprint is a definition. **A gridded population product is public and would close half of this.** The other half now has one of its three inputs: the impact velocity of every fragment class is computed.
 
-**Impact probabilities and the failure probability** (`impactProbabilities`). A real impact probability comes from propagating a debris catalogue through an atmosphere with a wind field, from every failure time along the trajectory, which is a Monte Carlo rather than a closed form. The failure probability comes from a reliability argument the vehicle does not have yet.
+**The debris catalogue and the failure probability** (`impactProbabilities`), narrowed from what this entry used to say. The propagation is now computed: [`DebrisDispersion`](../rangeSafetyLibrary/DebrisDispersion.py) falls every fragment class from the break-up state to the ground through an exponential atmosphere with a wind, disperses each about its impact point, and reports the impact probability per region. The worked example no longer assumes the number everything else is multiplied by.
+
+**What is unvalidated is the catalogue rather than the propagation.** The fragment counts, masses and drag areas are representative of a small two stage vehicle; a real one comes from a structural break-up analysis of a specific article and is programme property. The propagation itself is anchored where it can be: terminal velocity is a closed form and a fragment dropped from rest has to arrive at it, and the atmosphere is asserted equal to the one [recoveryAndReusability](../../recoveryAndReusability/) falls an entry through rather than being written twice.
+
+**What computing it changed.** Every assumed impact probability in the worked case turned out to be the wrong size, and with the coastal town under the ground track the launch stops being licensable by a factor of thirty. **A number with no derivation behind it cannot be argued with**, which is the reason this one was worth building rather than registering.
+
+The failure probability still comes from a reliability argument the vehicle does not have yet.
 
 **The failure probability multiplies everything**, which is why the class sweeps it and reports the value at which the criterion stops being met rather than quoting a single number. **The risk analysis inherits the reliability estimate whole**, and that is the weakest number in it.
 
@@ -86,7 +92,9 @@ Two entries in [validation/referenceCases.py](../../validation/referenceCases.py
 
 ## What is not modelled at all
 
-**Debris catalogues and fragment dispersion.** The largest single piece of unbuilt work implied by this repository. [EntryTrajectory](../../recoveryAndReusability/docs/EntryAerodynamics.md) computes the descent of one body; the missing parts are the catalogue, the imparted velocity, the wind field and the Monte Carlo over failure times.
+**A Monte Carlo dispersion.** Four fragment classes are propagated deterministically and dispersed about their impact points from two causes. A real analysis samples thousands of fragments over break-up time, attitude, fragment properties and a measured wind profile. **The difference is coverage rather than accuracy**: a catalogue of four classes has four modes and a real footprint is continuous.
+
+**A structural break-up model, and a lethality model.** The first decides what the catalogue is and the second decides what a fragment does when it lands. The domain computes the impact velocity, which is one of the three inputs a lethality model needs; the other two are the impact angle and an injury criterion.
 
 **Blast overpressure.** Computed in [groundSystemsAndOperations](../../groundSystemsAndOperations/docs/HazardZonesAndSiting.md) from DESR 6055.09 and not duplicated here.
 

@@ -107,16 +107,19 @@ def testTheOceanTakesTheDebrisAndTheTownTakesTheRisk(case):
 
     '''
     The domain's headline result, in the worked case: risk follows population rather than impact
-    probability.
+    probability. Run on the computed impact probabilities rather than the assumed ones, because
+    that is what the example reports.
     '''
 
-    collective = codeInterface.buildRisk(case).calculateCollective()
+    computed = _computedProbabilities(case)
+
+    collective = codeInterface.buildRisk(case, computed).calculateCollective()
     byName = {entry['region']: entry for entry in collective['regions']}
 
     ocean = byName['downrange ocean']
     town = byName['coastal town']
 
-    assert ocean['impactProbability'] > 0.8
+    assert ocean['impactProbability'] > 0.5
     assert ocean['share'] < 0.05
     assert town['impactProbability'] < 0.001
     assert town['share'] > 0.8
@@ -225,7 +228,9 @@ def testTheExampleNamesWhatItDeliberatelyDidNotBuild(capsys):
 
     printed = capsys.readouterr().out
 
-    for absent in ('Debris catalogues and fragment ballistics',
+    for absent in ('A Monte Carlo debris dispersion',
+                   'A structural break-up model',
+                   'A lethality model',
                    'Blast overpressure and quantity-distance',
                    'Toxic dispersion',
                    'Ordnance initiation',
@@ -237,3 +242,143 @@ def testTheExampleLoadedIsThisDomainsOwn():
 
     assert os.path.abspath(codeInterface.__file__) == os.path.abspath(
         os.path.join(DOMAIN, 'codeInterface.py'))
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Stage 2: the debris footprint -- #
+# ------------------------------------------------------------------------------------------------ #
+
+def _computedProbabilities(case: dict) -> dict:
+
+    '''
+    The impact probabilities the example runs on, computed from the dispersion rather than read
+    from the file.
+    '''
+
+    dispersion = codeInterface.buildDispersion(case)
+
+    regions = [{key: region[key] for key in
+                ('name', 'start', 'end', 'crossRange', 'crossWidth') if key in region}
+               for region in case['risk']['regions']]
+
+    return {entry['name']: entry['impactProbability']
+            for entry in dispersion.impactProbabilities(regions)['regions']}
+
+def testTheComputedProbabilitiesReplaceTheAssumedOnes(case):
+
+    '''
+    The whole point of the stage. The assumed set stays in the file so the two can be printed
+    against each other, and every region's computed value differs from it: a plausible guess was
+    wrong in every one.
+    '''
+
+    computed = _computedProbabilities(case)
+
+    for region in case['risk']['regions']:
+
+        assumed = region['impactProbability']
+        actual  = computed[region['name']]
+
+        assert actual != pytest.approx(assumed, rel = 0.2), \
+            f'{region["name"]} was guessed at {assumed:.4f} and computes to {actual:.4f}'
+
+def testTheComputedProbabilitiesAccountForEveryFragment(case):
+
+    computed = _computedProbabilities(case)
+
+    # The town is a cross-range slice rather than a full band, so the three do not sum to one.
+    # The two full-width bands do.
+    fullWidth = sum(value for name, value in computed.items() if name != 'coastal town')
+
+    assert 0.6 < fullWidth < 1.0
+
+def testTheFootprintIsLongAndNarrowInTheWorkedCase(case):
+
+    '''
+    81 km by 4.5 km. The length is the ballistic coefficient spread and the width is the destruct
+    charge, and those are an order of magnitude apart, which is why a debris footprint is drawn as
+    a long thin ellipse rather than a circle.
+    '''
+
+    extent = codeInterface.buildDispersion(case).footprint()
+
+    assert extent['length'] / 1000.0 == pytest.approx(81.0, rel = 0.05)
+    assert extent['width'] / 1000.0 == pytest.approx(4.5, rel = 0.1)
+    assert extent['aspectRatio'] > 15.0
+
+def testTheTownDirectlyDownrangeIsNotLicensable(case):
+
+    '''
+    The result the computed probabilities produce and the assumed ones hid. With the town under
+    the ground track the collective criterion fails by a factor of thirty, and no vehicle
+    reliability recovers it: the relationship is linear and the failure probability would have to
+    fall below a thousandth.
+    '''
+
+    dispersion = codeInterface.buildDispersion(case)
+
+    regions = [{key: region[key] for key in
+                ('name', 'start', 'end', 'crossRange', 'crossWidth') if key in region}
+               for region in case['risk']['regions']]
+
+    for region in regions:
+        if 'town' in region['name']:
+            region['crossRange'] = 0.0
+
+    computed = {entry['name']: entry['impactProbability']
+                for entry in dispersion.impactProbabilities(regions)['regions']}
+
+    with pytest.raises(RiskError):
+        codeInterface.buildRisk(case, computed).calculateCollective()
+
+def testTheAzimuthOffsetHasAThreshold(case):
+
+    '''
+    A computed distance rather than a rule of thumb: the town has to sit about twenty kilometres
+    off the ground track. **That is what a launch azimuth buys**, and it is bought against the
+    cross-range dispersion of the light debris rather than against the footprint width.
+    '''
+
+    dispersion = codeInterface.buildDispersion(case)
+
+    base = [{key: region[key] for key in
+             ('name', 'start', 'end', 'crossRange', 'crossWidth') if key in region}
+            for region in case['risk']['regions']]
+
+    threshold = None
+
+    for offset in case['dispersion']['townOffsets']:
+
+        trial = [dict(region) for region in base]
+
+        for region in trial:
+            if 'town' in region['name']:
+                region['crossRange'] = offset
+
+        computed = {entry['name']: entry['impactProbability']
+                    for entry in dispersion.impactProbabilities(trial)['regions']}
+
+        try:
+            codeInterface.buildRisk(case, computed).calculateCollective()
+        except RiskError:
+            continue
+
+        threshold = offset
+        break
+
+    assert threshold is not None, 'no offset in the sweep clears the criterion'
+    assert 15000.0 < threshold < 30000.0
+
+def testTheSummaryRunsOnTheComputedProbabilities(capsys):
+
+    '''
+    A summary recomputed from the assumed set while the stage above it reported the computed one
+    would be a drift inside a single run, which is the failure this example's summary is written
+    the way it is to avoid.
+    '''
+
+    codeInterface.main()
+
+    printed = capsys.readouterr().out
+
+    assert '59% against 2%' in printed, 'the summary is not using the computed ocean share'

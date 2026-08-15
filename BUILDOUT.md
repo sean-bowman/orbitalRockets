@@ -4,8 +4,8 @@
 
 The master list of what is built and what is not, kept current as the repository is populated.
 
-**Last updated:** 14 August 2026, at commit `54e1264`.
-**Repository totals:** 423 tracked markdown documents, 1596 passing tests, **16 domains complete of 16**.
+**Last updated:** 14 August 2026, at commit `db1867f`.
+**Repository totals:** 423 tracked markdown documents, 1625 passing tests, **16 domains complete of 16**.
 
 ---
 
@@ -112,7 +112,7 @@ Dependency driven. Propulsion first because it is the repository's stated identi
 | [groundSystemsAndOperations](groundSystemsAndOperations/) | Light | 13 | 4 | **standard**, DESR 6055.09 read in full |
 | [recoveryAndReusability](recoveryAndReusability/) | Full | 12 | 5 | **standard**, Allen-Eggers, plus bounded Sutton-Graves |
 | [manufacturingAndAssembly](manufacturingAndAssembly/) | Light | 12 | 3 | **standard**, MIL-HDBK-1823A, model only |
-| [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | 11 | 3 | **standard**, 14 CFR Part 450 read from the regulation |
+| [rangeSafetyAndFTS](rangeSafetyAndFTS/) | Light | 11 | 4 | **standard**, 14 CFR Part 450 read from the regulation |
 | [reliabilityAndMissionAssurance](reliabilityAndMissionAssurance/) | Light | 12 | 4 | internal, no external anchor, and deliberately so |
 
 **Six reach hardware level and seven reach standard level.** Each carries a

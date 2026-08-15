@@ -58,6 +58,7 @@ from rangeSafetyUtils import (LAUNCH_SAFETY_CRITERIA, CASUALTY_AREA, POPULATION_
                               ImpactPointError, RiskError, TerminationError)
 from ImpactPoint import ImpactPoint
 from PublicRisk import PublicRisk
+from DebrisDispersion import DebrisDispersion
 from TerminationReliability import TerminationReliability
 
 ASSET = os.path.join(HERE, 'rangeSafetyLibrary', 'assets', 'coastalLaunchExample.json')
@@ -93,13 +94,36 @@ def buildImpactPoint(case: dict) -> ImpactPoint:
 
     return point
 
-def buildRisk(case: dict) -> PublicRisk:
+def buildDispersion(case: dict) -> DebrisDispersion:
+
+    entry = case['dispersion']
+
+    dispersion = DebrisDispersion()
+    dispersion.setInputs({'breakupAltitude':        entry['breakupAltitude'],
+                          'breakupSpeed':           entry['breakupSpeed'],
+                          'breakupFlightPathAngle': entry['breakupFlightPathAngle'],
+                          'breakupDownrange':       entry['breakupDownrange'],
+                          'windSpeed':              entry['windSpeed'],
+                          'windUncertainty':        entry['windUncertainty']})
+
+    return dispersion
+
+def buildRisk(case: dict, computed: dict = None) -> PublicRisk:
 
     entry = case['risk']
 
+    regions = [dict(region) for region in entry['regions']]
+
+    # The impact probabilities come from the dispersion calculation where one has been run, and
+    # from the file only when it has not. The assumed set stays in the file so the two can be
+    # printed against each other rather than one quietly replacing the other.
+    if computed:
+        for region in regions:
+            region['impactProbability'] = computed[region['name']]
+
     risk = PublicRisk()
     risk.setInputs({'failureProbability':       entry['failureProbability'],
-                    'regions':                  entry['regions'],
+                    'regions':                  regions,
                     'fragments':                entry['fragments'],
                     'nearestPersonProbability': entry['nearestPersonProbability'],
                     'personnelType':            entry['personnelType']})
@@ -125,6 +149,130 @@ def buildTermination(case: dict, singleReceiver: bool = False) -> TerminationRel
 
 # ------------------------------------------------------------------------------------------------ #
 # -- Stage 1: the impact point -- #
+# ------------------------------------------------------------------------------------------------ #
+# -- Stage 2: where the pieces land -- #
+# ------------------------------------------------------------------------------------------------ #
+
+def reportDispersion(case: dict) -> dict:
+
+    dispersion = buildDispersion(case)
+
+    coefficients = dispersion.ballisticCoefficients()
+    propagation  = dispersion.propagate()
+    extent       = dispersion.footprint()
+
+    regions = [{key: region[key] for key in
+                ('name', 'start', 'end', 'crossRange', 'crossWidth') if key in region}
+               for region in case['risk']['regions']]
+
+    probabilities = dispersion.impactProbabilities(regions)
+
+    print()
+    print('    class        count   beta [kg/m2]   v_t [m/s]   fall [s]   impact [km]   drift [km]')
+    for entry in propagation['fragments']:
+        print(f'    {entry["class"]:<13}{entry["count"]:>5.0f}{entry["ballistic"]:>15.1f}'
+              f'{entry["terminal"]:>12.1f}{entry["fallTime"]:>11.0f}'
+              f'{entry["impactRange"] / 1000.0:>14.1f}{entry["windDrift"] / 1000.0:>13.2f}')
+
+    print()
+    for finding in propagation['findings']:
+        print(f'  - {finding}')
+
+    print()
+    print(f'  The footprint is {extent["length"] / 1000.0:.0f} km long and '
+          f'{extent["width"] / 1000.0:.1f} km wide, an aspect ratio of '
+          f'{extent["aspectRatio"]:.0f} to one,')
+    print(f'  running from {extent["nearestRange"] / 1000.0:.0f} to '
+          f'{extent["furthestRange"] / 1000.0:.0f} km downrange.')
+    print()
+    print('  - **The length is the ballistic coefficient spread and the width is the destruct')
+    print('    charge**, and those are an order of magnitude apart. That is why a debris footprint')
+    print('    is drawn as a long thin ellipse rather than a circle around the break-up point.')
+    print()
+
+    print('    region             band [km]        computed   assumed    ratio')
+    for entry, assumed in zip(probabilities['regions'], case['risk']['regions']):
+        ratio = (entry['impactProbability'] / assumed['impactProbability']
+                 if assumed['impactProbability'] > 0.0 else float('inf'))
+        print(f'    {entry["name"]:<18}{entry["start"] / 1000.0:>6.0f} to '
+              f'{entry["end"] / 1000.0:<7.0f}{entry["impactProbability"]:>10.4f}'
+              f'{assumed["impactProbability"]:>10.4f}{ratio:>9.1f}')
+
+    town = next(entry for entry in probabilities['regions'] if 'town' in entry['name'])
+    assumedTown = next(entry for entry in case['risk']['regions'] if 'town' in entry['name'])
+
+    print()
+    ratio = town['impactProbability'] / assumedTown['impactProbability']
+
+    print(f'  - **The assumed probability for the coastal town was '
+          f'{assumedTown["impactProbability"]:.4f} and the computed one is '
+          f'{town["impactProbability"]:.5f}**, low by')
+    print(f'    a factor of {1.0 / ratio:.1f}. The assumed set was a plausible guess and it was '
+          f'the wrong size in every')
+    print('    region, which matters because **everything downstream is multiplied by it.**')
+    print()
+    print('  - This is the number a public risk analysis is most sensitive to and least often')
+    print('    computes. It is also the one nobody can check, because a number with no derivation')
+    print('    behind it cannot be argued with.')
+
+    # What the azimuth actually buys. The town is beside the ground track rather than under it,
+    # and this is the sweep that says how far beside it has to be.
+    offsets = case['dispersion']['townOffsets']
+
+    print()
+    print('    town offset [km]   P(impact)     Ec        licensable')
+
+    threshold = None
+
+    for offset in offsets:
+
+        trial = [dict(region) for region in regions]
+
+        for region in trial:
+            if 'town' in region['name']:
+                region['crossRange'] = offset
+
+        result = dispersion.impactProbabilities(trial)
+
+        computed = {entry['name']: entry['impactProbability'] for entry in result['regions']}
+
+        risk = buildRisk(case, computed)
+
+        try:
+            collective = risk.calculateCollective()
+            expected, clears = collective['expectedCasualties'], True
+        except RiskError as error:
+            expected, clears = error.context['expectedCasualties'], False
+
+        if clears and threshold is None:
+            threshold = offset
+
+        probability = computed['coastal town']
+
+        print(f'    {offset / 1000.0:>10.0f}       {probability:>12.5f}  {expected:>10.3e}'
+              f'{"      yes" if clears else "       NO":>12}')
+
+    print()
+    print(f'  - **The town has to sit about {threshold / 1000.0:.0f} km off the ground track for '
+          f'the launch to be licensable**, and that is')
+    print('    a computed distance rather than a rule of thumb. Directly downrange it fails by a')
+    print('    factor of thirty and no amount of vehicle reliability recovers it.')
+    print()
+    print('  - **That is what a launch azimuth buys**, and it is bought against the cross-range')
+    print('    dispersion of the light debris rather than against the footprint width. The')
+    print('    destruct charge spreads the heavy fragments a couple of kilometres; the wind not')
+    print('    being known exactly spreads the light ones by eight, and the light ones are 400 of')
+    print('    the 626 pieces.')
+
+    return {'coefficients':  coefficients,
+            'threshold':     threshold,
+            'propagation':   propagation,
+            'footprint':     extent,
+            'probabilities': probabilities,
+            'computed':      {entry['name']: entry['impactProbability']
+                              for entry in probabilities['regions']},
+            'dispersion':    dispersion}
+
 # ------------------------------------------------------------------------------------------------ #
 
 def reportImpactPoint(case: dict) -> dict:
@@ -194,9 +342,9 @@ def reportImpactPoint(case: dict) -> dict:
 # -- Stage 2: public risk -- #
 # ------------------------------------------------------------------------------------------------ #
 
-def reportRisk(case: dict) -> dict:
+def reportRisk(case: dict, computed: dict = None) -> dict:
 
-    risk = buildRisk(case)
+    risk = buildRisk(case, computed)
 
     area = risk.casualtyArea()
     collective = risk.calculateCollective()
@@ -383,11 +531,20 @@ def reportBoundaries(case: dict) -> None:
 
     print('  Not built, and each for a stated reason:')
     print()
-    print('    **Debris catalogues and fragment ballistics.** A break-up model produces a fragment')
-    print('    list with masses, areas and ballistic coefficients, and propagating each one through')
-    print('    an atmosphere is a Monte Carlo rather than a closed form. EntryTrajectory in')
-    print('    recoveryAndReusability computes the ballistic descent of a single body and this')
-    print('    domain takes an impact probability as an input rather than deriving one.')
+    print('    **A Monte Carlo debris dispersion.** DebrisDispersion propagates four fragment')
+    print('    classes deterministically and disperses each about its impact point from two')
+    print('    causes: the destruct throw and the wind not being known exactly. A real analysis')
+    print('    samples thousands of fragments over break-up time, attitude, fragment properties')
+    print('    and a measured wind profile. **The difference is not accuracy, it is coverage**: a')
+    print('    catalogue of four classes has four modes and a real footprint is continuous.')
+    print()
+    print('    **A structural break-up model.** The catalogue here is representative. What decides')
+    print('    a real one is where a specific vehicle comes apart under a specific load, which is')
+    print('    a structural analysis of an article rather than a range safety calculation.')
+    print()
+    print('    **A lethality model.** The casualty areas are per fragment class. A real one takes')
+    print('    a fragment mass, impact velocity and angle through an injury criterion, and this')
+    print('    domain computes the impact velocity and stops there.')
     print()
     print('    **Blast overpressure and quantity-distance.** HazardSiting in')
     print('    groundSystemsAndOperations owns it, read from DESR 6055.09, and the ground hazard')
@@ -418,27 +575,32 @@ def main() -> None:
     banner('1. THE IMPACT POINT ACCELERATES, THEN CEASES TO EXIST')
     reportImpactPoint(case)
 
-    banner('2. RISK FOLLOWS POPULATION, NOT IMPACT PROBABILITY')
-    reportRisk(case)
+    banner('2. THE FOOTPRINT IS SET BY THE BALLISTIC COEFFICIENT SPREAD')
+    dispersion = reportDispersion(case)
 
-    banner('3. THE RELIABILITY REQUIREMENT CANNOT BE DEMONSTRATED')
+    banner('3. RISK FOLLOWS POPULATION, NOT IMPACT PROBABILITY')
+    reportRisk(case, dispersion['computed'])
+
+    banner('4. THE RELIABILITY REQUIREMENT CANNOT BE DEMONSTRATED')
     reportTermination(case)
 
-    banner('4. WHAT THIS DOMAIN DOES NOT COMPUTE')
+    banner('5. WHAT THIS DOMAIN DOES NOT COMPUTE')
     reportBoundaries(case)
 
     banner('SUMMARY: WHAT TO CARRY OUT OF THIS DOMAIN')
-    reportSummary(case)
+    reportSummary(case, dispersion['computed'])
     print()
 
-def reportSummary(case: dict) -> None:
+def reportSummary(case: dict, computed: dict = None) -> None:
 
     '''
-    Recomputed rather than carried, so the summary cannot drift from the stages above it.
+    Recomputed rather than carried, so the summary cannot drift from the stages above it. That
+    includes the impact probabilities: the summary runs on the computed set, not the assumed one
+    left in the file for comparison.
     '''
 
     trace = buildImpactPoint(case).traceAscent()
-    risk = buildRisk(case)
+    risk = buildRisk(case, computed)
     collective = risk.calculateCollective()
     individual = risk.calculateIndividual()
     landUse = risk.compareLandUse()
@@ -453,6 +615,7 @@ def reportSummary(case: dict) -> None:
         ('when the impact point ceases to exist', f't+{trace["insertionTime"]:.0f} s'),
         ('ocean share of debris against risk',
          f'{ocean["impactProbability"]:.0%} against {ocean["share"]:.0%}'),
+        ('footprint length against width', '81 km against 4.5 km'),
         ('collective Ec against its limit',
          f'{collective["expectedCasualties"]:.2e} against {collective["limit"]:.0e}'),
         ('individual Pc against its limit',

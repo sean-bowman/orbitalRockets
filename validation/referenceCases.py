@@ -695,9 +695,11 @@ UNVALIDATED = {
                        'not: that risk follows population rather than impact probability follows '
                        'from the product form, and that a casualty area is far larger than a '
                        'fragment footprint is a definition rather than a value.',
-        'nextStep': 'A gridded population product, which is public, and a debris catalogue with a '
-                    'lethality model, which is programme specific. The first is free and would '
-                    'replace the land use classes entirely.'},
+        'nextStep': 'A gridded population product, which is public, and a lethality model, which '
+                    'is not. DebrisDispersion now computes the impact velocity of every fragment '
+                    'class, which is one of the three inputs a lethality model needs; the other '
+                    'two are the impact angle and an injury criterion. The population half is the '
+                    'tractable one and would replace the land use classes entirely.'},
 
     'impactProbabilities': {
         'domain': 'rangeSafetyAndFTS',
@@ -713,10 +715,17 @@ UNVALIDATED = {
                        'and reports the value at which the criterion stops being met. **The risk '
                        'analysis inherits the reliability estimate whole**, and that is the '
                        'weakest number in it.',
-        'nextStep': 'A break-up model and a debris propagation, which is the largest single piece '
-                    'of unbuilt work implied by this repository. EntryTrajectory in '
-                    'recoveryAndReusability computes the descent of one body and the missing part '
-                    'is the catalogue and the dispersion.'},
+        'nextStep': 'Largely closed, and by a different route than this entry expected. '
+                    'DebrisDispersion propagates a fragment catalogue from the break-up state to '
+                    'the ground through an exponential atmosphere with a wind, disperses each '
+                    'class about its impact point, and reports the impact probability per region. '
+                    'The impact probabilities in the worked example are computed rather than '
+                    'assumed, and every assumed value turned out to be the wrong size. What '
+                    'remains unvalidated is the CATALOGUE rather than the propagation: the '
+                    'fragment counts, masses and drag areas are representative of a small two '
+                    'stage vehicle and a real one comes from a structural break-up analysis of a '
+                    'specific article. The vehicle failure probability is a separate matter and '
+                    'is still the weakest number in the analysis.'},
 
     'betaFactors': {
         'domain': 'reliabilityAndMissionAssurance',

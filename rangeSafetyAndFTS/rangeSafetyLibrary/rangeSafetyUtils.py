@@ -176,6 +176,104 @@ POPULATION_DENSITY = {
     'denseUrban':     20000.0,
 }
 
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Break-up and debris dispersion -- #
+# ------------------------------------------------------------------------------------------------ #
+
+# Exponential atmosphere, matching the one recoveryAndReusability propagates an entry through. Two
+# domains falling bodies through two different atmospheres would be a drift waiting to happen, and
+# a test asserts these agree with the recovery library's constants.
+SEA_LEVEL_DENSITY = 1.225                # [kg/m3]
+ATMOSPHERIC_SCALE_HEIGHT = 7200.0        # [m]
+
+GRAVITY = 9.80665                        # [m/s2]
+
+# The debris catalogue produced by a commanded destruct.
+#
+# **The ballistic coefficient is the whole model.** m / (Cd A) decides how far downrange a fragment
+# lands, how long it takes to get there, and therefore how far the wind carries it, and the four
+# classes below span it by a factor of 660. That spread is what makes a debris footprint an
+# ellipse tens of kilometres long rather than a point, and it is the reason a catalogue cannot be
+# collapsed to an average fragment.
+#
+# The counts, masses and drag areas are REPRESENTATIVE of a small two stage vehicle and are
+# registered as unvalidated. A real catalogue comes from a structural break-up analysis of a
+# specific vehicle and is programme property. What is not representative is the ordering and the
+# span, which follow from what the fragments are: a pressure vessel dome is dense and compact, an
+# insulation panel is neither.
+DEBRIS_CATALOGUE = {
+    'insulation':  {'count': 400, 'mass':    0.4, 'dragArea': 0.30,
+                    'casualtyClass': 'small',
+                    'note': 'foam, cork and shroud panel. Stops in the upper air and then drifts'},
+    'skin':        {'count': 180, 'mass':    6.0, 'dragArea': 0.55,
+                    'casualtyClass': 'medium',
+                    'note': 'tank wall and fairing sections, tumbling'},
+    'structure':   {'count':  40, 'mass':  120.0, 'dragArea': 0.90,
+                    'casualtyClass': 'large',
+                    'note': 'thrust structure, interstage frames, ring segments'},
+    'machinery':   {'count':   6, 'mass': 1400.0, 'dragArea': 1.60,
+                    'casualtyClass': 'intact',
+                    'note': 'engine and turbomachinery, the densest thing on the vehicle'},
+}
+
+# Velocity a destruct charge imparts to a fragment, spread roughly isotropically. A linear shaped
+# charge opens a tank rather than shattering it, so this is small next to the vehicle velocity and
+# it is not small next to the difference between fragment classes.
+#
+# Representative, and registered. What it controls is the WIDTH of the footprint; the length comes
+# from the ballistic coefficient spread and is an order of magnitude larger.
+DESTRUCT_IMPARTED_VELOCITY = 30.0        # [m/s]
+
+def ballisticCoefficient(mass: float, dragArea: float) -> float:
+
+    '''
+
+    Ballistic coefficient m / (Cd A), in kg/m2.
+
+    Drag area is Cd times the reference area, taken together because neither is separately knowable
+    for a tumbling fragment. A tumbling plate has no single reference area and its drag coefficient
+    is an average over attitude, so splitting the product implies a precision that is not there.
+
+    '''
+
+    if mass <= 0.0 or dragArea <= 0.0:
+        raise InvalidInputError(
+            f'A fragment with a mass of {mass} kg and a drag area of {dragArea} m2 has no '
+            f'ballistic coefficient. Both have to be positive.',
+            context = createErrorContext(component = 'rangeSafetyUtils'))
+
+    return mass / dragArea
+
+def terminalVelocity(ballistic: float, density: float = SEA_LEVEL_DENSITY) -> float:
+
+    '''
+
+    Terminal velocity of a fragment at a given air density, in m/s.
+
+    From drag equal to weight: `rho v^2 / 2 * Cd A = m g`, so `v = sqrt( 2 g beta / rho )`. Exact,
+    and the check that the propagation below has not gone wrong: a fragment released high enough
+    arrives at the ground at this speed and no other.
+
+    '''
+
+    if ballistic <= 0.0 or density <= 0.0:
+        raise InvalidInputError(
+            f'A terminal velocity needs a positive ballistic coefficient and density, got '
+            f'{ballistic} and {density}.',
+            context = createErrorContext(component = 'rangeSafetyUtils'))
+
+    return float(np.sqrt(2.0 * GRAVITY * ballistic / density))
+
+def atmosphericDensity(altitude: float) -> float:
+
+    '''
+    Exponential atmosphere density in kg/m3. Clamped at the ground rather than extrapolated below
+    it, because a fragment that has landed has stopped rather than entered a denser atmosphere.
+    '''
+
+    return float(SEA_LEVEL_DENSITY * np.exp(-max(altitude, 0.0) / ATMOSPHERIC_SCALE_HEIGHT))
+
 def freeFlightRangeAngle(radius: float, speed: float, flightPathAngle: float,
                          impactRadius: float = None) -> dict:
 

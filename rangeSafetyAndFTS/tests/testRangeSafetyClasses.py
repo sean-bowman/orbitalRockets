@@ -29,6 +29,8 @@ from rangeSafetyUtils import (LAUNCH_SAFETY_CRITERIA, CASUALTY_AREA, POPULATION_
                               FLIGHT_SAFETY_RELIABILITY, FLIGHT_SAFETY_CONFIDENCE,
                               EARTH_RADIUS, EARTH_MU, EARTH_ROTATION_RATE,
                               freeFlightRangeAngle, zeroFailureTestCount,
+                              SEA_LEVEL_DENSITY, ATMOSPHERIC_SCALE_HEIGHT, GRAVITY,
+                              DEBRIS_CATALOGUE, ballisticCoefficient, terminalVelocity,
                               InvalidInputError, ImpactPointError, RiskError, TerminationError)
 
 from validation.referenceCases import RANGE_SAFETY_CRITERIA, UNVALIDATED
@@ -36,6 +38,8 @@ from validation.referenceCases import RANGE_SAFETY_CRITERIA, UNVALIDATED
 from ImpactPoint import ImpactPoint
 from PublicRisk import PublicRisk
 from TerminationReliability import TerminationReliability
+from DebrisDispersion import DebrisDispersion
+import DebrisDispersion as DebrisDispersion_module
 
 # ------------------------------------------------------------------------------------------------ #
 # -- Fixtures -- #
@@ -464,3 +468,309 @@ def testTheDomainRegistersWhatItCannotValidate():
     for name in registered:
         entry = UNVALIDATED[name]
         assert entry['reason'] and entry['consequence'] and entry['nextStep']
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- Debris dispersion -- #
+# ------------------------------------------------------------------------------------------------ #
+
+@pytest.fixture(scope = 'module')
+def dispersion():
+
+    component = DebrisDispersion()
+    component.setInputs({'breakupAltitude':        28000.0,
+                         'breakupSpeed':           1000.0,
+                         'breakupFlightPathAngle': 45.0,
+                         'breakupDownrange':       30000.0,
+                         'windSpeed':              15.0})
+    return component
+
+def testTerminalVelocityIsTheClosedForm():
+
+    '''
+    `v = sqrt( 2 g beta / rho )` from drag equal to weight. Exact, and the check that the whole
+    propagation has not gone wrong: a fragment released high enough arrives at this speed and no
+    other.
+    '''
+
+    for ballistic in (1.0, 10.0, 100.0, 1000.0):
+        assert terminalVelocity(ballistic, SEA_LEVEL_DENSITY) == pytest.approx(
+            np.sqrt(2.0 * GRAVITY * ballistic / SEA_LEVEL_DENSITY), rel = 1.0e-12)
+
+def testAFragmentDroppedFromRestArrivesAtTerminalVelocity():
+
+    '''
+    The end to end check on the integration. Dropped from high enough with no initial velocity, a
+    fragment has to arrive at the terminal velocity for the density it arrives in, and nothing
+    about the integrator is asserted anywhere else.
+    '''
+
+    component = DebrisDispersion()
+    component.setInputs({'breakupAltitude':        30000.0,
+                         'breakupSpeed':           0.0,
+                         'breakupFlightPathAngle': -90.0,
+                         'catalogue': {'panel': {'count': 1, 'mass': 6.0, 'dragArea': 0.55,
+                                                 'casualtyClass': 'medium'}}})
+
+    fragment = component.propagate()['fragments'][0]
+
+    assert fragment['impactSpeed'] == pytest.approx(fragment['terminal'], rel = 0.01), \
+        f'{fragment["impactSpeed"]:.2f} m/s against a terminal velocity of ' \
+        f'{fragment["terminal"]:.2f} m/s'
+
+def testTheStepSizeHasConverged():
+
+    '''
+    An adaptive step is a claim about accuracy, so it gets checked. Halving both step criteria has
+    to move the impacts by far less than anything the model is used for.
+    '''
+
+    def impacts(velocityFraction, heightFraction):
+
+        original = (DebrisDispersion_module.STEP_VELOCITY_FRACTION,
+                    DebrisDispersion_module.STEP_SCALE_HEIGHT_FRACTION)
+
+        DebrisDispersion_module.STEP_VELOCITY_FRACTION = velocityFraction
+        DebrisDispersion_module.STEP_SCALE_HEIGHT_FRACTION = heightFraction
+
+        try:
+            component = DebrisDispersion()
+            component.setInputs({'breakupAltitude':        28000.0,
+                                 'breakupSpeed':           1000.0,
+                                 'breakupFlightPathAngle': 45.0,
+                                 'windSpeed':              15.0})
+            return {item['class']: item['impactRange']
+                    for item in component.propagate()['fragments']}
+        finally:
+            (DebrisDispersion_module.STEP_VELOCITY_FRACTION,
+             DebrisDispersion_module.STEP_SCALE_HEIGHT_FRACTION) = original
+
+    coarse = impacts(0.01, 0.01)
+    fine   = impacts(0.005, 0.005)
+
+    for name in coarse:
+        assert abs(coarse[name] - fine[name]) < 100.0, \
+            f'{name} moves {abs(coarse[name] - fine[name]):.0f} m when the step is halved'
+
+def testTheHeaviestFragmentLandsFurthestInStillAir():
+
+    '''
+    With no wind nothing but the fragment decides where it lands, so the impacts have to fall in
+    ballistic coefficient order. A dense fragment keeps its downrange velocity and a light one
+    loses it in the first few kilometres of fall.
+    '''
+
+    component = DebrisDispersion()
+    component.setInputs({'breakupAltitude':        28000.0,
+                         'breakupSpeed':           1000.0,
+                         'breakupFlightPathAngle': 45.0,
+                         'windSpeed':              0.0})
+
+    propagation = component.propagate()
+
+    assert propagation['orderingHolds']
+
+    ranges = [item['impactRange'] for item in propagation['fragments']]
+
+    assert ranges == sorted(ranges), 'fragments are returned in ballistic coefficient order'
+
+def testWindBreaksTheBallisticOrdering(dispersion):
+
+    '''
+    The result worth having, and it is not obvious. In still air the lightest fragment lands
+    nearest. With a wind on it, the lightest fragment falls slowly enough to be carried past a
+    heavier one, so **the order of the pieces on the ground changes with the weather** and a
+    footprint is not a property of the vehicle alone.
+    '''
+
+    propagation = dispersion.propagate()
+
+    assert not propagation['orderingHolds']
+
+    byClass = {item['class']: item for item in propagation['fragments']}
+
+    assert byClass['insulation']['ballistic'] < byClass['skin']['ballistic']
+    assert byClass['insulation']['impactRange'] > byClass['skin']['impactRange']
+
+def testWindDriftFallsWithBallisticCoefficient(dispersion):
+
+    '''
+    Drift is the wind speed times the fall time, and the fall time falls as the fragment gets
+    denser. The ordering is structural and holds for any wind.
+    '''
+
+    fragments = dispersion.propagate()['fragments']
+
+    drifts = [abs(item['windDrift']) for item in fragments]
+
+    assert drifts == sorted(drifts, reverse = True), \
+        'drift has to fall monotonically as ballistic coefficient rises'
+
+    assert max(drifts) / max(min(drifts), 1.0) > 10.0, \
+        'the two ends of the catalogue should differ by an order of magnitude in drift'
+
+def testTheScatterCauseFlipsAcrossTheCatalogue(dispersion):
+
+    '''
+    Two independent causes of scatter, dominant at opposite ends. A fragment that falls slowly
+    loses the destruct throw in seconds and then spends the descent in a wind nobody measured; a
+    fragment that falls fast keeps its throw and outruns the wind.
+
+    Neither could be found from an average fragment, which is the argument for a catalogue.
+    '''
+
+    fragments = dispersion.propagate()['fragments']
+
+    causes = {item['class']: item['spreadCause'] for item in fragments}
+
+    assert causes['insulation'] == 'wind'
+    assert causes['machinery'] == 'destruct'
+
+    lightest = min(fragments, key = lambda item: item['ballistic'])
+    heaviest = max(fragments, key = lambda item: item['ballistic'])
+
+    assert lightest['throwSpread'] < heaviest['throwSpread'], \
+        'a light fragment cannot hold on to a throw'
+
+def testTheImpartedVelocityWidensTheFootprintThroughTheHeavyEnd(dispersion):
+
+    '''
+    The intuitive expectation is that a destruct charge scatters the light debris furthest. It does
+    the opposite: the fragments a charge can throw hardest are exactly the ones that decelerate
+    fastest, so the width of the footprint belongs to the dense fragments.
+    '''
+
+    fragments = dispersion.propagate()['fragments']
+
+    crossRanges = [item['crossRange'] for item in fragments]
+
+    assert crossRanges == sorted(crossRanges), \
+        'cross-range displacement has to rise with ballistic coefficient'
+
+def testTheFootprintIsLongAndNarrow(dispersion):
+
+    '''
+    A debris footprint is an ellipse tens of kilometres long and a few wide, and the aspect ratio
+    is the result rather than the dimensions: the length comes from the ballistic coefficient
+    spread and the width from a destruct charge, which are different in size by an order of
+    magnitude.
+    '''
+
+    extent = dispersion.footprint()
+
+    assert extent['length'] > 10.0 * extent['width']
+    assert extent['aspectRatio'] > 10.0
+
+def testImpactProbabilitiesSumToOne(dispersion):
+
+    '''
+    Every fragment lands somewhere. A set of bands covering the footprint has to account for the
+    whole catalogue, and the dispersion tails are what stop it being exact.
+    '''
+
+    regions = [{'name': 'near',   'start': 0.0,       'end': 40000.0},
+               {'name': 'middle', 'start': 40000.0,   'end': 50000.0},
+               {'name': 'far',    'start': 50000.0,   'end': 400000.0}]
+
+    result = dispersion.impactProbabilities(regions)
+
+    total = sum(entry['impactProbability'] for entry in result['regions'])
+
+    assert total == pytest.approx(1.0, abs = 0.002)
+
+def testRegionsThatMissTheFootprintAreRefused(dispersion):
+
+    '''
+    The categorical refusal. A risk analysis that does not cover where the debris lands is
+    incomplete rather than conservative, and returning a probability total of 0.3 would let the
+    shortfall pass as rounding in a calculation everything else is multiplied into.
+    '''
+
+    with pytest.raises(RiskError):
+        dispersion.impactProbabilities([{'name': 'launch area',
+                                         'start': 0.0, 'end': 20000.0}])
+
+def testAnEmptyRegionListIsRefused(dispersion):
+
+    with pytest.raises(RiskError):
+        dispersion.impactProbabilities([])
+
+def testAReversedRegionIsRefused(dispersion):
+
+    with pytest.raises(InvalidInputError):
+        dispersion.impactProbabilities([{'name': 'backwards',
+                                         'start': 50000.0, 'end': 10000.0}])
+
+def testACatalogueEntryWithoutAMassIsRefused():
+
+    '''
+    The ballistic coefficient is the whole model, so an entry that cannot produce one is not a
+    catalogue entry.
+    '''
+
+    component = DebrisDispersion()
+
+    with pytest.raises(InvalidInputError):
+        component.setInputs({'breakupAltitude':        28000.0,
+                             'breakupSpeed':           1000.0,
+                             'breakupFlightPathAngle': 45.0,
+                             'catalogue': {'mystery': {'count': 10, 'dragArea': 0.5}}})
+
+def testABreakupOnTheGroundIsRefused():
+
+    component = DebrisDispersion()
+
+    with pytest.raises(InvalidInputError):
+        component.setInputs({'breakupAltitude':        0.0,
+                             'breakupSpeed':           1000.0,
+                             'breakupFlightPathAngle': 45.0})
+
+def testWindMovesTheNearEndAndLeavesTheFarEnd(dispersion):
+
+    '''
+    A wind limit on launch day is usually justified by loads on the vehicle. This says what it does
+    to the debris footprint, which is a separate effect and acts almost entirely on one end.
+    '''
+
+    sweep = dispersion.windSensitivity([0.0, 10.0, 20.0, 30.0])
+
+    nearMoved = (max(entry['nearestRange'] for entry in sweep['results'])
+                 - min(entry['nearestRange'] for entry in sweep['results']))
+
+    farMoved = (max(entry['furthestRange'] for entry in sweep['results'])
+                - min(entry['furthestRange'] for entry in sweep['results']))
+
+    assert nearMoved > 5.0 * farMoved, \
+        f'the near end moved {nearMoved / 1000.0:.1f} km and the far end ' \
+        f'{farMoved / 1000.0:.1f} km'
+
+def testTheDispersionAtmosphereMatchesTheRecoveryDomain():
+
+    '''
+    Two domains falling bodies through two different atmospheres is a drift waiting to happen.
+    recoveryAndReusability propagates an entry through an exponential atmosphere and this domain
+    propagates debris through one, so they are asserted equal rather than assumed.
+    '''
+
+    sys.path.insert(0, os.path.join(ROOT, 'recoveryAndReusability',
+                                    'recoveryAndReusabilityLibrary'))
+
+    from recoveryUtils import (SEA_LEVEL_DENSITY as recoveryDensity,
+                               ATMOSPHERIC_SCALE_HEIGHT as recoveryScaleHeight)
+
+    assert SEA_LEVEL_DENSITY == recoveryDensity
+    assert ATMOSPHERIC_SCALE_HEIGHT == recoveryScaleHeight
+
+def testTheDebrisCatalogueSpansThreeOrdersOfMagnitude(dispersion):
+
+    '''
+    The span is what makes a footprint rather than a point, so it is a property of the catalogue
+    worth asserting. A catalogue that collapsed to one ballistic coefficient would put every
+    fragment in one place and produce a risk analysis that is wrong in an obvious way.
+    '''
+
+    coefficients = dispersion.ballisticCoefficients()
+
+    assert coefficients['ballisticSpan'] > 100.0
+    assert coefficients['lightest'] == 'insulation'
+    assert coefficients['heaviest'] == 'machinery'
