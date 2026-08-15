@@ -21,7 +21,7 @@
 
 ## Overview
 
-Everything between a break-up and an impact probability. This is the largest single piece of unbuilt work implied by this repository, and this document says what it would take.
+Everything between a break-up and an impact probability, which is what [`DebrisDispersion`](../rangeSafetyLibrary/DebrisDispersion.py) computes and this document explains.
 
 ---
 

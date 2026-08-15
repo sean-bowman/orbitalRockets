@@ -146,7 +146,7 @@ orders and sums rather than from values. All three are listed as outstanding rat
 
 **Nothing. Every domain in the repository is built.**
 
-The remaining work is the validation retrofit below, and the debris catalogue and break-up model named in [rangeSafetyAndFTS](rangeSafetyAndFTS/docs/DebrisAndBlast.md), which is the largest single piece of unbuilt work the repository implies.
+The remaining work is the validation retrofit below. The debris catalogue and break-up model that used to sit at the top of this list is [built](rangeSafetyAndFTS/docs/DebrisAndBlast.md), and what is left of it is a fragment catalogue for a specific article rather than a model.
 
 ### A naming rule the scaffold does not follow
 
@@ -184,6 +184,10 @@ Every unbuilt domain still ships a library helper called `utils.py`, which viola
 Six domains were completed before stage 5 existed. Each needs at least one comparison against
 published hardware, in this order, chosen by how much downstream work depends on the domain being
 right.
+
+**Five of the six are now done and one remains.** The `What still limits it` column is the useful
+half of this table: a domain that reaches a level still has a boundary, and stating where it runs
+out is what stops a validated domain being read as a validated result.
 
 | Domain | Done | Level reached | What still limits it |
 |---|---|---|---|

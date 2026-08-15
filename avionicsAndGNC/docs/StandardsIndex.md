@@ -93,7 +93,9 @@ The whole list, since it is the whole index.
 | NASA-HDBK-1002 | The radiation environment |
 | MIL-STD-461 / 464 | Emissions and susceptibility, indexed in electricalPower |
 
-**And one that is not a standard**: an IMU datasheet. Every manufacturer publishes bias, random walk and scale factor for every grade, and that single document would move [SensorsAndNavigation](SensorsAndNavigation.md) from representative to anchored. It is the most tractable gap here by a wide margin, and it is the same shape of gap as the battery cell datasheet in [electricalPower](../../electricalPower/docs/ValidationReferences.md).
+**And one that is not a standard**: an IMU datasheet. Every manufacturer publishes bias, random walk and scale factor for every grade, and that single document would move [SensorsAndNavigation](SensorsAndNavigation.md) from representative to anchored.
+
+**It was called the most tractable gap here until somebody tried to close it.** The Analog Devices ADIS16507 datasheet was attempted through the manufacturer, two distributors and two mirrors, and every route returned a block page or timed out. Secondary summaries quoting a bias stability and a random walk were found and are deliberately not recorded: this repository has been wrong three times by trusting a summary of a document it had not read. **The same shape of gap in [electricalPower](../../electricalPower/docs/ValidationReferences.md) closed on the first attempt**, which is the difference between a manufacturer that serves a PDF and one that does not.
 
 ---
 

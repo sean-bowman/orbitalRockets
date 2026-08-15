@@ -114,7 +114,7 @@ Reading it settled three things a summary would not have.
 
 **The anchor is exact and it establishes nothing about the analysis feeding it.** The criteria are numbers a launch is licensed against rather than a model of anything, so reproducing them is exact by construction. The debris and population inputs are representative and registered as unvalidated, which means **the arithmetic is right and the answer is illustrative.** That is stated in [ValidationReferences](docs/ValidationReferences.md) rather than implied.
 
-**RCC 319 and AFSPCMAN 91-710 were not read**, and a debris catalogue and break-up model is the largest single piece of unbuilt work implied by this repository.
+**RCC 319 and AFSPCMAN 91-710 were not read.** The debris propagation is built and the fragment catalogue it runs on is representative, which is the half that comes from a structural break-up analysis of a specific article.
 
 ---
 

@@ -84,7 +84,7 @@ Indexed and not read, and they are where the implementation detail lives.
 
 **RCC 319 is the largest of these for this domain**, because the FTS material here is practice-based and that document is the requirement. **AC 450.123-1 is the most tractable**, because it is the method behind the population data that drives the whole risk analysis, and it is public.
 
-**And one that is not a document**: a debris catalogue and break-up model. That is the largest single piece of unbuilt work implied by this repository, and it is what would turn the impact probabilities from representative into derived. See [DebrisAndBlast](DebrisAndBlast.md).
+**And one that is not a document**: a fragment catalogue for a real article. The propagation from a break-up state to an impact probability is [built](DebrisAndBlast.md) and the catalogue it runs on is representative, which is the half that comes from a structural break-up analysis of a specific vehicle and is programme property.
 
 ---
 

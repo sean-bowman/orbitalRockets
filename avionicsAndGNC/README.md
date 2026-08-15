@@ -105,7 +105,7 @@ python avionicsAndGNC/codeInterface.py
 
 It is also the domain whose conclusions depend least on its numbers, and the two facts are related. The gyro term overtaking the accelerometer term follows from an integration order. The governing disturbance changing follows from one term being present in one phase and absent in the other. The telemetry concentration follows from the spread of sample rates. **None of the three is validated and none of the three is at risk**, which is a different claim from the numbers being right.
 
-**An IMU datasheet is the most tractable gap by a wide margin**, and every manufacturer publishes one. See [ValidationReferences](docs/ValidationReferences.md), which states this at the top rather than the bottom.
+**An IMU datasheet remains the closest thing to a tractable gap**, and every manufacturer publishes one without serving it to a script. The attempt and its failure are recorded in [ValidationReferences](docs/ValidationReferences.md) rather than left as an intention.
 
 ---
 
