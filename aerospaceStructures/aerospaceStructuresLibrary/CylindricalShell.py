@@ -26,9 +26,17 @@ Three things make the picture less bleak than that:
     stiffening          moves the failure mode away from the imperfection-sensitive one
     knowing the shape   a measured imperfection field supports a far less punitive factor
 
-The first is why a pressure-stabilized tank is efficient, and it is modelled here. The second is
-StiffenedPanel's subject. The third is modern practice at the large end, needs a measured shell,
-and is out of scope for preliminary sizing.
+The first is why a pressure-stabilized tank is efficient, and it is modelled here with a saturating
+curve that is NOT the one SP-8007 gives. The document's Figure 4-5 is a figure, and reading values
+off it would be worse provenance than saying so. The second is StiffenedPanel's subject. The third
+is modern practice at the large end, needs a measured shell, and is out of scope for preliminary
+sizing.
+
+**The correlation has two stated bounds and both are enforced or reported here.** It applies below
+r/t = 1500, which is a refusal, and it has not been verified by experiment above L/r = 5, which is
+reported alongside the factor. A long shell also has to be checked as a column, because the
+classical prediction the knockdown multiplies cannot see column buckling and becomes unconservative
+in exactly that regime.
 
 Bending is less imperfection sensitive than uniform compression, because only part of the
 circumference is highly loaded and the peak stress region is short. Torsion and external pressure
@@ -72,15 +80,42 @@ except ImportError:
 # Below this R/t the shell is thick enough that thin-shell theory misleads and the failure mode
 # drifts toward crushing. Above it, and up to a few thousand, the correlations here apply.
 THIN_SHELL_MINIMUM_RATIO = 20.0     # [-]
-THIN_SHELL_MAXIMUM_RATIO = 3000.0   # [-]
+
+# SP-8007 Rev 2 states the axial knockdown parameter as phi = (1/16) sqrt(r/t) FOR r/t < 1500. That
+# bound is part of the correlation and not a convention, so a shell above it gets a refusal rather
+# than an extrapolated factor.
+THIN_SHELL_MAXIMUM_RATIO = 1500.0   # [-], SP-8007 Rev 2 Eq. 10
+
+# The same section cautions that the axial knockdown "should be used with caution for cylinders
+# with ratios of L/r > 5 since correlation has not been verified by experiment in this range", and
+# separately that the Donnell prediction becomes UNCONSERVATIVE at large L/r because it cannot see
+# the interaction between shell buckling and column buckling.
+#
+# Reported rather than refused, because the length is optional for an axial check and a caution is
+# not a prohibition. A shell past it should be checked as a column as well, which BeamColumn does.
+LENGTH_TO_RADIUS_CORRELATED = 5.0   # [-], SP-8007 Rev 2 section 4.1.1.1
 
 # Bending is less imperfection sensitive than uniform axial compression. NASA SP-8007 allows the
 # axial knockdown to be relaxed by this factor for pure bending, capped at 1.0.
 BENDING_KNOCKDOWN_RELIEF = 1.30     # [-]
 
-# Torsion and external pressure buckle in well separated modes, so theory is close to test.
-TORSION_KNOCKDOWN         = 0.80    # [-], SP-8007
-EXTERNAL_PRESSURE_KNOCKDOWN = 0.90  # [-], SP-8007, for the general instability mode
+# Torsion. SP-8007 Rev 2 Eq. 34 carries the correlation as gamma^(3/4) inside the critical shear
+# stress expression rather than as gamma, and Eq. 35 recommends 0.67 for that group as a lower
+# bound to the test data for moderately long cylinders. It is applied here to the same classical
+# expression the document writes, so it multiplies the stress directly.
+TORSION_CORRELATION = 0.67          # [-], this is gamma^(3/4), SP-8007 Rev 2 Eq. 35
+
+# External pressure, and the two branches carry different factors because they buckle differently.
+#
+# A long cylinder collapses into a two-lobe oval, theory and test are close, and Rev 2 Eq. 29
+# recommends 0.90. A shorter one buckles into more circumferential waves, where the test scatter is
+# far wider and the end restraint of the specimen was often not accounted for, and Rev 2 Eq. 28
+# recommends sqrt(gamma) = 0.75, so gamma = 0.5625.
+#
+# **These differ by a factor of 1.6 and the short branch is the punishing one.** Applying the long
+# cylinder factor to a short shell is unconservative by exactly that much.
+EXTERNAL_PRESSURE_KNOCKDOWN_LONG  = 0.90    # [-], SP-8007 Rev 2 Eq. 29, oval mode
+EXTERNAL_PRESSURE_KNOCKDOWN_SHORT = 0.5625  # [-], SP-8007 Rev 2 Eq. 28
 
 # The interaction exponents for combined loading, per SP-8007. Axial and bending add linearly
 # because they are the same stress; pressure and torsion enter quadratically.
@@ -89,6 +124,14 @@ COMBINED_SHEAR_EXPONENT   = 2.0     # [-]
 
 # Internal pressure stabilization saturates: past this non-dimensional pressure the shell has
 # recovered essentially all of the knockdown and more pressure buys nothing further.
+#
+# **This saturating model is NOT SP-8007's.** The document gives the pressurized capability as
+# P = 2 pi E t^2 (0.605 gamma + d_gamma) + p pi r^2, with d_gamma read from its Figure 4-5 against
+# the same non-dimensional pressure used here. The PARAMETER is the document's; the curve is a
+# saturating interpolation with the right shape and no published points behind it, because Figure
+# 4-5 is a figure and reading values off it would be a worse provenance than saying so. Registered
+# as unvalidated, and the document's own warning applies: applying a recovery of this kind on top
+# of a knockdown can produce an unconservative design.
 PRESSURE_STABILIZATION_CAP = 1.0    # [-], on the parameter p (R/t)^2 / E
 
 # ------------------------------------------------------------------------------------------------ #
@@ -272,12 +315,24 @@ class CylindricalShell:
 
         self.knockdown = knockdown
 
+        # Where this shell sits against the range the correlation was verified over. A long shell
+        # is not refused, because the caution is about the experimental basis rather than about the
+        # arithmetic, and because the Donnell prediction it multiplies has its own separate problem
+        # at large L/r: it cannot see column buckling.
+        lengthToRadius = (self.length / self.radius if np.isfinite(self.length)
+                          else np.nan)
+
+        beyondCorrelated = bool(np.isfinite(lengthToRadius)
+                                and lengthToRadius > LENGTH_TO_RADIUS_CORRELATED)
+
         return {'radiusToThickness':  self.radiusToThickness,
                 'sp8007Knockdown':    base,
                 'pressureParameter':  pressureParameter,
                 'pressureRecovery':   recovery,
                 'knockdown':          knockdown,
                 'penaltyFactor':      1.0 / knockdown,
+                'lengthToRadius':     lengthToRadius,
+                'beyondCorrelatedLength': beyondCorrelated,
                 'overridden':         bool(np.isfinite(self.knockdownOverride))}
 
     # -------------------------------------------------------------------------------------------- #
@@ -407,14 +462,21 @@ class CylindricalShell:
 
         classical = longShellPressure if isLongShell else max(shortShellPressure,
                                                               longShellPressure)
-        allowable = EXTERNAL_PRESSURE_KNOCKDOWN * classical
+
+        # The branch decides the factor as well as the classical pressure. A short shell buckles
+        # into more circumferential waves and its test scatter is far wider, which is the 1.6 the
+        # two factors differ by.
+        knockdown = (EXTERNAL_PRESSURE_KNOCKDOWN_LONG if isLongShell
+                     else EXTERNAL_PRESSURE_KNOCKDOWN_SHORT)
+
+        allowable = knockdown * classical
 
         return {'longShellPressure':  longShellPressure,
                 'shortShellPressure': shortShellPressure,
                 'transitionLength':   transitionLength,
                 'isLongShell':        bool(isLongShell),
                 'classicalPressure':  classical,
-                'knockdown':          EXTERNAL_PRESSURE_KNOCKDOWN,
+                'knockdown':          knockdown,
                 'allowablePressure':  allowable,
                 'appliedPressure':    self.externalPressure,
                 'margin':             marginOfSafety(allowable, self.externalPressure,
@@ -443,13 +505,13 @@ class CylindricalShell:
                      * (self.radius / self.length) ** 0.5
                      / (1.0 - self.poisson ** 2) ** 0.625)
 
-        allowable = TORSION_KNOCKDOWN * classical
+        allowable = TORSION_CORRELATION * classical
 
         polarModulus = 2.0 * np.pi * self.radius ** 2 * self.thickness
         applied      = abs(self.torsion) / polarModulus if polarModulus > 0.0 else np.nan
 
         return {'classicalShearStress': classical,
-                'knockdown':            TORSION_KNOCKDOWN,
+                'knockdown':            TORSION_CORRELATION,
                 'allowableShearStress': allowable,
                 'appliedShearStress':   applied,
                 'margin':               marginOfSafety(allowable, applied, self.factorOfSafety)}
@@ -644,8 +706,10 @@ class CylindricalShell:
 
         if ratio > THIN_SHELL_MAXIMUM_RATIO:
             raise GeometryError(
-                f'R/t of {ratio:.0f} is above {THIN_SHELL_MAXIMUM_RATIO:.0f}, outside the range '
-                f'the SP-8007 correlation was fitted over.', context = context)
+                f'R/t of {ratio:.0f} is above {THIN_SHELL_MAXIMUM_RATIO:.0f}, which is the bound '
+                f'SP-8007 states on the knockdown parameter itself rather than a convention. The '
+                f'correlation returns a number above it and the number means nothing.',
+                context = context)
 
         if self.internalPressure > 0.0 and self.externalPressure > 0.0:
             raise InvalidInputError(

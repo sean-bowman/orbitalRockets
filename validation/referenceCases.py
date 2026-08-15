@@ -847,24 +847,85 @@ RANDOM_VIBRATION_LEVELS = {
 # a curve fitted to test scatter in the 1960s, it is still what everyone uses, and it turns a
 # classical buckling stress that is wrong by a factor of five into a design value.
 #
-# What can be checked here is that the implementation reproduces the published formula at stated
-# radius-to-thickness ratios. What cannot be checked is the formula itself, because the test scatter
-# it was fitted to is not in the document in a form that can be re-fitted. That distinction is the
-# difference between the 'standard' and 'hardware' levels.
+# The anchor is the 2020 revision rather than the 1968 original, and reading it settled four things
+# the library had wrong or missing.
+#
+# **The formula is unchanged after fifty two years.** Rev 2 restates Eq. 9 and Eq. 10 exactly as the
+# 1968 document had them and keeps recommending them, which is a stronger statement than the
+# original made: a curve that survives a full revision by the organisation that owns it has been
+# re-examined rather than merely inherited.
+#
+# **It carries two bounds the library did not.** The parameter applies for r/t < 1500, and the
+# library was allowing 3000. The correlation is unverified by experiment above L/r = 5, and the
+# library said nothing.
+#
+# **The direction of its conservatism is now sourced rather than assumed.** Rev 2 states the curve
+# is likely to bound aerospace-quality cylinders and that testing has shown buckling loads higher
+# than it. That is a published statement about how hardware behaves relative to the curve, and it
+# is what makes the factor safe to use without being accurate.
+#
+# **What is still not validated is the magnitude of that conservatism.** Knowing the curve is a
+# lower bound is not knowing how far below the data it sits, and Rev 2 does not reproduce the test
+# scatter in a form that can be re-fitted. That remains the difference between this entry and a
+# hardware-level one.
 SHELL_BUCKLING = {
 
     'NASA SP-8007 knockdown': {
-        'source': 'NASA SP-8007, Buckling of Thin-Walled Circular Cylinders, 1968 revision. The '
-                  'correlation factor for axially compressed cylinders',
+        'source': 'NASA/SP-8007-2020/REV 2, Buckling of Thin-Walled Circular Cylinders, December '
+                  '2020, section 4.1.1.1 and Eq. 9 and 10. Read from https://shellbuckling.com/'
+                  'papers/classicNASAReports/NASA-SP-8007-2020Rev2FINAL.pdf, accessed '
+                  '15 August 2026',
         'kind': 'derived',
         'level': 'standard',
-        'formula': 'gamma = 1 - 0.901 (1 - exp(-phi)), phi = (1/16) sqrt(R/t)',
+
+        'formula': 'gamma = 1 - 0.901 (1 - exp(-phi)), phi = (1/16) sqrt(r/t)',
         'points': {100.0: 0.5813, 300.0: 0.4042, 500.0: 0.3217, 1000.0: 0.2238, 1500.0: 0.1791},
-        'note': 'Values computed from the published closed form at each radius-to-thickness ratio. '
-                'This validates the implementation and cannot validate the correlation, which was '
-                'fitted to test scatter the document does not reproduce in re-fittable form. A '
-                'knockdown of 0.22 at R/t 1000 means the classical stress overpredicts by a factor '
-                'of four and a half, which is the reason the factor exists.'},
+
+        # The bounds the revision states on the correlation itself.
+        'maximumRadiusToThickness': 1500.0,     # [-], Eq. 10 is written for r/t below this
+        'correlatedLengthToRadius':    5.0,     # [-], unverified by experiment above this
+
+        # The other two correlations the same section recommends, both of which the library had
+        # carried at the wrong value.
+        'torsionCorrelationThreeQuarter': 0.67,   # [-], gamma^(3/4), Eq. 35
+        'externalPressureShort':          0.5625, # [-], sqrt(gamma) = 0.75, Eq. 28
+        'externalPressureLong':           0.90,   # [-], Eq. 29, the two-lobe oval mode
+
+        'conservatismNote': 'Rev 2 states that the knockdown factor equation is likely to bound '
+                            'what is expected in the design of aerospace-quality cylinders which '
+                            'have well-controlled manufacturing processes, and that testing has '
+                            'shown buckling loads higher than the lower bound design curve, '
+                            'attributed to greater quality control minimising initial geometric '
+                            'imperfections and loading nonuniformities. So the DIRECTION of the '
+                            'error is published and the MAGNITUDE is not.',
+
+        'boundsNote': 'Two bounds, and they fail differently. Above r/t = 1500 the correlation '
+                      'returns a number that means nothing, which is a refusal. Above L/r = 5 the '
+                      'correlation is simply unverified, and the classical prediction it '
+                      'multiplies has a separate problem in the same regime: Donnell cannot see '
+                      'the interaction between shell buckling and column buckling, so it becomes '
+                      'UNCONSERVATIVE for long cylinders. A long shell needs a column check too.',
+
+        'note': 'A knockdown of 0.22 at r/t 1000 means the classical stress overpredicts by a '
+                'factor of four and a half, which is the reason the factor exists. Reproducing the '
+                'closed form validates the implementation and not the correlation.'},
+
+    'SP-8007 pressure stabilization': {
+        'source': 'NASA/SP-8007-2020/REV 2, Eq. 48 and Figure 4-5',
+        'kind': 'derived',
+        'level': 'unvalidated',
+
+        'formula': 'P_press = 2 pi E t^2 (0.605 gamma + d_gamma) + p pi r^2',
+        'parameter': '(p / E) (r / t)^2',
+
+        'note': 'The library uses the document\'s non-dimensional pressure parameter and NOT its '
+                'd_gamma curve, because Figure 4-5 is a figure and reading values off it would be '
+                'worse provenance than saying so. What the library carries instead is a saturating '
+                'recovery of the lost knockdown with the right shape and no published points '
+                'behind it. Rev 2 warns that applying its d_gamma data to other configurations or '
+                'alongside less conservative knockdown factors can produce unconservative designs, '
+                'and the same warning applies to a substitute curve. Closing this needs the '
+                'digitised figure or the data behind it.'},
 }
 
 # ------------------------------------------------------------------------------------------------ #

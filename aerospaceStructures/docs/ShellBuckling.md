@@ -81,7 +81,11 @@ phi   = (1/16) sqrt(R/t)
 
 **It is a lower bound on old data, and it is conservative by design.** A modern shell built to a measured tolerance and analysed with its actual imperfection field supports a far less punitive factor, and that is current practice at the large end. It needs a measured shell, so it is out of scope for preliminary sizing.
 
-**The curve is empirical and has no physical content.** Do not extrapolate it beyond roughly R/t of 3000, and do not read meaning into its form.
+**The curve is empirical and has no physical content**, and it comes with two stated bounds.
+
+**It applies below R/t = 1500.** NASA/SP-8007 Rev 2 writes the parameter as `phi = (1/16) sqrt(r/t)` for `r/t < 1500`, which is a bound on the correlation rather than a convention. Above it the expression still returns a number and the number means nothing, so the library refuses.
+
+**It is unverified by experiment above L/r = 5.** That one fails differently: the correlation is untested there rather than meaningless, so the library reports where the shell sits rather than refusing. **A long shell also needs a column check**, because the classical prediction the knockdown multiplies cannot see the interaction between shell buckling and column buckling and becomes unconservative in exactly that regime. [BeamColumn](../aerospaceStructuresLibrary/BeamColumn.py) is what does it.
 
 ---
 
@@ -112,12 +116,15 @@ The mechanism is direct: internal pressure pretensions the shell circumferential
 |---|---|---|
 | **Axial compression** | **0.29 to 0.65** | Nearly degenerate modes |
 | **Bending** | **1.3x the axial value** | Peak stress acts over a short arc |
-| **Torsion** | **0.80** | Well separated modes |
-| **External pressure** | **0.90** | Well separated modes |
+| **Torsion** | **0.67** | Well separated modes. Carried as `gamma^(3/4)` in the stress expression |
+| **External pressure, long** | **0.90** | Two-lobe oval mode, theory close to test |
+| **External pressure, short** | **0.5625** | More circumferential waves, far wider scatter |
 
 **Bending is less sensitive than uniform compression** because only part of the circumference is highly loaded, and the shell can shed load around a local imperfection into the less loaded region.
 
-**Torsion and external pressure are barely sensitive at all.** Their buckling modes are well separated, so theory is close to test and the factors are mild. A shell that would need a 0.3 knockdown in compression needs 0.8 in torsion.
+**Torsion and external pressure are barely sensitive at all.** Their buckling modes are well separated, so theory is close to test and the factors are mild. A shell that would need a 0.3 knockdown in compression needs 0.67 in torsion.
+
+**External pressure carries two factors and they differ by 1.6.** A long cylinder collapses into a two-lobe oval where theory and test agree closely. A shorter one buckles into more circumferential waves, where the reported scatter is far wider: end restraint was often not accounted for in the test analysis, and some reported buckling loads were isolated buckles rather than a global pattern. **Applying the long cylinder factor to a short shell is unconservative by that 1.6**, and the branch that selects the classical pressure has to select the factor with it.
 
 ---
 
@@ -153,10 +160,11 @@ Z = L^2 sqrt(1 - nu^2) / (R t)
 | Knockdown `1 - 0.901(1 - exp(-sqrt(R/t)/16))` | SP-8007 |
 | Classical is 2 to 4x optimistic | Always knock it down |
 | Bending relief | 1.3x the axial knockdown |
-| Torsion 0.80, external pressure 0.90 | Mild, well separated modes |
+| Torsion 0.67 | Mild, well separated modes |
+| External pressure 0.90 long, 0.5625 short | The branch decides the factor |
 | Pressure stabilization is large | And it must be shown non-losable |
 | Combine loads | Linear in axial and bending, quadratic in shear |
-| Do not extrapolate beyond R/t 3000 | The curve is empirical |
+| Do not extrapolate beyond R/t 1500 | A bound the document states, not a convention |
 
 ---
 
@@ -171,6 +179,10 @@ Z = L^2 sqrt(1 - nu^2) / (R t)
 **Loads checked individually.** The combination fails where each alone passes.
 
 **The knockdown curve extrapolated past its range.** It has no physical content to extrapolate.
+
+**The long cylinder external pressure factor used on a short shell.** Unconservative by 1.6, and the two cases look identical in a report that prints only one knockdown.
+
+**A long shell checked for shell buckling alone.** The classical prediction becomes unconservative at large L/r because it cannot see column buckling, so the knockdown multiplies a number that is already too high.
 
 **Bending checked at the axial knockdown.** Conservative, and it costs mass unnecessarily.
 

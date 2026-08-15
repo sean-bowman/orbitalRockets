@@ -33,7 +33,12 @@ from structuresUtils import (structuralAllowables, classicalShellBucklingStress,
                    transitionSlenderness, marginOfSafety,
                    InvalidInputError, GeometryError)
 from CylindricalShell import (CylindricalShell, THIN_SHELL_MINIMUM_RATIO,
-                              THIN_SHELL_MAXIMUM_RATIO, BENDING_KNOCKDOWN_RELIEF)
+                              THIN_SHELL_MAXIMUM_RATIO, BENDING_KNOCKDOWN_RELIEF,
+                              LENGTH_TO_RADIUS_CORRELATED, TORSION_CORRELATION,
+                              EXTERNAL_PRESSURE_KNOCKDOWN_LONG,
+                              EXTERNAL_PRESSURE_KNOCKDOWN_SHORT)
+
+from validation.referenceCases import SHELL_BUCKLING
 from PressureVessel import (PressureVessel, DOME_TYPES, DOME_COMPRESSION_ASPECT_RATIO,
                             THIN_WALL_MINIMUM_RATIO)
 
@@ -487,3 +492,156 @@ def testReportsRunForBothClasses():
 
     assert 'CYLINDRICAL SHELL' in buildShell().generateReport()
     assert 'PRESSURE VESSEL' in buildTank().generateReport()
+
+
+# ------------------------------------------------------------------------------------------------ #
+# -- SP-8007, against the 2020 revision -- #
+# ------------------------------------------------------------------------------------------------ #
+
+def _shell(**overrides):
+
+    inputs = {'radius':          1.0,
+              'thickness':       0.003,
+              'length':          1.0,
+              'modulus':         70.0e9,
+              'poisson':         0.33,
+              'yieldStrength':   270.0e6}
+
+    inputs.update(overrides)
+
+    component = CylindricalShell()
+    component.setInputs(inputs)
+
+    return component
+
+def testTheKnockdownBoundIsTheOneTheDocumentStates():
+
+    '''
+    Rev 2 writes the knockdown parameter as phi = (1/16) sqrt(r/t) FOR r/t < 1500. That is a bound
+    on the correlation and not a convention, so the library refuses above it rather than returning
+    an extrapolated factor.
+
+    This test exists because the library allowed 3000 for a full domain build.
+    '''
+
+    reference = SHELL_BUCKLING['NASA SP-8007 knockdown']
+
+    assert THIN_SHELL_MAXIMUM_RATIO == reference['maximumRadiusToThickness']
+
+    # r/t of 1400 is inside the bound and 1600 is not.
+    _shell(radius = 1.0, thickness = 1.0 / 1400.0).calculateKnockdown()
+
+    with pytest.raises(GeometryError):
+        _shell(radius = 1.0, thickness = 1.0 / 1600.0).calculateKnockdown()
+
+def testTheKnockdownReportsWhereItLeavesItsExperimentalBasis():
+
+    '''
+    The second bound fails differently from the first. Above L/r = 5 the correlation is unverified
+    rather than meaningless, so this is reported alongside the factor rather than refused.
+
+    It matters because the classical prediction the knockdown multiplies has its own problem in the
+    same regime: Donnell cannot see the interaction between shell buckling and column buckling, so
+    it becomes unconservative for long cylinders.
+    '''
+
+    reference = SHELL_BUCKLING['NASA SP-8007 knockdown']
+
+    assert LENGTH_TO_RADIUS_CORRELATED == reference['correlatedLengthToRadius']
+
+    short = _shell(length = 4.0).calculateKnockdown()
+    long  = _shell(length = 6.0).calculateKnockdown()
+
+    assert short['lengthToRadius'] == pytest.approx(4.0)
+    assert not short['beyondCorrelatedLength']
+
+    assert long['lengthToRadius'] == pytest.approx(6.0)
+    assert long['beyondCorrelatedLength']
+
+    # The factor itself does not change, because L/r is not in the correlation.
+    assert short['sp8007Knockdown'] == pytest.approx(long['sp8007Knockdown'])
+
+def testTheExternalPressureBranchesCarryDifferentFactors():
+
+    '''
+    Rev 2 gives two correlation factors for external pressure and they differ by 1.6. A long
+    cylinder collapses into a two-lobe oval where theory and test are close, Eq. 29 recommends
+    0.90. A shorter one buckles into more circumferential waves with far wider scatter, and Eq. 28
+    recommends 0.5625.
+
+    The library applied the long cylinder factor to both, which is unconservative by that 1.6 on
+    every short shell it sized.
+    '''
+
+    reference = SHELL_BUCKLING['NASA SP-8007 knockdown']
+
+    assert EXTERNAL_PRESSURE_KNOCKDOWN_LONG == reference['externalPressureLong']
+    assert EXTERNAL_PRESSURE_KNOCKDOWN_SHORT == reference['externalPressureShort']
+
+    short = _shell(length = 1.0, externalPressure = 20000.0).calculateExternalPressureBuckling()
+    long  = _shell(length = 40.0, externalPressure = 20000.0).calculateExternalPressureBuckling()
+
+    assert not short['isLongShell']
+    assert long['isLongShell']
+
+    assert short['knockdown'] == pytest.approx(EXTERNAL_PRESSURE_KNOCKDOWN_SHORT)
+    assert long['knockdown'] == pytest.approx(EXTERNAL_PRESSURE_KNOCKDOWN_LONG)
+
+    assert (EXTERNAL_PRESSURE_KNOCKDOWN_LONG
+            / EXTERNAL_PRESSURE_KNOCKDOWN_SHORT) == pytest.approx(1.6, rel = 0.01)
+
+def testTheTorsionCorrelationIsTheDocumentsValue():
+
+    '''
+    Rev 2 carries the torsional correlation as gamma^(3/4) inside the critical shear stress
+    expression, and Eq. 35 recommends 0.67 for that group. The library carried 0.80, which is
+    unconservative by 19 per cent on every torsional check.
+    '''
+
+    reference = SHELL_BUCKLING['NASA SP-8007 knockdown']
+
+    assert TORSION_CORRELATION == reference['torsionCorrelationThreeQuarter']
+
+    result = _shell(torsion = 1.0e5).calculateTorsionalBuckling()
+
+    assert result['knockdown'] == pytest.approx(0.67)
+    assert result['allowableShearStress'] == pytest.approx(
+        0.67 * result['classicalShearStress'], rel = 1.0e-12)
+
+def testEveryKnockdownIsBelowUnityAndOrderedByImperfectionSensitivity():
+
+    '''
+    The structural statement, and it holds whatever the values are. Axial compression is the most
+    imperfection sensitive mode and carries the harshest factor; torsion and the oval external
+    pressure mode have well separated buckling modes and carry mild ones.
+    '''
+
+    axial = sp8007Knockdown(500.0)
+
+    assert axial < EXTERNAL_PRESSURE_KNOCKDOWN_SHORT
+    assert EXTERNAL_PRESSURE_KNOCKDOWN_SHORT < TORSION_CORRELATION
+    assert TORSION_CORRELATION < EXTERNAL_PRESSURE_KNOCKDOWN_LONG
+    assert EXTERNAL_PRESSURE_KNOCKDOWN_LONG < 1.0
+
+def testThePressureRecoveryIsNotClaimedToBeTheDocumentsCurve():
+
+    '''
+    The library uses the document's non-dimensional pressure parameter and not its d_gamma curve,
+    because Figure 4-5 is a figure. That distinction is recorded in the register at unvalidated
+    level, and this asserts the record rather than the curve.
+    '''
+
+    entry = SHELL_BUCKLING['SP-8007 pressure stabilization']
+
+    assert entry['level'] == 'unvalidated'
+    assert entry['parameter'] == '(p / E) (r / t)^2'
+
+    # The parameter the library forms is the one the entry names.
+    result = _shell(internalPressure = 200000.0).calculateKnockdown()
+
+    expected = 200000.0 / 70.0e9 * (1.0 / 0.003) ** 2
+
+    assert result['pressureParameter'] == pytest.approx(expected, rel = 1.0e-9)
+
+    # And pressure only ever helps.
+    assert result['knockdown'] >= result['sp8007Knockdown']
