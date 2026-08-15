@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>orbitalRockets -- Repository Walkthrough</title>
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath:  [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            tags: 'ams'
+        },
+        svg: { fontCache: 'global' }
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+<style>
+:root {
+    --bg:         #1a1e2a;
+    --surface:    #22273a;
+    --surface-2:  #292f42;
+    --border:     #3a4055;
+    --text:       #d8e0ec;
+    --text-muted: #8a95a8;
+    --text-dim:   #5c6575;
+    --green:      #86C06C;
+    --accent:     #E0975A;
+    --red:        #e08080;
+    --yellow:     #d4b86a;
+    --blue:       #7baee8;
+    --orange:     #d48c5a;
+    --purple:     #aa84d8;
+    --cyan:       #6ad4c8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; }
+section { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+.section-header { margin-bottom: 2rem; }
+.section-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.4rem; }
+.section-subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+nav {
+    position: sticky; top: 0;
+    background: rgba(26, 30, 42, 0.96);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100; padding: 0 2rem;
+}
+nav ul { display: flex; list-style: none; overflow-x: auto; scrollbar-width: none; }
+nav ul::-webkit-scrollbar { display: none; }
+nav a {
+    display: block; padding: 0.9rem 1.1rem;
+    color: var(--text-muted); text-decoration: none;
+    font-size: 0.82rem; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s; cursor: pointer;
+}
+nav a:hover, nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.hero { padding: 5rem 0 4rem; border-bottom: 1px solid var(--border); }
+.hero-eyebrow {
+    font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text-dim); margin-bottom: 1rem;
+}
+.hero-title { font-size: 2.8rem; font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+.hero-desc {
+    font-size: 1.05rem; color: var(--text-muted);
+    max-width: 750px; margin-bottom: 2rem; line-height: 1.65;
+}
+.hero-meta { display: flex; gap: 2rem; font-size: 0.82rem; color: var(--text-dim); flex-wrap: wrap; }
+.hero-meta span::before { content: '\2014 '; }
+.hero-meta span:first-child::before { content: ''; }
+
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.4rem; border-top: 3px solid;
+}
+.summary-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 0.4rem; }
+.summary-value { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.2rem; }
+.summary-detail { font-size: 0.82rem; color: var(--text-muted); line-height: 1.55; }
+
+.data-table-wrap { overflow-x: auto; margin: 1.2rem 0; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+.data-table th {
+    padding: 0.7rem 1rem; text-align: left;
+    background: var(--surface-2); border-bottom: 2px solid var(--border);
+    font-weight: 500; color: var(--text-muted); font-size: 0.78rem;
+    white-space: nowrap;
+}
+.data-table td { padding: 0.65rem 1rem; border-bottom: 1px solid rgba(58,64,85,0.45); vertical-align: middle; }
+.data-table tr:hover td { background: rgba(34,39,58,0.8); }
+
+.status-badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.status-pass     { background: rgba(134,192,108,0.12); color: var(--green);  border: 1px solid rgba(134,192,108,0.3); }
+.status-fail     { background: rgba(224,128,128,0.12); color: var(--red);   border: 1px solid rgba(224,128,128,0.3); }
+.status-progress { background: rgba(123,174,232,0.12); color: var(--blue);  border: 1px solid rgba(123,174,232,0.3); }
+.status-warn     { background: rgba(212,184,106,0.12); color: var(--yellow);border: 1px solid rgba(212,184,106,0.3); }
+.status-info     { background: rgba(224,151,90,0.10); color: var(--accent); border: 1px solid rgba(224,151,90,0.25); }
+.status-none     { background: rgba(92,101,117,0.1);  color: var(--text-dim);border: 1px solid rgba(92,101,117,0.2); }
+
+.callout-box {
+    background: rgba(224,151,90,0.06); border: 1px solid rgba(224,151,90,0.2);
+    border-radius: 8px; padding: 1.1rem 1.4rem; margin: 1rem 0;
+}
+.callout-title { font-size: 0.78rem; font-weight: 600; color: var(--accent); margin-bottom: 0.4rem; }
+.callout-text  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
+
+.warning-box {
+    background: rgba(212,184,106,0.06); border: 1px solid rgba(212,184,106,0.2);
+    border-radius: 8px; padding: 1.1rem 1.4rem; margin: 1rem 0;
+}
+.warning-title { font-size: 0.78rem; font-weight: 600; color: var(--yellow); margin-bottom: 0.4rem; }
+.warning-text  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
+
+.key-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.4rem; margin-bottom: 1.5rem; }
+.key-box h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.8rem; color: var(--text); }
+.key-box p  { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.6rem; }
+.key-box ul { padding-left: 1.2rem; margin: 0.5rem 0; }
+.key-box li { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.3rem; }
+
+code {
+    font-family: 'Consolas', 'Fira Code', monospace;
+    font-size: 0.78rem; color: var(--cyan);
+    background: var(--surface-2); padding: 1px 5px; border-radius: 3px;
+}
+
+p.body { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1rem; max-width: 980px; }
+p.body strong { color: var(--text); font-weight: 600; }
+
+figure { margin: 1.6rem 0; }
+figure img { width: 100%; max-width: 100%; border: 1px solid var(--border); border-radius: 8px; display: block; }
+figcaption { font-size: 0.76rem; color: var(--text-dim); margin-top: 0.6rem; line-height: 1.55; }
+
+.math-block { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 1.4rem; margin: 1.2rem 0; overflow-x: auto; }
+
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; }
+
+footer { padding: 3rem 0 4rem; color: var(--text-dim); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container" style="padding:0">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#method">How a domain is built</a></li>
+      <li><a href="#allowables">Allowables</a></li>
+      <li><a href="#cryogenic">Cryogenic $c_p$</a></li>
+      <li><a href="#friction">Pipe friction</a></li>
+      <li><a href="#exchange">Exchange ratios</a></li>
+      <li><a href="#battery">Battery cell</a></li>
+      <li><a href="#debris">Debris dispersion</a></li>
+      <li><a href="#open">What is still open</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+
+<div class="hero">
+  <div class="hero-eyebrow">orbitalRockets</div>
+  <h1 class="hero-title">Six anchors, and what<br>reaching for them changed</h1>
+  <p class="hero-desc">
+    A walkthrough of the most recent work in a sixteen-domain launch vehicle engineering
+    repository. Each item started as an entry in the unvalidated register: a number the library
+    used, with nothing behind it. Closing them was supposed to be bookkeeping. Three of the six
+    changed a result, one reversed an ordering the code enforced as a guard, and one turned a
+    launch that cleared its licensing criterion into one that does not.
+  </p>
+  <div class="hero-meta">
+    <span>16 domains</span>
+    <span>423 documents</span>
+    <span>1,625 tests</span>
+    <span>15 August 2026</span>
+  </div>
+</div>
+
+<section id="overview">
+  <div class="section-header">
+    <h2 class="section-title">The repository</h2>
+    <p class="section-subtitle">What it is, and the rule that shapes it</p>
+  </div>
+
+  <p class="body">
+    Sixteen domains covering a launch vehicle from propellant properties to range safety. Each
+    carries a class library, a worked example driven by a JSON asset, a documentation set written
+    against numbers the code produced, and a tiered test suite. The domains share a
+    <code>common/</code> package so that a quantity is written down once: 316L's yield strength
+    lives in exactly one file, and a test asserts it.
+  </p>
+
+  <p class="body">
+    <strong>The rule that shapes the work is that a tool checked only against itself has not been
+    checked.</strong> Tests establish that code does what it was written to do. They say nothing
+    about whether what it was written to do is right, and 666 passing tests once failed to catch a
+    placeholder heat flux wrong by a factor of three, with a document written against its
+    conclusion. Every domain must therefore compare a result against something published, or record
+    in the validation register why it cannot.
+  </p>
+
+  <div class="summary-grid">
+    <div class="summary-card" style="border-top-color: var(--green)">
+      <div class="summary-label">Domains complete</div>
+      <div class="summary-value" style="color: var(--green)">16 / 16</div>
+      <div class="summary-detail">Six reach hardware level and seven reach standard level</div>
+    </div>
+    <div class="summary-card" style="border-top-color: var(--accent)">
+      <div class="summary-label">Tests passing</div>
+      <div class="summary-value" style="color: var(--accent)">1,625</div>
+      <div class="summary-detail">Three tiers: guards, published comparisons, self-consistency</div>
+    </div>
+    <div class="summary-card" style="border-top-color: var(--blue)">
+      <div class="summary-label">Documents</div>
+      <div class="summary-value" style="color: var(--blue)">423</div>
+      <div class="summary-detail">Every numeric claim produced by running code, not asserted</div>
+    </div>
+    <div class="summary-card" style="border-top-color: var(--yellow)">
+      <div class="summary-label">Register entries</div>
+      <div class="summary-value" style="color: var(--yellow)">38</div>
+      <div class="summary-detail">Quantities with no external anchor, each with what depends on it</div>
+    </div>
+  </div>
+
+  <div class="callout-box">
+    <div class="callout-title">The rule the register enforces</div>
+    <div class="callout-text">
+      Nothing in <code>validation/referenceCases.py</code> may be adjusted to make a test pass. If a
+      tool disagrees with a reference, either the tool is wrong, the comparison is wrong, or the
+      disagreement is real and understood. All three are recorded outcomes. Editing the reference is
+      not.
+    </div>
+  </div>
+</section>
+
+<section id="method">
+  <div class="section-header">
+    <h2 class="section-title">How a domain is built</h2>
+    <p class="section-subtitle">Five stages, library before documents</p>
+  </div>
+
+  <p class="body">
+    Library first, so that every number a document cites has already been produced by running code.
+    The fifth stage exists because the first four cannot catch a wrong model.
+  </p>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:600px"><thead><tr><th>Stage</th><th>Content</th><th>Done when</th></tr></thead><tbody><tr><td>1</td><td>Component classes and a tiered test suite</td><td>Tests pass, uniquely named helper module in place</td></tr><tr><td>2</td><td><code>codeInterface.py</code> worked example, driven by a JSON asset</td><td>Runs end to end, numbers verified</td></tr><tr><td>3</td><td>Documents, written against stage 2 numbers</td><td>Every numeric claim produced by code, every snippet executes</td></tr><tr><td>4</td><td>Verification, README status, commit</td><td>Links resolve, snippets run, full suite green</td></tr><tr><td>5</td><td>Validation against published hardware</td><td>An external reference case, or a register entry saying why not</td></tr></tbody></table></div>
+
+  <div class="split">
+    <div class="key-box">
+      <h4>Validation levels</h4>
+      <ul>
+        <li><span class="status-badge status-pass">hardware</span> &nbsp;Compared against measured or
+            specified performance of real hardware. Can catch a wrong model.</li>
+        <li><span class="status-badge status-info">standard</span> &nbsp;Reproduces a published
+            standard or definition exactly. Catches an implementation error only.</li>
+        <li><span class="status-badge status-progress">bounded</span> &nbsp;No direct comparison, but
+            the result is bracketed by something.</li>
+        <li><span class="status-badge status-warn">unvalidated</span> &nbsp;No external anchor.
+            Recorded with what depends on it.</li>
+      </ul>
+    </div>
+    <div class="key-box">
+      <h4>The hard part is not finding a reference</h4>
+      <p>
+        It is establishing that it is the same quantity. The propulsion library models a thrust
+        chamber; a published engine specific impulse is a whole-engine figure that includes the
+        cycle. RS-25 is closed cycle and validates the library to 1.7 %. F-1 is open cycle and
+        disagrees by 8.1 %, and is kept in the reference set precisely because it marks the boundary
+        of what the library covers.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="allowables">
+  <div class="section-header">
+    <h2 class="section-title">1. Material allowables and the tolerance factor
+      &nbsp;<span class="status-badge status-info">standard</span></h2>
+    <p class="section-subtitle">aerospaceMaterials &middot; the statistic every strength number rests on</p>
+  </div>
+
+  <p class="body">
+    A material property measured on twenty specimens produces twenty numbers. A design needs one,
+    and the one it needs is not the average: the part that flies was not one of the twenty tested.
+    That statement is a one-sided lower tolerance limit.
+  </p>
+
+  <div class="math-block">
+    $$T = \bar{x} - k\,s \tag{1}$$
+  </div>
+
+  <p class="body">
+    <strong>The entire content of the method is in $k$.</strong> It has to account for two separate
+    uncertainties at once: how far into the tail the required exceedance sits, and how badly the
+    sample mean and standard deviation might misrepresent the population. Three routes to it are
+    implemented, and a test used to assert that they agreed with each other.
+  </p>
+
+  <div class="warning-box">
+    <div class="warning-title">Three routes agreeing is not a validation</div>
+    <div class="warning-text">
+      It establishes that one formula was typed the same way three times. That catches a
+      transcription error and nothing else, and it was the reason this domain sat at internal level
+      while every other statistical claim in the repository depended on it.
+    </div>
+  </div>
+
+  <p class="body">
+    The anchor is a NIST/SEMATECH worked example that prints every intermediate, so the comparison
+    reaches the noncentral $t$ quantile itself rather than stopping at the answer. That matters
+    because $k$ is a ratio, and a compensating pair of errors in the noncentrality parameter and in
+    the quantile would reproduce it while getting both halves wrong.
+  </p>
+
+  <div class="math-block">
+    $$k_1 = \frac{t_{\alpha,\,N-1,\,\delta}}{\sqrt{N}}, \qquad
+      \delta = z_p\sqrt{N} \tag{2}$$
+  </div>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:600px"><thead><tr><th>Quantity</th><th>NIST published</th><th>Computed here</th><th>Error</th></tr></thead><tbody><tr><td>$a$</td><td>0.9356</td><td>0.9356</td><td>0.00 %</td></tr><tr><td>$b$</td><td>1.5165</td><td>1.5165</td><td>0.00 %</td></tr><tr><td>$\delta$</td><td>8.4037</td><td>8.4037</td><td>0.00 %</td></tr><tr><td>Noncentral $t$ quantile</td><td>12.28834</td><td>12.28834</td><td>0.00 %</td></tr><tr><td>$k$ from Natrella</td><td>1.8752</td><td>1.8752</td><td>0.00 %</td></tr><tr><td>$k$ from noncentral $t$</td><td>1.8740</td><td>1.8740</td><td>0.00 %</td></tr></tbody></table></div>
+
+  <p class="body">
+    The example runs at 99 % confidence, which is not the library default of 95 %, so neither
+    routine can reproduce it by having been written around the case it is tested on.
+  </p>
+
+  <figure>
+    <img src="images/toleranceFactors.png"
+         alt="Tolerance factor against sample size, and the deviation of two approximations">
+    <figcaption>
+      Left: what a small sample costs. At $n = 10$ the A-basis factor is 3.98 against a limiting
+      normal quantile of 2.326, so a ten-specimen A-basis pays 71 % more standard deviations than an
+      infinite one. Right: with the exact route anchored, the two approximations can be measured
+      rather than compared.
+    </figcaption>
+  </figure>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:500px"><thead><tr><th>$n$</th><th>A-basis $k$</th><th>B-basis $k$</th><th>A / B</th></tr></thead><tbody><tr><td>10</td><td>3.9811</td><td>2.3546</td><td>1.69</td></tr><tr><td>20</td><td>3.2952</td><td>1.9260</td><td>1.71</td></tr><tr><td>30</td><td>3.0639</td><td>1.7773</td><td>1.72</td></tr><tr><td>50</td><td>2.8624</td><td>1.6456</td><td>1.74</td></tr><tr><td>100</td><td>2.6840</td><td>1.5267</td><td>1.76</td></tr><tr><td>300</td><td>2.5219</td><td>1.4169</td><td>1.78</td></tr></tbody></table></div>
+
+  <div class="callout-box">
+    <div class="callout-title">What measuring the approximations found</div>
+    <div class="callout-text">
+      The Natrella closed form returns a smaller $k$ than the exact route at every sample size, and
+      a smaller $k$ is a larger allowable. It reports material as stronger than the statistics
+      support, by 1.4 % on B-basis at $n = 10$, which is the smallest sample the library will
+      accept. It is an approximation erring in the unconservative direction, so the exact route is
+      the default and the closed form exists to be compared against rather than used.
+    </div>
+  </div>
+
+  <p class="body">
+    <strong>The class refuses to do harm rather than reporting a number.</strong> It raises below
+    $n = 10$ and warns below 100 specimens or fewer than 10 lots. An A-basis allowable from a sample
+    of five is the one output of this domain that could cause real damage: it would carry the
+    authority of a statistical allowable and the content of a guess.
+  </p>
+</section>
+
+<section id="cryogenic">
+  <div class="section-header">
+    <h2 class="section-title">2. Cryogenic specific heat
+      &nbsp;<span class="status-badge status-info">standard</span></h2>
+    <p class="section-subtitle">common &middot; propulsion/ignitionAndStart &middot; how much propellant a chill-down boils away</p>
+  </div>
+
+  <p class="body">
+    Loading a cryogenic engine means cooling the hardware to the propellant's boiling point, and the
+    propellant that does the cooling is boiled off and vented. Sizing that load needs the enthalpy
+    the metal has to give up.
+  </p>
+
+  <p class="body">
+    <strong>Specific heat is the property that behaves least like its room-temperature value.</strong>
+    304 stainless is 470 J/(kg&middot;K) at room temperature and 248 at the liquid oxygen boiling
+    point. A handbook value over the whole range overstates the stored enthalpy by roughly a third.
+    The library used to carry a constant mean per material to correct for that.
+  </p>
+
+  <figure>
+    <img src="images/cryogenicSpecificHeat.png"
+         alt="Specific heat against temperature, and the enthalpy-averaged mean per cryogen">
+    <figcaption>
+      Left: the NIST cryogenic curve fits, with the four cryogen boiling points marked. Right: the
+      enthalpy-averaged specific heat over each cryogen's range, against the room-temperature value
+      a chill-down must not use.
+    </figcaption>
+  </figure>
+
+  <div class="callout-box">
+    <div class="callout-title">A mean specific heat belongs to a range, not to a metal</div>
+    <div class="callout-text">
+      Which is why the library now integrates rather than tabulating. The same stainless line
+      averages 413 J/(kg&middot;K) chilling for methane and 331 for hydrogen, a spread of a quarter,
+      so the material alone does not determine it and the cryogen has to be in the calculation.
+    </div>
+  </div>
+
+  <div class="math-block">
+    $$Q = m\int_{T_{\text{target}}}^{T_{\text{start}}} c_p(T)\,dT,
+      \qquad
+      \log_{10} c_p = \sum_{n=0}^{8} a_n \left(\log_{10} T\right)^n \tag{3}$$
+  </div>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:720px"><thead><tr><th>Material</th><th>LH2 [J/(kg K)]</th><th>LN2</th><th>LOX</th><th>LCH4</th><th>At 293 K</th><th>Spread</th></tr></thead><tbody><tr><td><code>stainless 304</code></td><td>331.4</td><td>390.0</td><td>399.5</td><td>413.0</td><td><span style="color:var(--text-dim)">470.5</span></td><td><strong>1.25x</strong></td></tr><tr><td><code>stainless 316</code></td><td>335.1</td><td>394.4</td><td>404.2</td><td>418.5</td><td><span style="color:var(--text-dim)">485.4</span></td><td><strong>1.25x</strong></td></tr><tr><td><code>aluminium 6061</code></td><td>638.1</td><td>761.0</td><td>782.7</td><td>814.3</td><td><span style="color:var(--text-dim)">943.1</span></td><td><strong>1.28x</strong></td></tr></tbody></table></div>
+
+  <p class="body">
+    The old constant, quoted over the oxygen range, overstated a hydrogen chill-down by 16 % because
+    it never saw the part of the curve below 90 K where specific heat collapses.
+  </p>
+
+  <div class="key-box">
+    <h4>A free check on nine transcribed numbers</h4>
+    <p>
+      316 stainless is published as two curve fits meeting at 50 K. Both are carried rather than
+      only the upper one, because the joint is a check on the transcription that costs one
+      assertion: a wrong coefficient anywhere shows up as a step at 50 K that neither set can hide.
+      The two agree there to 0.2 %.
+    </p>
+  </div>
+
+  <div class="warning-box">
+    <div class="warning-title">Narrowed, not closed</div>
+    <div class="warning-text">
+      The NIST database carries thermal conductivity and linear expansion for Ti-6Al-4V and
+      Inconel 718 and no specific heat, so those two keep a constant mean and stay in the register.
+      Aluminium 2219 is mapped onto the 6061-T6 curve as a stated approximation: specific heat per
+      kilogram in a dilute substitutional alloy is set by the base lattice, and the heavier copper
+      2219 carries means the substitution should run a few per cent high.
+    </div>
+  </div>
+</section>
+
+<section id="friction">
+  <div class="section-header">
+    <h2 class="section-title">3. Line pressure drop
+      &nbsp;<span class="status-badge status-pass">hardware</span></h2>
+    <p class="section-subtitle">fluidSystems &middot; the one term in a feed line that is a model rather than a definition</p>
+  </div>
+
+  <p class="body">
+    A feed line pressure drop is Darcy-Weisbach, and every term in it is a definition except the
+    friction factor. The retrofit list asked for Crane TP-410 worked examples. TP-410 is not openly
+    available and no reproducible example from it could be found, so the anchor became the thing its
+    friction chart approximates: measured smooth pipe friction from the Princeton Superpipe, over
+    31,000 to 35,500,000 in Reynolds number.
+  </p>
+
+  <div class="callout-box">
+    <div class="callout-title">The substitution is an upgrade</div>
+    <div class="callout-text">
+      A TP-410 example would establish that this library implements Colebrook the way Crane does.
+      The Superpipe fit establishes how far Colebrook is from the pipe, which is a different and
+      more useful question.
+    </div>
+  </div>
+
+  <div class="math-block">
+    $$\frac{1}{\sqrt{\lambda}} = 1.930\log_{10}\!\left(\mathrm{Re}\sqrt{\lambda}\right) - 0.537
+      \qquad\text{against}\qquad
+      \frac{1}{\sqrt{\lambda}} = 2.0\log_{10}\!\left(\mathrm{Re}\sqrt{\lambda}\right) - 0.799 \tag{4}$$
+  </div>
+
+  <p class="body">
+    The right-hand form is what the Colebrook equation reduces to at zero roughness, and those two
+    constants are the whole difference. They were fitted an order of magnitude lower in Reynolds
+    number than the Superpipe reached.
+  </p>
+
+  <figure>
+    <img src="images/frictionFactor.png"
+         alt="Smooth pipe friction factor against Reynolds number, and the deviation of each method">
+    <figcaption>
+      Left: the measured relation against the three methods the library implements, plus Blasius as
+      the low-Reynolds bracket. Right: the deviation of each from measurement. The vertical scale is
+      three per cent, which is why the left panel looks like agreement.
+    </figcaption>
+  </figure>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:640px"><thead><tr><th>Reynolds number</th><th>Superpipe $\lambda$</th><th>Colebrook $\lambda$</th><th>Colebrook error</th><th>Churchill error</th></tr></thead><tbody><tr><td>3.13e+04</td><td>0.02322</td><td>0.02325</td><td><span style="color:var(--red)">+0.13 %</span></td><td><span style="color:var(--red)">-0.27 %</span></td></tr><tr><td>1.00e+05</td><td>0.01811</td><td>0.01799</td><td><span style="color:var(--red)">-0.64 %</span></td><td><span style="color:var(--red)">-1.27 %</span></td></tr><tr><td>1.00e+06</td><td>0.01186</td><td>0.01165</td><td><span style="color:var(--red)">-1.77 %</span></td><td><span style="color:var(--red)">-2.05 %</span></td></tr><tr><td>1.00e+07</td><td>0.00832</td><td>0.00810</td><td><span style="color:var(--red)">-2.57 %</span></td><td><span style="color:var(--red)">-2.05 %</span></td></tr><tr><td>3.55e+07</td><td>0.00700</td><td>0.00679</td><td><span style="color:var(--red)">-2.91 %</span></td><td><span style="color:var(--red)">-1.90 %</span></td></tr></tbody></table></div>
+
+  <div class="warning-box">
+    <div class="warning-title">Every method is low, and none crosses over</div>
+    <div class="warning-text">
+      A low friction factor is a low pressure drop, so a line sized on one carries less margin than
+      its number says. The shortfall is under one per cent below $\mathrm{Re} = 10^5$ and grows
+      monotonically above it, reaching 2.9 % for Colebrook at the top of the range. Three per cent is
+      small against the other uncertainties in a feed system and it is in the unhelpful direction,
+      which is worth knowing rather than assuming. Churchill sitting closer than Colebrook at the top
+      is a coincidence: it approximates Colebrook and happens to err the other way, so the two errors
+      partly cancel there.
+    </div>
+  </div>
+
+  <div class="key-box">
+    <h4>The whole chain, against a closed form</h4>
+    <p>
+      Laminar flow is the only place in the domain where a pressure drop has an exact answer, which
+      makes it the check on everything rather than on one term. Velocity from mass flow, the
+      Reynolds number, the $64/\mathrm{Re}$ factor and the Darcy-Weisbach assembly all have to be
+      right together. A factor of four anywhere, a radius used where a diameter belongs, or a Fanning
+      factor read as a Darcy one all fail it by a wide margin.
+    </p>
+    <p>
+      $$\Delta p = \frac{128\,\mu Q L}{\pi D^4} \tag{5}$$
+    </p>
+    <p>
+      The library matches to one part in a million, and the residual is the density being
+      re-evaluated along the marched line rather than an error. The exponents are asserted alongside
+      the value: fourth power in diameter, first power in length and in flow.
+    </p>
+  </div>
+
+  <p class="body">
+    One incidental finding: the Prandtl smooth-pipe intercept the Colebrook equation actually
+    reduces to is $2\log_{10}(2.51) = 0.799347$, not the 0.8 that gets quoted. <strong>The
+    rounding is in the textbook rather than in the equation.</strong>
+  </p>
+</section>
+
+<section id="exchange">
+  <div class="section-header">
+    <h2 class="section-title">4. Payload exchange ratios
+      &nbsp;<span class="status-badge status-pass">hardware</span></h2>
+    <p class="section-subtitle">vehicleArchitecture &middot; recoveryAndReusability &middot; what recovering a booster costs</p>
+  </div>
+
+  <p class="body">
+    Two things are given up to recover a stage: dry mass carried the whole way up, and propellant
+    reserved for the boost-back, entry and landing burns. Converting each into payload needs an
+    exchange ratio, and those are properties of the vehicle rather than of the recovery system.
+    They were representative defaults, with a plausible reason written beside them.
+  </p>
+
+  <div class="warning-box">
+    <div class="warning-title">The reason did not survive being examined</div>
+    <div class="warning-text">
+      It said a kilogram of landing leg is carried through the entire first stage burn while a
+      kilogram of reserve propellant is only carried until it is used. A recovery reserve is spent
+      after separation, not during the climb, so it is aboard for the whole ascent exactly as the
+      leg is. The class enforced the ordering that reason implied as a validation guard, and that
+      guard would have refused the correct pair.
+    </div>
+  </div>
+
+  <p class="body">
+    What actually separates them is that added dry mass raises the first stage initial mass and its
+    burnout mass together, while reserved propellant is already aboard and raises the burnout mass
+    alone. Differentiating the stage contribution $c\ln(I/F)$:
+  </p>
+
+  <div class="math-block">
+    $$\frac{\partial(\Delta v)}{\partial m_{\text{dry}}} = c\left(\frac{1}{I} - \frac{1}{F}\right),
+      \qquad
+      \frac{\partial(\Delta v)}{\partial m_{\text{res}}} = -\frac{c}{F}
+      \qquad\Longrightarrow\qquad
+      \frac{\text{dry}}{\text{reserve}} = 1 - \frac{1}{R} \tag{6}$$
+  </div>
+
+  <p class="body">
+    <strong>$1 - 1/R$ is below one for any stage that burns any propellant at all</strong>, so a
+    kilogram of reserve propellant always costs more payload than a kilogram of dry mass, on every
+    vehicle, and relatively more the smaller the mass ratio of the stage carrying it. The offsetting
+    rise in initial mass is what dry mass gets and reserve does not.
+  </p>
+
+  <figure>
+    <img src="images/exchangeRatios.png"
+         alt="Exchange ratios by vehicle, and the measured ratio against the closed form">
+    <figcaption>
+      Left: the two ratios on four different vehicles, with the reserve more expensive on every one.
+      Right: the numerically measured ratio against $1 - 1/R$. A closed form that has not been
+      checked against the thing it describes is a claim about algebra.
+    </figcaption>
+  </figure>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:760px"><thead><tr><th>Vehicle</th><th>First stage $R$</th><th>Dry [kg/kg]</th><th>Reserve [kg/kg]</th><th>Measured ratio</th><th>$1 - 1/R$</th><th>Error</th></tr></thead><tbody><tr><td>Falcon 9 class</td><td>3.626</td><td>0.1115</td><td>0.1540</td><td>0.7242</td><td>0.7242</td><td><span style="color:var(--green)">0.0004 %</span></td></tr><tr><td>Small kerolox</td><td>3.651</td><td>0.1106</td><td>0.1524</td><td>0.7261</td><td>0.7261</td><td><span style="color:var(--green)">0.0005 %</span></td></tr><tr><td>Hydrolox</td><td>3.369</td><td>0.2674</td><td>0.3803</td><td>0.7032</td><td>0.7032</td><td><span style="color:var(--green)">0.0005 %</span></td></tr><tr><td>Heavy, poor structure</td><td>4.460</td><td>0.0727</td><td>0.0937</td><td>0.7758</td><td>0.7758</td><td><span style="color:var(--green)">0.0004 %</span></td></tr></tbody></table></div>
+
+  <div class="callout-box">
+    <div class="callout-title">One free quantity left, and it is the one the domain owns</div>
+    <div class="callout-text">
+      With both ratios fixed by the vehicle, inverting the published Falcon 9 payload penalty says
+      the stage holds back 6.2 % of its propellant load rather than the 9 % assumed. That inverted
+      number survives being turned back into what it describes: through the rocket equation on a
+      landed mass of 25,300 kg it buys 1,937 m/s, which is an entry burn and a landing burn without
+      boost-back. The 9 % assumption needs 2,491 m/s, which is more descent than that profile flies.
+    </div>
+  </div>
+
+  <p class="body">
+    Tuning the ratios until the budget reproduced the published penalty and then reporting the
+    agreement would be calibration presented as validation. Computing them from the vehicle and
+    inverting the one quantity left says what the stage must be doing, and <strong>the delta-V check
+    is what separates a descent profile from an artefact of the arithmetic.</strong>
+  </p>
+</section>
+
+<section id="battery">
+  <div class="section-header">
+    <h2 class="section-title">5. A chemistry table, bracketed by a real cell
+      &nbsp;<span class="status-badge status-pass">hardware</span></h2>
+    <p class="section-subtitle">electricalPower &middot; whether a representative number is representative</p>
+  </div>
+
+  <p class="body">
+    The battery tables carry a specific energy per chemistry rather than per part number. That is
+    the right shape for a sizing library and it is also a claim nothing checked. One real cell
+    cannot validate a class figure; it can say whether the class figure errs the right way, which
+    is the only question a representative number has to answer.
+  </p>
+
+  <figure>
+    <img src="images/battery.png"
+         alt="The class specific energy against a datasheet cell, and the charge temperature asymmetry">
+    <figcaption>
+      Left: the library's lithium ion class figure against the Panasonic NCR18650BF datasheet.
+      Right: the cell discharges thirty degrees colder than it can be charged.
+    </figcaption>
+  </figure>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:640px"><thead><tr><th>Quantity</th><th>Datasheet</th><th>Note</th></tr></thead><tbody><tr><td>Rated capacity</td><td>3.200 A h</td><td>at 20 C</td></tr><tr><td>Typical capacity</td><td>3.350 A h</td><td>at 25 C, 4.7 % higher</td></tr><tr><td>Nominal voltage</td><td>3.6 V</td><td></td></tr><tr><td>Maximum mass</td><td>46.5 g</td><td>bare cell, without tube</td></tr><tr><td>Gravimetric energy density</td><td><strong>248 W h/kg</strong></td><td>library class figure is 200, so 19 % conservative</td></tr><tr><td>Volumetric energy density</td><td>677 W h/l</td><td></td></tr><tr><td>Charge temperature</td><td>10 to 45 C</td><td>a hard limit, not a derating curve</td></tr><tr><td>Discharge temperature</td><td>-20 to 60 C</td><td>matches the library low-temperature limit exactly</td></tr></tbody></table></div>
+
+  <div class="callout-box">
+    <div class="callout-title">Which capacity a datasheet energy density is built from</div>
+    <div class="callout-text">
+      Both published densities reproduce exactly from the <em>rated</em> capacity and the bare cell
+      dimensions, and neither reproduces from the typical capacity. Rated times nominal is 11.52 W h,
+      which over 46.5 g is 247.7 W h/kg and over the 17.01 mL bare cell is 677.2 W h/l. The two
+      capacities differ by five per cent, so multiplying a nameplate density by a typical capacity
+      counts that five per cent twice. Both are asserted rather than noted.
+    </div>
+  </div>
+
+  <div class="warning-box">
+    <div class="warning-title">The limit the chemistry table did not carry</div>
+    <div class="warning-text">
+      The cell discharges to $-20$ C and cannot be charged below $+10$ C. That is a hard limit
+      rather than a derating curve, so no capacity factor expresses it, and the library carried only
+      the discharge side. The consequence is operational rather than a sizing one: a vehicle cold
+      soaked on the pad can run its battery and cannot top it up. A chemistry-level table cannot say
+      that, which is the argument for having a real part alongside one.
+    </div>
+  </div>
+</section>
+
+<section id="debris">
+  <div class="section-header">
+    <h2 class="section-title">6. Debris dispersion
+      &nbsp;<span class="status-badge status-warn">catalogue unvalidated</span></h2>
+    <p class="section-subtitle">rangeSafetyAndFTS &middot; the number a public risk analysis multiplies everything by</p>
+  </div>
+
+  <p class="body">
+    A public risk analysis needs the probability that debris from a destruct reaches each populated
+    region. That number was an input, and the register called building it the largest single piece of
+    unbuilt work the repository implied. It is also the weakest link in the calculation, because
+    everything else is multiplied by it.
+  </p>
+
+  <div class="math-block">
+    $$\beta = \frac{m}{C_d A},
+      \qquad
+      \frac{d\mathbf{v}}{dt} = -\frac{\rho(h)\,|\mathbf{v}_{\text{rel}}|\,\mathbf{v}_{\text{rel}}}{2\beta} + \mathbf{g},
+      \qquad
+      v_t = \sqrt{\frac{2 g \beta}{\rho}} \tag{7}$$
+  </div>
+
+  <p class="body">
+    <strong>The ballistic coefficient is the whole model.</strong> It decides how much of its
+    downrange velocity a fragment keeps, how long it falls, and therefore how far the wind carries
+    it. The drag area $C_d A$ is not split, because a tumbling plate has no single reference area and
+    its drag coefficient is an average over attitude.
+  </p>
+
+  <figure>
+    <img src="images/debris.png"
+         alt="Fragment descent trajectories, and the collective risk against town offset">
+    <figcaption>
+      Left: four fragment classes from one break-up state at 28 km and 1000 m/s, in a 15 m/s wind.
+      The dense fragments arc downrange; the light ones stop in the upper air and are then bent
+      downwind below 12 km. Right: collective casualty expectation against how far the coastal town
+      sits from the ground track, computed through the domain's own risk class.
+    </figcaption>
+  </figure>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:800px"><thead><tr><th>Class</th><th>Count</th><th>$\beta$ [kg/m2]</th><th>$v_t$ [m/s]</th><th>Fall [s]</th><th>Impact [km]</th><th>Wind drift [km]</th><th>Scatter set by</th></tr></thead><tbody><tr><td><code>insulation</code></td><td>400</td><td>1.3</td><td>4.6</td><td>2687</td><td><strong>56.8</strong></td><td>26.46</td><td><span class="status-badge status-warn">wind</span></td></tr><tr><td><code>skin</code></td><td>180</td><td>10.9</td><td>13.2</td><td>963</td><td><strong>41.8</strong></td><td>9.18</td><td><span class="status-badge status-warn">wind</span></td></tr><tr><td><code>structure</code></td><td>40</td><td>133.3</td><td>46.2</td><td>342</td><td><strong>62.1</strong></td><td>2.45</td><td><span class="status-badge status-warn">wind</span></td></tr><tr><td><code>machinery</code></td><td>6</td><td>875.0</td><td>118.4</td><td>219</td><td><strong>122.7</strong></td><td>0.65</td><td><span class="status-badge status-info">destruct</span></td></tr></tbody></table></div>
+
+  <div class="callout-box">
+    <div class="callout-title">Three results a single average fragment cannot produce</div>
+    <div class="callout-text">
+      <strong>The footprint is 81 km long and
+      4.5 km wide</strong>, an aspect ratio of
+      18 to one, and the two dimensions come from different things:
+      the length is a 656-to-one spread in ballistic coefficient and the width is a destruct charge.
+      <br><br>
+      <strong>The destruct charge widens the footprint through the heavy fragments, not the light
+      ones.</strong> The intuition runs the other way, and it is wrong because the fragments a charge
+      can throw hardest are exactly the ones that decelerate fastest. It moves a turbopump 2.3 km
+      sideways and an insulation panel 9 metres. The wind does the reverse and by more.
+      <br><br>
+      <strong>The impacts are not in ballistic coefficient order once there is any wind.</strong> In
+      still air they are, and nothing but the fragment decides where it lands. With a wind on it the
+      lightest fragment is carried past a heavier one, so a footprint is not a property of the
+      vehicle alone and the order of the pieces on the ground changes with the weather.
+    </div>
+  </div>
+
+  <p class="body">
+    Computing the impact probabilities rather than assuming them changed the answer. Every assumed
+    value in the worked case was the wrong size, and <strong>with the coastal town under the ground
+    track the launch is not licensable</strong>, by a factor of thirty on the 14 CFR 450.101
+    collective criterion. The relationship is linear in failure probability, so no vehicle
+    reliability recovers it.
+  </p>
+
+  <div class="key-box">
+    <h4>What a launch azimuth buys</h4>
+    <p>
+      The town has to sit 16 km off the ground track, and that is
+      a computed distance rather than a rule of thumb.
+    </p>
+    <p>
+      It is bought against the cross-range dispersion of the light debris rather than against the
+      footprint width. The footprint is 4.5 km wide, so a naive
+      reading says five kilometres of offset is plenty. It is not, because the width is the destruct
+      throw and the thing that actually reaches sideways is the wind uncertainty acting on 400
+      insulation panels for forty five minutes. <strong>A wind error is a vector</strong>, and its
+      cross-range component is as large as its downrange one.
+    </p>
+  </div>
+
+  <div class="warning-box">
+    <div class="warning-title">What is unvalidated is the catalogue, not the propagation</div>
+    <div class="warning-text">
+      The fragment counts, masses and drag areas are representative of a small two stage vehicle; a
+      real catalogue comes from a structural break-up analysis of a specific article and is programme
+      property. The propagation is anchored where it can be: terminal velocity is a closed form and a
+      fragment dropped from rest has to arrive at it, and the atmosphere is asserted equal to the one
+      <code>recoveryAndReusability</code> falls an entry through rather than being written twice.
+      Four classes propagated deterministically is a coverage limitation and not an accuracy one: a
+      real footprint is continuous and this one has four modes.
+    </div>
+  </div>
+</section>
+
+<section id="open">
+  <div class="section-header">
+    <h2 class="section-title">What is still open</h2>
+    <p class="section-subtitle">The register, and one gap that did not close</p>
+  </div>
+
+  <div class="data-table-wrap"><table class="data-table" style="min-width:720px"><thead><tr><th>Domain</th><th>Level reached</th><th>What still limits it</th></tr></thead><tbody><tr><td><code>aerospaceStructures</code></td><td><span class="status-badge status-info">standard</span></td><td>The SP-8007 shell buckling curve itself is unvalidated. Reproducing it to 1e-4 proves the implementation and nothing about the correlation</td></tr><tr><td><code>thermalManagement</code></td><td><span class="status-badge status-pass">hardware</span></td><td>Radiation path only. Conduction and the contact conductance table remain unchecked</td></tr><tr><td><code>fluidSystems</code></td><td><span class="status-badge status-pass">hardware</span></td><td>Properties and smooth pipe friction. The roughness branch and the fitting loss coefficients are unanchored, and the loss coefficients are the larger of the two</td></tr><tr><td><code>environmentsAndLoads</code></td><td><span class="status-badge status-pass">hardware</span></td><td>Random vibration only. Acoustics and shock remain unchecked</td></tr><tr><td><code>aerospaceMaterials</code></td><td><span class="status-badge status-info">standard</span></td><td>Statistics only. The anchor says nothing about normality, lot pooling, or any knockdown applied afterwards</td></tr><tr><td><code>fluidSystemsTesting</code></td><td><span class="status-badge status-warn">internal</span></td><td>Process domain, lowest priority</td></tr></tbody></table></div>
+
+  <p class="body">
+    <strong>The most consequential unvalidated number in the repository is the SP-8007 shell
+    buckling knockdown.</strong> It converts a classical stress that overpredicts by four and a half
+    into a design value, more than one domain depends on it, and reproducing the published curve
+    exactly says nothing about whether the curve is right.
+  </p>
+
+  <div class="warning-box">
+    <div class="warning-title">One gap that was called tractable and is not</div>
+    <div class="warning-text">
+      An IMU datasheet would move the avionics navigation drift figures from representative to
+      anchored, and every manufacturer publishes one. The Analog Devices ADIS16507 was attempted
+      through the manufacturer, two distributors and two mirrors, and every route returned a block
+      page or timed out. Secondary summaries quoting a bias stability and a random walk were found
+      and are deliberately not recorded, because this repository has been wrong three times by
+      trusting a summary of a document it had not read. The register entry now says that rather
+      than saying the gap is easy.
+    </div>
+  </div>
+
+  <div class="key-box">
+    <h4>The pattern across all six</h4>
+    <p>
+      Reaching for an anchor was expected to confirm the numbers and instead changed three results,
+      reversed one ordering the code enforced as a guard, and made one launch unlicensable. The
+      common thread is not that the old numbers were badly chosen. It is that a plausible reason
+      written next to a wrong number is harder to catch than a bare number, and the reserve
+      propellant exchange ratio sat behind one through a full domain build.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div>orbitalRockets &middot; Sean Bowman</div>
+</footer>
+
+</div>
+
+<script>
+    const links = document.querySelectorAll('nav a');
+    const sections = [...links].map(link => document.querySelector(link.getAttribute('href')));
+
+    function highlight() {
+        const offset = window.scrollY + 120;
+        let active = 0;
+        sections.forEach((section, index) => {
+            if (section && section.offsetTop <= offset) active = index;
+        });
+        links.forEach((link, index) => link.classList.toggle('active', index === active));
+    }
+
+    window.addEventListener('scroll', highlight, { passive: true });
+    highlight();
+</script>
+
+</body>
+</html>

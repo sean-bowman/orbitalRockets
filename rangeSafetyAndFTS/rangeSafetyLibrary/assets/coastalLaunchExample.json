@@ -130,11 +130,20 @@
   "note": "the break-up state is the 60 second trajectory point above, which is the worst case for the coastal town: high enough for the light debris to be carried a long way and still steep enough for the heavy debris to run downrange",
   "townOffsets": [
    0.0,
-   5000.0,
+   2000.0,
+   4000.0,
+   6000.0,
+   8000.0,
    10000.0,
-   15000.0,
+   12000.0,
+   14000.0,
+   16000.0,
+   18000.0,
    20000.0,
-   25000.0,
+   22000.0,
+   24000.0,
+   26000.0,
+   28000.0,
    30000.0
   ]
  }

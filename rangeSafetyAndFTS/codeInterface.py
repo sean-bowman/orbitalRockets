@@ -253,9 +253,9 @@ def reportDispersion(case: dict) -> dict:
               f'{"      yes" if clears else "       NO":>12}')
 
     print()
-    print(f'  - **The town has to sit about {threshold / 1000.0:.0f} km off the ground track for '
-          f'the launch to be licensable**, and that is')
-    print('    a computed distance rather than a rule of thumb. Directly downrange it fails by a')
+    print(f'  - **The town has to sit {threshold / 1000.0:.0f} km off the ground track for the '
+          f'launch to be licensable**, and that is a')
+    print('    computed distance rather than a rule of thumb. Directly downrange it fails by a')
     print('    factor of thirty and no amount of vehicle reliability recovers it.')
     print()
     print('  - **That is what a launch azimuth buys**, and it is bought against the cross-range')

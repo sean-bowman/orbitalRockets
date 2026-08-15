@@ -103,14 +103,15 @@ The result that came out of computing the impact probabilities rather than assum
 | Town offset [km] | P(impact) | Ec | Licensable |
 |---|---|---|---|
 | 0 | 0.18066 | 2.93e-03 | no |
-| 5 | 0.07856 | 1.27e-03 | no |
-| 10 | 0.01760 | 2.86e-04 | no |
-| 15 | 0.00638 | 1.04e-04 | no |
+| 4 | 0.10469 | 1.70e-03 | no |
+| 8 | 0.02961 | 4.81e-04 | no |
+| 12 | 0.01176 | 1.92e-04 | no |
+| 14 | 0.00790 | 1.29e-04 | no |
+| 16 | 0.00508 | 8.33e-05 | **yes** |
 | 20 | 0.00176 | 2.96e-05 | **yes** |
-| 25 | 0.00034 | 6.51e-06 | **yes** |
 | 30 | 0.00004 | 1.79e-06 | **yes** |
 
-**The town has to sit about 20 km off the ground track, and that is a computed distance rather than a rule of thumb.**
+**The town has to sit 16 km off the ground track, and that is a computed distance rather than a rule of thumb.**
 
 **It is bought against the cross-range dispersion of the light debris rather than against the footprint width.** The footprint is 4.5 km wide, so a naive reading says 5 km of offset is plenty. It is not, because the width is the destruct throw and the thing that actually reaches sideways is the wind uncertainty acting on 400 insulation panels for forty five minutes. **A wind error is a vector**, and its cross-range component is as large as its downrange one.
 

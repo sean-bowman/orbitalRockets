@@ -84,7 +84,7 @@ All classes follow the repository interface: `setInputs()`, `calculate*()` or `s
 | Ocean share of debris against risk | 59 % against 2 % |
 | Debris footprint, length against width | **81 km against 4.5 km** |
 | Ballistic coefficient span across the catalogue | 656 to one |
-| Offset the coastal town needs to be licensable | **20 km** |
+| Offset the coastal town needs to be licensable | **16 km** |
 | Collective Ec against its limit | 6.5e-6 against 1e-4 |
 | Individual Pc against its limit | 3.0e-7 against 1e-6 |
 | Which criterion binds | **individual** |
