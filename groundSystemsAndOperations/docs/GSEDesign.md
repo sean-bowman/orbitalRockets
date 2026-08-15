@@ -85,7 +85,7 @@ Stated plainly, because it is the largest scope decision in this domain.
 
 **What this domain adds is the integration across an operation**, which is what [PropellantLoading](PropellantStorageAndTransfer.md) does: it takes the boil-off rate from fluid systems and the chill-down mass from propulsion and totals them over a launch attempt. That is a calculation nothing else does, and it is small.
 
-**The general rule this follows** is the one written into [BUILDOUT](../../BUILDOUT.md): an argument against duplicating a neighbouring tool is not an argument against every calculation nearby. Check what the neighbour actually computes before declining to compute anything.
+**The general rule this follows**: an argument against duplicating a neighbouring tool is not an argument against every calculation nearby. Check what the neighbour actually computes before declining to compute anything.
 
 ---
 

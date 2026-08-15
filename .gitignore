@@ -20,6 +20,7 @@ tmpclaude-*
 
 # Internal notes (not for publication)
 objectives.md
+BUILDOUT.md
 
 # Temporary / generated job data
 temp/

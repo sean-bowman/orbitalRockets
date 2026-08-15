@@ -28,7 +28,7 @@ The firing circuit is an electrical circuit and it is not modelled here. This do
 
 Two implementations of the same circuit with nothing enforcing agreement between them is the failure this repository has avoided in five other places, and the boundary is drawn the same way here.
 
-The general rule, from [BUILDOUT](../../BUILDOUT.md): an argument against duplicating a neighbouring tool is not an argument against every calculation in its subject. What matters is whether the two would compute the *same quantity*, and here they would.
+The general rule: an argument against duplicating a neighbouring tool is not an argument against every calculation in its subject. What matters is whether the two would compute the *same quantity*, and here they would.
 
 ---
 

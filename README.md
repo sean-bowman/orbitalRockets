@@ -30,7 +30,7 @@ Two things that are meant to be used together, in every domain.
 
 ## Domains
 
-**All sixteen are complete.** [BUILDOUT.md](BUILDOUT.md) is the master checklist: what is built, what is not, the build order, and the depth each remaining domain is planned to.
+**All sixteen are complete.** Each domain's README states what it carries, and its `docs/ValidationReferences.md` states what that rests on and where it runs out.
 
 [validation/](validation/) holds the comparisons against published hardware, and the register of what has not been checked against anything external. A tool that has only been checked against itself has not been checked.
 
@@ -80,6 +80,66 @@ Each domain's `utils.py` locates the package by walking up from its own file unt
 # Inside any domain library, this just works
 from utils import fluidProps, materialProperties, PA_PER_PSIA, formatReportTable
 ```
+
+---
+
+## How a domain is built
+
+Five stages, in this order. Library before documents, so that every number a document cites has
+already been produced by running code.
+
+| Stage | Content | Done when |
+|---|---|---|
+| **1** | Component classes and a tiered test suite | Tests pass, uniquely named helper module in place |
+| **2** | `codeInterface.py` worked example, driven by a JSON asset | Runs end to end, numbers verified |
+| **3** | Documents, written against stage 2 numbers | Every numeric claim produced by code, every snippet executes |
+| **4** | Verification: links resolve, snippets run, full suite green | Nothing in the domain contradicts anything else in it |
+| **5** | Validation against something published | An external reference case exists, or the register says why not |
+
+**Stage 5 exists because stages 1 to 4 cannot catch a wrong model.** They establish that the code
+does what it was written to do. They say nothing about whether what it was written to do is right,
+and 666 passing tests once failed to catch a placeholder heat flux wrong by a factor of three that
+had a document written against its conclusion.
+
+**The hard part of stage 5 is not finding a reference, it is establishing that it is the same
+quantity.** The propulsion library models a thrust chamber; a published engine specific impulse is a
+whole-engine figure that includes the cycle. RS-25 is closed cycle and validates the library to
+1.7 per cent. F-1 is open cycle and disagrees by 8.1 per cent, and stays in the reference set
+precisely because it marks the boundary of what the library covers.
+
+### Three naming rules, all from the same cause
+
+A flat `sys.path` resolves identically named modules in different domains to one entry in
+`sys.modules`. The first one imported wins and the rest silently receive it. This has bitten the
+repository three times in three different places, so all three rules are written down rather than
+rediscovered.
+
+**The library helper module must be uniquely named**: `structuresUtils`, `thermalUtils`,
+`rangeSafetyUtils`, never `utils`. Sharing the name works by accident for the shared re-exported
+foundation and fails for anything only one domain defines. `fluidSystems` predates the rule and is
+the one remaining exception.
+
+**Test file basenames must be unique across the whole repository.**
+`propulsion/tests/testWorkedExample.py` and `thermalManagement/tests/testWorkedExample.py` cannot
+coexist: pytest imports test modules by basename and raises an import file mismatch. Name them for
+the domain, as `testPropulsionWorkedExample.py`.
+
+**`codeInterface.py` must be loaded by explicit path, never by `import codeInterface`.** Every
+domain has one at its root and none can be renamed without breaking the documented
+`python <domain>/codeInterface.py` entry point, so the fix belongs at the import rather than at the
+file. Load it with `importlib.util.spec_from_file_location` under a domain-unique module name.
+
+**The last one is the dangerous member of the family, because it fails silently rather than
+loudly**: a second domain's example tests pass while asserting against the first domain's module.
+Every worked-example test file carries a `testTheExampleLoadedIsThisDomainsOwn` guard.
+
+### Depth scales to the computable content
+
+A class that wraps a lookup table is a class not to build, and the reasoning behind each
+documentation-only decision is written into the relevant overview rather than assumed. Three
+`aerospaceMaterials` sub-domains are deliberately documentation only: `wroughtMaterials` because
+product form and temper are database axes, `joiningProcesses` because `Weld.py` already owns it,
+and `additiveOther` because each process is one equation belonging in `ProcessComparison`.
 
 ---
 
